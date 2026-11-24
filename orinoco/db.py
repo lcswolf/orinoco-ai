@@ -7,8 +7,8 @@ import re
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
 
 from orinoco.auth.passwords import hash_password, verify_password
@@ -21,6 +21,8 @@ DEFAULT_DATABASE_PATH = Path(
 def get_database_path() -> Path:
     """Return the configured database path, resolving environment at call time."""
     return Path(os.environ.get("ORINOCO_DATABASE_PATH", str(DEFAULT_DATABASE_PATH)))
+
+
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
 
 
@@ -273,6 +275,44 @@ def get_conversation(
             for message in messages
         ],
     }
+
+
+
+def save_exchange(
+    user_id: int,
+    conversation_id: int,
+    user_content: str,
+    assistant_content: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    if not user_content.strip() or len(user_content) > 4000:
+        raise ValueError("user message must contain 1–4000 characters")
+    if not assistant_content.strip() or len(assistant_content) > 16000:
+        raise ValueError("assistant response must contain 1–16000 characters")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        owned = connection.execute(
+            "SELECT id FROM conversations WHERE id = ? AND user_id = ?",
+            (conversation_id, user_id),
+        ).fetchone()
+        if owned is None:
+            return False
+        connection.executemany(
+            """
+            INSERT INTO messages (conversation_id, role, content, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            [
+                (conversation_id, "user", user_content, now),
+                (conversation_id, "assistant", assistant_content, now),
+            ],
+        )
+        connection.execute(
+            "UPDATE conversations SET updated_at = ? WHERE id = ?",
+            (now, conversation_id),
+        )
+        return True
 
 
 def get_recent_messages(
