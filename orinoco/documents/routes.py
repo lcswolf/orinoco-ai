@@ -110,7 +110,6 @@ async def get_documents(request: Request) -> dict[str, object]:
 
 @router.post("", status_code=201)
 async def upload_private_document(
-    """Store a document privately under the authenticated user's account."""
     request: Request,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
