@@ -46,6 +46,14 @@ DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand
 
 The restore path now creates its pre-restore database snapshot through SQLite's online backup API, preserving committed WAL data. It also preserves the existing file-based session secret and restores it if a later restore step fails. A failure-injection regression test is being added to exercise this rollback path.
 
+### Chat reference-context formatting — corrected
+
+Several prompt-context separators had been double-escaped, causing the model to receive literal backslash-n text instead of readable line breaks. They now use actual newline characters, with a regression assertion covering document context formatting.
+
+### Automatic memory sensitive-data filtering — strengthened
+
+The model-generated memory filter now uses word-boundary matching and covers additional common medical, financial, religious, political, sexual-orientation and criminal-history terms. This is a conservative keyword filter, not a guarantee that every sensitive fact can be recognised; the prompt, user review controls and privacy review remain important.
+
 ### Browser security headers — added
 
 The application now sends a restrictive Content Security Policy, clickjacking protection, MIME sniffing protection, a conservative referrer policy, same-origin resource/opener policies and a Permissions Policy disabling unused camera/microphone/geolocation access. The current frontend uses DOM node creation and textContent for dynamic content rather than HTML string injection. Regression tests check the headers on application, API and static responses.
