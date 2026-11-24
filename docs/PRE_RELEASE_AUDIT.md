@@ -38,6 +38,10 @@ Several database function docstrings had been placed inside conditionals or tran
 
 The first S3-compatible upload implementation checked object size and client-supplied SHA-256 metadata. Metadata alone does not prove the bytes stored by the remote service match the source. Upload verification now downloads the stored object and hashes the returned bytes as well. Symbolic-link backup sources are rejected before resolving the path. Regression tests cover altered remote bytes and symbolic-link inputs.
 
+### Office document decompression limits — strengthened
+
+DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand into a much larger payload, so the extraction path now checks archive entry counts, encrypted entries and both declared and actual uncompressed size before parsing. A regression test uses a highly-compressible oversized archive to verify the limit.
+
 ### Documentation accuracy — corrected
 
 The README and development guide now distinguish implemented encrypted backup operations from the outstanding scheduler/retention work. The Egg's web-search descriptions now reflect the implemented SearXNG integration rather than describing it as future work.
@@ -46,7 +50,7 @@ The README and development guide now distinguish implemented encrypted backup op
 
 - [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation.
 - [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
-- [ ] Review private/shared document ownership, file permissions, extraction limits, archive handling and cleanup failure paths.
+- [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [ ] Finish review of private/shared document ownership, file permissions, parser edge cases and cleanup failure paths.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [ ] Review encrypted backup archive validation, restore atomicity, rollback copies, key handling and remote transfer failure behaviour.
