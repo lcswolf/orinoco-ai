@@ -13,6 +13,7 @@ def test_admin_bootstrap_uses_configured_database_path(tmp_path, monkeypatch) ->
     passwords = iter(["a-very-long-admin-password-123", "a-very-long-admin-password-123"])
     monkeypatch.setattr("orinoco.admin.cli.getpass.getpass", lambda prompt: next(passwords))
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "create-admin"])
+    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: True))
 
     assert main() == 0
     assert database.is_file()
@@ -68,6 +69,7 @@ def test_admin_password_reset_uses_configured_database_and_revokes_sessions(
     passwords = iter(["a-new-long-password-456", "a-new-long-password-456"])
     monkeypatch.setattr("orinoco.admin.cli.getpass.getpass", lambda prompt: next(passwords))
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
+    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: True))
 
     assert main() == 0
     assert authenticate_user(
@@ -98,6 +100,26 @@ def test_admin_password_reset_requires_exact_account_confirmation(tmp_path, monk
     monkeypatch.setattr(
         "orinoco.admin.cli.getpass.getpass",
         lambda prompt: pytest.fail("password prompt must not be reached"),
+    )
+    monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
+    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: True))
+
+    assert main() == 2
+
+
+def test_admin_password_reset_refuses_noninteractive_password_input(tmp_path, monkeypatch) -> None:
+    """Do not fall back to echoed stdin when the command has no terminal."""
+    from orinoco.db import create_user, initialise_database
+
+    database = tmp_path / "accounts.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("recoveradmin", "an-old-long-password-123", role="admin", database_path=database)
+    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: False))
+    monkeypatch.setattr("builtins.input", lambda prompt: (_ for _ in ()).throw(AssertionError("must not prompt")))
+    monkeypatch.setattr(
+        "orinoco.admin.cli.getpass.getpass",
+        lambda prompt: (_ for _ in ()).throw(AssertionError("password must not be read")),
     )
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
 
