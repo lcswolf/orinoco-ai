@@ -16,6 +16,11 @@ from orinoco.auth.passwords import hash_password, verify_password
 DEFAULT_DATABASE_PATH = Path(
     os.environ.get("ORINOCO_DATABASE_PATH", "/home/container/data/orinoco.sqlite3")
 )
+
+
+def get_database_path() -> Path:
+    """Return the configured database path, resolving environment at call time."""
+    return Path(os.environ.get("ORINOCO_DATABASE_PATH", str(DEFAULT_DATABASE_PATH)))
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
 
 
@@ -140,6 +145,29 @@ def get_user_by_username(
             FROM users WHERE username = ? COLLATE NOCASE
             """,
             (normalized,),
+        ).fetchone()
+    if row is None:
+        return None
+    return User(
+        id=int(row["id"]),
+        username=str(row["username"]),
+        role=str(row["role"]),
+        active=bool(row["active"]),
+        created_at=str(row["created_at"]),
+    )
+
+
+
+def get_user_by_id(
+    user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
+) -> User | None:
+    with _database(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT id, username, role, active, created_at
+            FROM users WHERE id = ?
+            """,
+            (user_id,),
         ).fetchone()
     if row is None:
         return None
