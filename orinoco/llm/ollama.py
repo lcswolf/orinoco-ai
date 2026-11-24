@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from urllib.parse import urlsplit
 from collections.abc import Sequence
 from typing import Any
 
@@ -34,6 +35,18 @@ class OllamaClient:
         # explicit mock base_url, but environment variables cannot redirect user
         # prompts to an external inference provider.
         resolved_url = base_url or "http://127.0.0.1:11434"
+        if transport is None:
+            parsed_url = urlsplit(resolved_url)
+            if (
+                parsed_url.scheme != "http"
+                or parsed_url.hostname not in {"127.0.0.1", "::1", "localhost"}
+                or parsed_url.port != 11434
+                or parsed_url.username
+                or parsed_url.password
+                or parsed_url.query
+                or parsed_url.fragment
+            ):
+                raise ValueError("the production Ollama endpoint must be loopback on port 11434")
 
         if not 1024 <= resolved_context <= 8192:
             raise ValueError("context_length must be between 1024 and 8192")
