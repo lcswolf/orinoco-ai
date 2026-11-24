@@ -10,6 +10,8 @@ This page separates confirmed project decisions from implementation work. A plan
 - Custom responsive Orinoco interface shell, served directly by FastAPI.
 - Orinoco's requested greeting and an initial local-model status display.
 - Custom sign-in dialog connected to the authentication API.
+- Account settings dialog with password changes and an administrator-only user-management screen.
+- Admin API to create standard accounts, list accounts and suspend/reactivate users; the last active administrator cannot be suspended.
 - Working authenticated chat composer with saved conversation list, conversation switching and a mobile recent-chat selector.
 - Local Ollama chat orchestration with one generation at a time, bounded response length and a short conversation context window.
 - Atomic saving of user/assistant message pairs and server-side conversation ownership checks.
@@ -49,7 +51,6 @@ The latest completed GitHub Actions Python test run passed all 26 tests. The exp
 
 ## Not implemented yet
 
-- User-management routes and administrator screens.
 - Conversation deletion/editing, pagination and streaming responses.
 - Per-user memory review and correction controls.
 - Document ingestion, retrieval and shared/private libraries.
@@ -59,6 +60,7 @@ The latest completed GitHub Actions Python test run passed all 26 tests. The exp
 - Live import and test of the Egg against the user's Panel/Wings installation.
 - Backup, restore, update and rollback tooling.
 - Production security review, MFA and account recovery.
+- Server-side session revocation across all devices after password changes.
 
 ## Suggested implementation sequence
 
