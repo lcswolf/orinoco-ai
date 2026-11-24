@@ -197,6 +197,24 @@
       "user_viewable": false,
       "user_editable": false,
       "rules": "nullable|string|max:512"
+    },
+    {
+      "name": "Daily Backup Time",
+      "description": "Local 24-hour time for automatic encrypted backups. Defaults to 03:00 in the configured TIMEZONE.",
+      "env_variable": "ORINOCO_BACKUP_TIME",
+      "default_value": "03:00",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|date_format:H:i"
+    },
+    {
+      "name": "Local Backup Retention",
+      "description": "Number of days to retain local encrypted backup files. Old files are pruned only after a successful backup and, when configured, a verified off-site upload.",
+      "env_variable": "ORINOCO_BACKUP_RETENTION_DAYS",
+      "default_value": "14",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:1|max:365"
     }
   ]
 }
