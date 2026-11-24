@@ -64,6 +64,10 @@ The first S3-compatible upload implementation checked object size and client-sup
 
 Private and shared document deletion now removes the original file before deleting its database record. If file cleanup fails, the record remains visible and the user/administrator receives an error so cleanup can be retried; failures during upload rollback are logged. Stored paths reject traversal, final-component symbolic links and a symbolic-link document root. Upload, deletion, backup and restore operations share a cross-process file lock so a backup cannot snapshot database metadata and document files from opposite sides of an in-progress file operation. The lock uses POSIX flock on the Linux VPS and an msvcrt byte-range fallback for Windows development.
 
+### PDF decompression and extraction limits — strengthened
+
+The PDF parser's default decompression ceilings were too generous for the planned small VPS, and the previous extraction path accumulated all page text before truncating it. The pypdf minimum dependency is now 6.13 so its documented stream limits are available. Orinoco lowers filter output limits to 8 MiB per stream, rejects pages with more than four content streams or more than 32 MiB of combined decoded page content, retains the 100-page cap, and stops retaining text after 200,000 characters. Regression tests cover stream-count rejection, bounded text accumulation and the lower decompression settings. The upstream pypdf documentation specifically warns that parsing a large uncompressed page stream can consume many gigabytes of memory and recommends bounding content streams ([extraction guidance](https://pypdf.readthedocs.io/en/stable/user/extract-text.html), [security limits](https://pypdf.readthedocs.io/en/6.13.0/user/security.html)).
+
 ### Office document decompression limits — strengthened
 
 DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand into a much larger payload, so the extraction path now checks archive entry counts, encrypted entries and both declared and actual uncompressed size before parsing. A regression test uses a highly-compressible oversized archive to verify the limit.
