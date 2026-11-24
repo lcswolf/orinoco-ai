@@ -23,6 +23,7 @@ def test_user_preferences_have_safe_defaults_and_are_account_scoped(tmp_path) ->
         "voice": "bright",
         "tone": "friendly",
         "answer_detail": "balanced",
+        "auto_save_memories": True,
     }
     updated = update_user_preferences(
         first.id,
@@ -32,7 +33,7 @@ def test_user_preferences_have_safe_defaults_and_are_account_scoped(tmp_path) ->
         database_path=database,
     )
 
-    assert updated == {"voice": "calm", "tone": "direct", "answer_detail": "detailed"}
+    assert updated == {"voice": "calm", "tone": "direct", "answer_detail": "detailed", "auto_save_memories": True}
     assert get_user_preferences(first.id, database_path=database) == updated
     assert get_user_preferences(second.id, database_path=database)["voice"] == "bright"
 
