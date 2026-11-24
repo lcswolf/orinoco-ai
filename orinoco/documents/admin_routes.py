@@ -14,7 +14,7 @@ from orinoco.db import (
     list_documents,
 )
 from orinoco.documents.routes import _require_csrf, _store_upload
-from orinoco.documents.storage import remove_document_file
+from orinoco.documents.storage import document_storage_lock, remove_document_file
 
 router = APIRouter(prefix="/api/admin/shared-documents", tags=["administration"])
 
