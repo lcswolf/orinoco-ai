@@ -219,3 +219,49 @@ def test_automatic_memory_saving_can_be_disabled(tmp_path, monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()["saved_memories"] == []
     assert memories == []
+
+
+
+def test_chat_receives_only_authorised_document_excerpts(tmp_path, monkeypatch) -> None:
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    user = create_user("docchat", "a-long-test-password-123", database_path=database)
+    from orinoco.db import create_document
+
+    create_document(
+        owner_user_id=user.id,
+        scope="private",
+        original_name="my-notes.txt",
+        stored_path="private/1/my-notes.txt",
+        file_type="txt",
+        size_bytes=30,
+        sha256="c" * 64,
+        extracted_text="Orinoco project note mentions the special widget called Blue Finch.",
+        database_path=database,
+    )
+    captured: list[dict[str, str]] = []
+
+    class CapturingOllamaClient:
+        async def chat(self, messages: list[dict[str, str]]) -> str:
+            captured.extend(messages)
+            return "I found a note about Blue Finch."
+
+        async def aclose(self) -> None:
+            return None
+
+    monkeypatch.setattr(chat_routes, "OllamaClient", CapturingOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "docchat", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "What does my note say about Blue Finch?"},
+        )
+
+    assert response.status_code == 200
+    system_message = captured[0]["content"]
+    assert "my-notes.txt" in system_message
+    assert "Blue Finch" in system_message
+    assert "untrusted reference material" in system_message
