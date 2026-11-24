@@ -22,6 +22,8 @@ Supervisor runs Ollama on `127.0.0.1:11434`, first-run model initialisation and 
 
 The image pins Ollama 0.40.18, disables Ollama cloud features and limits model concurrency to one. The web app uses secure signed sessions, CSRF-protected authentication, per-user chat/memory/document isolation and administrator-managed accounts.
 
+The initial chat queue admits one active generation plus up to eight additional in-flight chat requests by default. Excess requests receive HTTP 503 with a short retry hint instead of accumulating without bound. The administrator can adjust `ORINOCO_MAX_PENDING_GENERATIONS` from 0 to 32 in the Egg; this queue and the per-user chat rate limiter are process-local and assume one web worker.
+
 ## Current capabilities
 
 - Custom responsive Orinoco interface and sign-in.
