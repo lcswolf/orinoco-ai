@@ -30,6 +30,7 @@ def test_searxng_client_normalises_and_filters_results(monkeypatch) -> None:
                     {"title": "Local hostname", "url": "http://printer.local/", "content": "ignored"},
                     {"title": "Reserved test domain", "url": "https://search.example.test/", "content": "ignored"},
                     {"title": "Invalid port", "url": "https://example.com:99999/", "content": "ignored"},
+                    {"title": "Malformed IPv6", "url": "http://[not-an-ip/", "content": "ignored"},
                 ]
             },
         )
