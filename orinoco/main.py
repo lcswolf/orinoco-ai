@@ -9,8 +9,11 @@ import httpx
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from orinoco import __version__
+from orinoco.auth.routes import router as auth_router
+from orinoco.auth.sessions import get_session_secret, secure_cookie_enabled
 
 OLLAMA_API_BASE = os.environ.get("ORINOCO_OLLAMA_API", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.environ.get("AI_MODEL", "qwen2.5:1.5b")
@@ -23,6 +26,15 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=get_session_secret(),
+    session_cookie="orinoco_session",
+    max_age=60 * 60 * 24 * 7,
+    same_site="lax",
+    https_only=secure_cookie_enabled(),
+)
+app.include_router(auth_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
