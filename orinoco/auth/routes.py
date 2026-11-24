@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hmac
 import secrets
+import time
+from collections import defaultdict, deque
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -17,6 +19,9 @@ from orinoco.db import (
 )
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
+MAX_LOGIN_FAILURES = 5
+LOGIN_WINDOW_SECONDS = 15 * 60
+_login_failures: dict[str, deque[float]] = defaultdict(deque)
 
 
 class LoginRequest(BaseModel):
@@ -35,6 +40,19 @@ def _require_csrf(request: Request) -> None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your security token has expired. Refresh the page and try again.",
+        )
+
+
+def _check_login_rate(username: str) -> None:
+    now = time.monotonic()
+    failures = _login_failures[username]
+    while failures and now - failures[0] > LOGIN_WINDOW_SECONDS:
+        failures.popleft()
+    if len(failures) >= MAX_LOGIN_FAILURES:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many unsuccessful sign-in attempts. Please wait and try again.",
+            headers={"Retry-After": str(LOGIN_WINDOW_SECONDS)},
         )
 
 
@@ -58,18 +76,22 @@ async def csrf_token(request: Request) -> dict[str, str]:
 @router.post("/login")
 async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     _require_csrf(request)
+    username = payload.username.strip().lower()
+    _check_login_rate(username)
     initialise_database(get_database_path())
     user = authenticate_user(
-        payload.username,
+        username,
         payload.password,
         database_path=get_database_path(),
     )
     if user is None:
+        _login_failures[username].append(time.monotonic())
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The username or password was not recognised.",
         )
 
+    _login_failures.pop(username, None)
     # Rotate the session after authentication to prevent session fixation.
     request.session.clear()
     request.session["user_id"] = user.id
