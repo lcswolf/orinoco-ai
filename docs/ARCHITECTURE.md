@@ -28,7 +28,7 @@ The current interface supports authenticated chat, owner-only conversation delet
 
 ## Deployment proposal
 
-The initial target is Ubuntu 24.04 LTS on a separate VPS. Pterodactyl Panel 2.x (latest stable) will manage the Orinoco server through a custom Egg and Docker image.
+The initial target is Ubuntu 24.04 LTS on a separate VPS. Pterodactyl Panel 1.13.0 (stable 1.x release line) will manage the Orinoco server through a custom Egg and Docker image.
 
 The initial layout uses one Pterodactyl server/container. Supervisor manages Ollama, first-run model initialisation and the web application. Components may be split into separate managed services later if that proves more reliable.
 
