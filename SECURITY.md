@@ -38,8 +38,8 @@ Uploaded documents are untrusted content. Their text may be included as referenc
 Before exposing an Orinoco instance:
 
 - Disable public registration and create the first administrator securely.
-- Use HTTPS and strong unique credentials; enable MFA where available.
-- Keep Ollama, databases and internal service ports off the public internet.
+- Use HTTPS and strong unique credentials. Orinoco does not yet provide app-level MFA; enable MFA on GitHub, hosting-provider and Pterodactyl accounts where available.
+- Keep Ollama bound to loopback, databases and internal service ports off the public internet. Production inference is fixed to the local Ollama service and ignores HTTP proxy environment variables.
 - Restrict access to approved users and keep each user's data isolated.
 - Apply updates and maintain encrypted, off-server backups.
 - Treat webpages, documents and other retrieved content as untrusted input.
