@@ -28,6 +28,7 @@ _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
 
 @dataclass(frozen=True)
 class User:
+    """Represents the public account fields returned by persistence operations; password hashes are never included."""
     id: int
     username: str
     role: str
@@ -40,6 +41,7 @@ class AccountError(ValueError):
 
 
 def _connect(database_path: Path) -> sqlite3.Connection:
+    """Open a SQLite connection with foreign-key enforcement and a bounded lock wait."""
     database_path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(database_path, timeout=10)
     connection.row_factory = sqlite3.Row
@@ -50,6 +52,7 @@ def _connect(database_path: Path) -> sqlite3.Connection:
 
 @contextmanager
 def _database(database_path: Path) -> Iterator[sqlite3.Connection]:
+    """Provide a transaction-scoped connection and always close it, including after errors."""
     connection = _connect(database_path)
     try:
         with connection:
@@ -158,6 +161,7 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
 
 
 def _validate_username(username: str) -> str:
+    """Normalize and validate usernames before they are stored."""
     normalized = username.strip().lower()
     if not _USERNAME_PATTERN.fullmatch(normalized):
         raise AccountError(
@@ -175,6 +179,7 @@ def create_user(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> User:
     if role not in {"admin", "user"}:
+        """Create an account with a password hash; reject invalid roles and duplicate usernames."""
         raise AccountError("role must be admin or user")
     normalized = _validate_username(username)
     try:
@@ -212,6 +217,7 @@ def create_user(
 
 
 def list_users(*, database_path: Path = DEFAULT_DATABASE_PATH) -> list[User]:
+    """Return account summaries without exposing password hashes."""
     with _database(database_path) as connection:
         rows = connection.execute(
             """
@@ -239,6 +245,7 @@ def set_user_active(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
     with _database(database_path) as connection:
+        """Suspend or reactivate an account while protecting the last active administrator."""
         user = connection.execute(
             "SELECT role, active FROM users WHERE id = ?",
             (user_id,),
@@ -266,6 +273,7 @@ def change_user_password(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
     try:
+        """Verify the current password before replacing the stored password hash."""
         new_hash = hash_password(new_password)
     except ValueError as exc:
         raise AccountError(str(exc)) from exc
@@ -290,6 +298,7 @@ def get_user_by_username(
 ) -> User | None:
     normalized = username.strip().lower()
     with _database(database_path) as connection:
+        """Look up an account by its case-insensitive username."""
         row = connection.execute(
             """
             SELECT id, username, role, active, created_at
@@ -319,6 +328,7 @@ def create_conversation(
     now = datetime.now(UTC).isoformat()
     safe_title = " ".join(title.split())[:80] or "New conversation"
     with _database(database_path) as connection:
+        """Create a conversation owned by the supplied account and return its ID."""
         cursor = connection.execute(
             """
             INSERT INTO conversations (user_id, title, created_at, updated_at)
@@ -333,6 +343,7 @@ def list_conversations(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> list[dict[str, object]]:
     with _database(database_path) as connection:
+        """List only conversations owned by the supplied account, newest first."""
         rows = connection.execute(
             """
             SELECT c.id, c.title, c.created_at, c.updated_at,
@@ -362,6 +373,7 @@ def get_conversation(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, object] | None:
     with _database(database_path) as connection:
+        """Fetch a conversation and its messages only when the requesting account owns it."""
         row = connection.execute(
             """
             SELECT id, title, created_at, updated_at
@@ -406,6 +418,7 @@ def save_exchange(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
     if not user_content.strip() or len(user_content) > 4000:
+        """Atomically append a user/assistant exchange after confirming conversation ownership."""
         raise ValueError("user message must contain 1–4000 characters")
     if not assistant_content.strip() or len(assistant_content) > 16000:
         raise ValueError("assistant response must contain 1–16000 characters")
@@ -443,6 +456,7 @@ def get_recent_messages(
 ) -> list[dict[str, str]]:
     bounded_limit = max(1, min(limit, 20))
     with _database(database_path) as connection:
+        """Return a bounded chronological message window for an account-owned conversation."""
         rows = connection.execute(
             """
             SELECT m.role, m.content
@@ -469,6 +483,7 @@ def add_conversation_message(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> int | None:
     if role not in {"user", "assistant"}:
+        """Append one validated message to an account-owned conversation."""
         raise ValueError("role must be user or assistant")
     if not content.strip() or len(content) > 16000:
         raise ValueError("message must contain 1–16000 characters")
@@ -505,6 +520,7 @@ def create_memory(
     """Save a memory owned by one user."""
     cleaned = " ".join(content.split())
     if not cleaned or len(cleaned) > 1000:
+        """Save a memory with an explicit owner and manual/automatic provenance."""
         raise ValueError("memory must contain 1–1000 characters")
     if source not in {"manual", "automatic"}:
         raise ValueError("memory source must be manual or automatic")
@@ -527,6 +543,7 @@ def list_memories(
 ) -> list[dict[str, object]]:
     """List only memories belonging to the requested account."""
     with _database(database_path) as connection:
+        """Return only memories belonging to the supplied account."""
         rows = connection.execute(
             """
             SELECT id, content, source, created_at, updated_at
@@ -557,6 +574,7 @@ def update_memory(
 ) -> bool:
     cleaned = " ".join(content.split())
     if not cleaned or len(cleaned) > 1000:
+        """Edit a memory only when its ID and owner account both match."""
         raise ValueError("memory must contain 1–1000 characters")
     now = datetime.now(UTC).isoformat()
     with _database(database_path) as connection:
@@ -574,6 +592,7 @@ def delete_memory(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
     with _database(database_path) as connection:
+        """Delete a memory only when its ID and owner account both match."""
         cursor = connection.execute(
             "DELETE FROM memories WHERE id = ? AND user_id = ?",
             (memory_id, user_id),
@@ -595,6 +614,7 @@ def create_document(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> int:
     if scope not in {"private", "shared"}:
+        """Register extracted document content and metadata with private/shared ownership rules."""
         raise ValueError("document scope must be private or shared")
     if (scope == "private") != (owner_user_id is not None):
         raise ValueError("private documents require an owner; shared documents do not")
@@ -629,6 +649,7 @@ def list_documents(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> list[dict[str, object]]:
     with _database(database_path) as connection:
+        """List private documents for the user and shared documents available to them."""
         if shared_only:
             rows = connection.execute(
                 """
@@ -668,6 +689,7 @@ def get_document(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, object] | None:
     with _database(database_path) as connection:
+        """Fetch document metadata/content only for its owner or when shared access is allowed."""
         row = connection.execute(
             """
             SELECT id, owner_user_id, scope, original_name, stored_path,
@@ -701,6 +723,7 @@ def delete_document(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> str | None:
     with _database(database_path) as connection:
+        """Remove an owned private document or an authorised shared document and return its stored path."""
         row = connection.execute(
             """
             SELECT stored_path FROM documents
@@ -737,6 +760,7 @@ def search_documents(
         if term not in stop_words
     ][:8]
     if not terms:
+        """Search private and shared document text while enforcing account-level visibility."""
         return []
 
     with _database(database_path) as connection:
@@ -770,6 +794,7 @@ def get_user_by_id(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
     with _database(database_path) as connection:
+        """Look up an account by its numeric ID without returning credential material."""
         row = connection.execute(
             """
             SELECT id, username, role, active, created_at
@@ -796,6 +821,7 @@ def authenticate_user(
 ) -> User | None:
     normalized = username.strip().lower()
     with _database(database_path) as connection:
+        """Verify credentials and return only active accounts."""
         row = connection.execute(
             """
             SELECT id, username, password_hash, role, active, created_at
