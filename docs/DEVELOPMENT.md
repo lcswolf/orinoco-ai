@@ -88,11 +88,12 @@ settings as `ORINOCO_USER_DOCUMENT_QUOTA_FILES`,
 individual upload size and total library quotas aligned with the VPS's actual
 persistent-storage allowance; increasing a quota does not increase disk space.
 
-Quota checks are applied while holding the document-storage lock, preventing
-concurrent uploads within the single application process from consuming the
-same remaining allowance. If Orinoco is later deployed with multiple web
-workers or replicas, move quota reservation into a single atomic database
-transaction before increasing worker count.
+Quota checks are applied while holding an OS-level document-storage lock.
+On the planned single VPS, this lock serialises uploads across application
+processes that share the same persistent filesystem. If Orinoco is later
+deployed across multiple hosts or a filesystem without reliable shared locking,
+verify the filesystem semantics or move quota reservation into a single atomic
+database transaction before increasing the replica count.
 
 ## Encrypted backups and recovery
 
