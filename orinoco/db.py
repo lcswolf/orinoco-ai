@@ -633,8 +633,8 @@ def get_user_preferences(
     user_id: int,
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
-) -> dict[str, str]:
-    """Return the account's whitelisted voice, tone and answer-detail preferences."""
+) -> dict[str, object]:
+    """Return the account's voice, tone, answer-detail and memory-saving preferences."""
     defaults = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
     with _database(database_path) as connection:
         row = connection.execute(
