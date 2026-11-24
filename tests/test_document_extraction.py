@@ -68,3 +68,89 @@ def test_office_zip_bomb_expansion_is_rejected() -> None:
     assert len(compressed) < 10 * 1024 * 1024
     with pytest.raises(ValueError, match="25 MiB safety limit"):
         extract_text("large.docx", compressed)
+
+
+def test_pdf_content_stream_count_is_bounded(monkeypatch) -> None:
+    """Reject pages with excessive content-stream arrays before text parsing."""
+    import pypdf
+
+    class FakePage:
+        def get(self, key):
+            assert key == "/Contents"
+            return [object(), object(), object(), object(), object()]
+
+        def get_contents(self):
+            raise AssertionError("content streams should be rejected before decoding")
+
+        def extract_text(self):
+            raise AssertionError("text extraction should not run for an oversized stream array")
+
+    class FakeReader:
+        is_encrypted = False
+        pages = [FakePage()]
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pypdf, "PdfReader", FakeReader)
+
+    with pytest.raises(ValueError, match="too many content streams"):
+        extract_text("large.pdf", b"%PDF-test")
+
+
+def test_pdf_text_accumulation_stops_at_global_extraction_limit(monkeypatch) -> None:
+    """Do not retain all page text before applying the document-wide character cap."""
+    import pypdf
+
+    class FakeContent:
+        def get_data(self):
+            return b"small content stream"
+
+    class FakePage:
+        def get(self, key):
+            assert key == "/Contents"
+            return [object()]
+
+        def get_contents(self):
+            return FakeContent()
+
+        def extract_text(self):
+            return "x" * 150_000
+
+    class FakeReader:
+        is_encrypted = False
+        pages = [FakePage(), FakePage()]
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pypdf, "PdfReader", FakeReader)
+
+    result = extract_text("long.pdf", b"%PDF-test")
+
+    assert len(result) == 200_000
+
+
+def test_pdf_decompression_filter_limits_are_lowered(monkeypatch) -> None:
+    """Apply smaller decompression limits than pypdf's general-purpose defaults."""
+    import pypdf
+
+    class FakeReader:
+        is_encrypted = False
+        pages = []
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pypdf, "PdfReader", FakeReader)
+    monkeypatch.setattr(
+        pypdf.filters,
+        "ZLIB_MAX_OUTPUT_LENGTH",
+        75 * 1024 * 1024,
+        raising=False,
+    )
+
+    with pytest.raises(ValueError, match="No readable text"):
+        extract_text("empty.pdf", b"%PDF-test")
+
+    assert pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH <= 8 * 1024 * 1024
