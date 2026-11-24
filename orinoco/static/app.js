@@ -22,6 +22,11 @@ const settingsButton = document.getElementById("settings-button");
 const settingsDialog = document.getElementById("settings-dialog");
 const adminTools = document.getElementById("admin-tools");
 const memoriesLink = document.getElementById("memories-link");
+const documentsLink = document.getElementById("documents-link");
+const chatLink = document.getElementById("chat-link");
+const chatView = document.querySelector(".welcome");
+const documentsView = document.getElementById("documents-view");
+const sharedDocumentTools = document.getElementById("shared-document-tools");
 let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
@@ -67,6 +72,7 @@ function showAccount(user) {
   if (user) {
     settingsButton.disabled = false;
     adminTools.hidden = user.role !== "admin";
+    sharedDocumentTools.hidden = user.role !== "admin";
     memoriesLink.classList.remove("unavailable");
     memoriesLink.setAttribute("aria-disabled", "false");
     userName.textContent = user.username;
@@ -82,6 +88,7 @@ function showAccount(user) {
   } else {
     settingsButton.disabled = true;
     adminTools.hidden = true;
+    sharedDocumentTools.hidden = true;
     memoriesLink.classList.add("unavailable");
     memoriesLink.setAttribute("aria-disabled", "true");
     userName.textContent = "Not signed in";
@@ -276,6 +283,7 @@ mobileConversations.addEventListener("change", () => {
 });
 
 newChatButton.addEventListener("click", () => {
+  showChatView();
   currentConversationId = null;
   clearThread();
   refreshConversations();
@@ -343,6 +351,175 @@ clearThread();
 refreshStatus();
 refreshAccount();
 
+
+
+function setActiveNavigation(activeLink) {
+  for (const link of [chatLink, documentsLink]) {
+    link.classList.toggle("active", link === activeLink);
+    if (link === activeLink) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
+}
+
+function showChatView() {
+  chatView.hidden = false;
+  documentsView.hidden = true;
+  setActiveNavigation(chatLink);
+}
+
+function showDocumentsView() {
+  if (!currentUser) {
+    loginDialog.showModal();
+    return;
+  }
+  chatView.hidden = true;
+  documentsView.hidden = false;
+  setActiveNavigation(documentsLink);
+  loadDocuments();
+}
+
+function setDocumentFeedback(id, message, isError = false) {
+  const element = document.getElementById(id);
+  element.textContent = message;
+  element.className = "settings-feedback" + (isError ? " error" : "");
+  element.hidden = false;
+}
+
+function renderDocumentList(element, documents, shared = false) {
+  element.replaceChildren();
+  if (!documents.length) {
+    const empty = document.createElement("p");
+    empty.className = "conversation-empty";
+    empty.textContent = "No documents here yet.";
+    element.append(empty);
+    return;
+  }
+
+  for (const documentInfo of documents) {
+    const item = document.createElement("article");
+    item.className = "document-item";
+    const details = document.createElement("div");
+    details.className = "document-copy";
+    const name = document.createElement("strong");
+    name.textContent = documentInfo.original_name;
+    const meta = document.createElement("span");
+    const size = Number(documentInfo.size_bytes || 0);
+    meta.textContent = (documentInfo.scope === "shared" ? "Shared library" : "Private to you") +
+      " · " + documentInfo.file_type.toUpperCase() +
+      " · " + (size < 1024 * 1024 ? Math.max(1, Math.round(size / 1024)) + " KB" : (size / (1024 * 1024)).toFixed(1) + " MB");
+    details.append(name, meta);
+    const actions = document.createElement("div");
+    actions.className = "document-actions";
+    const download = document.createElement("a");
+    download.href = "/api/documents/" + encodeURIComponent(documentInfo.id) + "/download";
+    download.textContent = "Download";
+    download.className = "document-download";
+    actions.append(download);
+
+    if (documentInfo.scope === "private" || (shared && currentUser && currentUser.role === "admin")) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "document-delete";
+      remove.textContent = "Delete";
+      remove.addEventListener("click", async () => {
+        if (!window.confirm("Delete " + documentInfo.original_name + "?")) return;
+        remove.disabled = true;
+        try {
+          const csrf = await getCsrfToken();
+          const endpoint = documentInfo.scope === "shared"
+            ? "/api/admin/shared-documents/" + encodeURIComponent(documentInfo.id)
+            : "/api/documents/" + encodeURIComponent(documentInfo.id);
+          const response = await fetch(endpoint, { method: "DELETE", headers: { "X-CSRF-Token": csrf } });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.detail || "Could not delete this document.");
+          await loadDocuments();
+        } catch (error) {
+          window.alert(error.message || "Could not delete this document.");
+          remove.disabled = false;
+        }
+      });
+      actions.append(remove);
+    }
+    item.append(details, actions);
+    element.append(item);
+  }
+}
+
+async function loadDocuments() {
+  if (!currentUser) return;
+  const privateList = document.getElementById("private-document-list");
+  const sharedList = document.getElementById("shared-document-list");
+  privateList.replaceChildren();
+  const loading = document.createElement("p");
+  loading.className = "conversation-empty";
+  loading.textContent = "Loading your documents…";
+  privateList.append(loading);
+  try {
+    const response = await fetch("/api/documents", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not load documents.");
+    const privateDocs = result.documents.filter(item => item.scope === "private");
+    const sharedDocs = result.documents.filter(item => item.scope === "shared");
+    renderDocumentList(privateList, privateDocs);
+    renderDocumentList(sharedList, sharedDocs, true);
+  } catch (error) {
+    privateList.replaceChildren();
+    const message = document.createElement("p");
+    message.className = "settings-feedback error";
+    message.textContent = error.message || "Could not load documents.";
+    privateList.append(message);
+  }
+}
+
+async function uploadDocument(formId, inputId, feedbackId, endpoint) {
+  const form = document.getElementById(formId);
+  const input = document.getElementById(inputId);
+  const button = form.querySelector("button[type=submit]");
+  const file = input.files && input.files[0];
+  if (!file) {
+    setDocumentFeedback(feedbackId, "Choose a document first.", true);
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    setDocumentFeedback(feedbackId, "That file is larger than the 10 MiB limit.", true);
+    return;
+  }
+  button.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const data = new FormData();
+    data.append("file", file);
+    const response = await fetch(endpoint, { method: "POST", headers: { "X-CSRF-Token": csrf }, body: data });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not upload this document.");
+    form.reset();
+    setDocumentFeedback(feedbackId, "Document uploaded and indexed for Orinoco's document search.");
+    await loadDocuments();
+  } catch (error) {
+    setDocumentFeedback(feedbackId, error.message || "Could not upload this document.", true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+documentsLink.addEventListener("click", event => {
+  event.preventDefault();
+  showDocumentsView();
+});
+chatLink.addEventListener("click", event => {
+  event.preventDefault();
+  showChatView();
+});
+document.getElementById("documents-refresh").addEventListener("click", loadDocuments);
+document.getElementById("private-document-form").addEventListener("submit", event => {
+  event.preventDefault();
+  uploadDocument("private-document-form", "private-document-file", "private-document-feedback", "/api/documents");
+});
+document.getElementById("shared-document-form").addEventListener("submit", event => {
+  event.preventDefault();
+  if (!currentUser || currentUser.role !== "admin") return;
+  uploadDocument("shared-document-form", "shared-document-file", "shared-document-feedback", "/api/admin/shared-documents");
+});
 
 function showFeedback(element, message, isError = false) {
   element.textContent = message;
