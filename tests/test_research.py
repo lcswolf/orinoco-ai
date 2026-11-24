@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from orinoco.db import create_user, initialise_database
 from orinoco.main import app
+from orinoco.research import routes as research_routes
 from orinoco.research.searxng import SearchUnavailable, SearXNGClient
 
 
@@ -79,3 +80,38 @@ def test_search_route_requires_authentication_and_configured_service(tmp_path, m
 
     assert unauthenticated.status_code == 401
     assert disabled.status_code == 503
+
+
+
+def test_authenticated_search_returns_sanitised_result_records(tmp_path, monkeypatch) -> None:
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("researcher", "a-long-test-password-123", database_path=database)
+
+    class FakeSearchClient:
+        async def search(self, query: str) -> list[dict[str, str]]:
+            assert query == "Orinoco private AI"
+            return [{
+                "title": "Orinoco guide",
+                "url": "https://example.com/guide",
+                "content": "A guide to self-hosted AI.",
+                "engine": "SearXNG",
+            }]
+
+        async def aclose(self) -> None:
+            return None
+
+    monkeypatch.setattr(research_routes, "SearXNGClient", FakeSearchClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        token = client.get("/api/auth/csrf").json()["csrf_token"]
+        client.post(
+            "/api/auth/login",
+            headers={"X-CSRF-Token": token},
+            json={"username": "researcher", "password": "a-long-test-password-123"},
+        )
+        response = client.get("/api/research/search?q=Orinoco%20private%20AI")
+
+    assert response.status_code == 200
+    assert response.json()["results"][0]["title"] == "Orinoco guide"
