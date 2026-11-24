@@ -38,14 +38,17 @@ SearXNG may be hosted separately to reduce memory pressure. It is optional and m
 
 ## Network boundaries
 
-- Public ingress should be limited to the HTTPS reverse proxy and the minimum ports needed for certificate issuance.
-- The web application should receive traffic through the proxy and its assigned Pterodactyl allocation.
-- Ollama binds to loopback inside the Orinoco container; it must not receive a public allocation.
+The current host-proxy design is documented in [Network Deployment](NETWORK_DEPLOYMENT.md). It uses Caddy for public TLS, Nginx on loopback for per-client rate/body/connection limits, and a separate Tailscale Serve endpoint for private access. The intended browser paths are the HTTPS subdomain, HTTPS public IP on port 8443, and the HTTPS tailnet DNS name on port 8444.
+
+- Public ingress is limited to TCP 80/443 for ACME and the subdomain, plus TCP 8443 for HTTPS by IP. SSH and Panel/Wings management ports are restricted to approved administration networks.
+- Nginx listens on 127.0.0.1:8081 and proxies to the Pterodactyl allocation. The allocation must be blocked from direct public access using the actual Docker/Wings firewall path.
+- Tailscale Serve proxies to the same local Nginx listener and remains tailnet-only; Funnel is not used.
+- The Orinoco container explicitly disables Uvicorn forwarded-header processing until the real trusted proxy peer address is measured and allow-listed. Nginx enforces public per-client limits at the edge.
+- Ollama binds to loopback inside the Orinoco container and receives no public allocation.
 - SQLite and all application data files remain inside the private container data directory; no database port is exposed.
 - Discord and search integrations require outbound connectivity.
-- Private remote access may be provided through Tailscale; public exposure through a private-network tunnel is not required.
 
-Exact ports, firewall rules and Pterodactyl/Wings compatibility must be verified during deployment.
+This is a configuration plan, not a deployed firewall. Exact addresses, ports, Docker rules and Pterodactyl/Wings compatibility must be verified on the live Leaseweb node.
 
 ## Identity and data isolation
 
