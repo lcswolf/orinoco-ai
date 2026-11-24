@@ -103,6 +103,8 @@ def test_failed_remote_upload_keeps_new_and_old_local_backups(tmp_path, monkeypa
     )
 
     assert "simulated object-storage outage" in state["last_error"]
+    assert "last_run_local_date" not in state
+    assert "last_success_at" not in state
     assert old.exists()
     assert created.exists()
 
@@ -176,3 +178,16 @@ def test_retention_helper_rejects_unbounded_days(tmp_path) -> None:
     """Retention bounds also apply when the helper is called outside the scheduler CLI."""
     with pytest.raises(ValueError, match="between 1 and 365"):
         backup_scheduler.prune_local_backups(tmp_path, 0)
+
+
+def test_scheduler_retry_backoff_and_success_date_use_completed_backups() -> None:
+    """A failed attempt remains retryable; only a completed backup marks the day."""
+    timezone = ZoneInfo("Europe/London")
+    attempted = datetime(2026, 11, 24, 3, 0, tzinfo=timezone)
+    state = {"last_attempt_at": attempted.isoformat()}
+
+    assert backup_scheduler._last_success_local_date(state, timezone) is None
+    assert backup_scheduler._retry_at(state, timezone) == attempted + timedelta(minutes=15)
+
+    state["last_success_at"] = attempted.astimezone(UTC).isoformat()
+    assert backup_scheduler._last_success_local_date(state, timezone) == "2026-11-24"
