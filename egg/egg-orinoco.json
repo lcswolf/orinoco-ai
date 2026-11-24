@@ -1,0 +1,121 @@
+{
+  "_comment": "Orinoco AI Assistant Egg for Pterodactyl Panel 1.x. Import this file into a dedicated Nest. Preview only: do not deploy until the matching Orinoco image has been built and published.",
+  "meta": {
+    "version": "PTDL_v1",
+    "update_url": null
+  },
+  "exported_at": "2026-11-24T00:00:00+00:00",
+  "name": "Orinoco AI Assistant",
+  "author": "Orinoco AI Project",
+  "description": "Preview Egg for the self-hosted Orinoco assistant. Requires the Orinoco custom Docker image. Current application scaffold exposes a health endpoint only; assistant features are still under development.",
+  "features": null,
+  "images": [
+    "ghcr.io/lcswolf/orinoco-ai:stable"
+  ],
+  "startup": "python -m uvicorn orinoco.main:app --host 0.0.0.0 --port {{SERVER_PORT}}",
+  "config": {
+    "files": "{}",
+    "startup": "{\n  \"done\": \"Application startup complete.\"\n}",
+    "logs": "{\n  \"custom\": false,\n  \"location\": \"\"\n}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\nset -euo pipefail\n\nmkdir -p /mnt/server/data/models\nmkdir -p /mnt/server/data/documents\nmkdir -p /mnt/server/data/backups\nmkdir -p /mnt/server/data/logs\n\ncat > /mnt/server/.orinoco-install-state <<'EOF'\nOrinoco Pterodactyl server directory initialised.\nApplication code and runtime dependencies are supplied by the Docker image.\nEOF\n\necho 'Orinoco server directories prepared.'",
+      "container": "ghcr.io/ptero-eggs/installers:debian",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "AI Model",
+      "description": "Preferred local model. Model selection is planned; the current scaffold does not yet load models.",
+      "env_variable": "AI_MODEL",
+      "default_value": "qwen2.5:1.5b",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:qwen2.5:0.5b,qwen2.5:1.5b,qwen2.5:3b"
+    },
+    {
+      "name": "Automatically Download Model",
+      "description": "Download the selected model when model management is implemented. This currently has no effect.",
+      "env_variable": "AUTO_DOWNLOAD_MODEL",
+      "default_value": "true",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:true,false"
+    },
+    {
+      "name": "Model Context",
+      "description": "Target context length in tokens. Planned setting; not yet applied by the scaffold.",
+      "env_variable": "MODEL_CONTEXT",
+      "default_value": "2048",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:1024|max:8192"
+    },
+    {
+      "name": "AI Concurrency",
+      "description": "Maximum simultaneous model requests. Initial intended value is one; not yet enforced.",
+      "env_variable": "AI_CONCURRENCY",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1|max:1"
+    },
+    {
+      "name": "Enable Discord",
+      "description": "Discord integration is planned and currently unavailable.",
+      "env_variable": "ENABLE_DISCORD",
+      "default_value": "false",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:true,false"
+    },
+    {
+      "name": "Discord Bot Token",
+      "description": "Reserved for the future Discord integration. Do not enter a real token until the integration and secret-handling guidance are implemented.",
+      "env_variable": "DISCORD_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:256"
+    },
+    {
+      "name": "Enable Voice",
+      "description": "Voice features are planned and currently unavailable.",
+      "env_variable": "ENABLE_VOICE",
+      "default_value": "false",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:true,false"
+    },
+    {
+      "name": "Enable Web Search",
+      "description": "Web research is planned and currently unavailable in the scaffold.",
+      "env_variable": "ENABLE_WEB_SEARCH",
+      "default_value": "true",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:true,false"
+    },
+    {
+      "name": "SearXNG URL",
+      "description": "Optional future SearXNG endpoint. Leave blank until search integration is implemented.",
+      "env_variable": "SEARXNG_URL",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string|max:512"
+    },
+    {
+      "name": "Timezone",
+      "description": "Timezone used by Orinoco services when implemented.",
+      "env_variable": "TIMEZONE",
+      "default_value": "Europe/London",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:64"
+    }
+  ]
+}
