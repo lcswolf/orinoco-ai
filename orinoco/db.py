@@ -455,6 +455,22 @@ def get_conversation(
 
 
 
+
+def delete_conversation(
+    user_id: int,
+    conversation_id: int,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    """Delete one conversation and its messages only when the requesting account owns it."""
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            "DELETE FROM conversations WHERE id = ? AND user_id = ?",
+            (conversation_id, user_id),
+        )
+        return cursor.rowcount > 0
+
+
 def save_exchange(
     user_id: int,
     conversation_id: int,
