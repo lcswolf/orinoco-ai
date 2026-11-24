@@ -14,4 +14,6 @@ if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
 fi
 
 echo "Starting Orinoco web application on 0.0.0.0:$PORT"
-exec python -m uvicorn orinoco.main:app --host 0.0.0.0 --port "$PORT"
+# Do not trust forwarded headers until the host proxy address has been measured and explicitly allow-listed.
+# The edge proxy enforces per-client IP limits; application throttles remain per account.
+exec python -m uvicorn orinoco.main:app --host 0.0.0.0 --port "$PORT" --no-proxy-headers
