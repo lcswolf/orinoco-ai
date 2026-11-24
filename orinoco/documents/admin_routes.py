@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
-from starlette.concurrency import run_in_threadpool
-
 from orinoco.db import (
     User,
     create_document,
@@ -17,8 +12,7 @@ from orinoco.db import (
     initialise_database,
     list_documents,
 )
-from orinoco.documents.extract import MAX_UPLOAD_BYTES, extract_text
-from orinoco.documents.routes import _require_csrf, _safe_filename, _store_upload
+from orinoco.documents.routes import _require_csrf, _store_upload
 from orinoco.documents.storage import remove_document_file
 
 router = APIRouter(prefix="/api/admin/shared-documents", tags=["administration"])
