@@ -1,6 +1,6 @@
 # Development
 
-This guide covers the current custom interface, authentication, local chat, personal memory, document and optional web-search foundations. Orinoco is not yet production-ready.
+This guide covers the custom interface, authentication, local chat, per-user response preferences, administrator-managed core persona, personal memory, document handling and optional web research. Orinoco is not yet production-ready.
 
 ## Requirements
 
@@ -43,7 +43,7 @@ The command asks for a username and password interactively. Use a password of at
 
 ## Personal memories
 
-Orinoco can extract durable, non-sensitive personal facts after a chat turn. Users can review, edit and delete their own memories. Automatic extraction uses an additional local model request and can be disabled with `AUTO_SAVE_MEMORIES=false`.
+Orinoco can extract durable, non-sensitive personal facts after a chat turn. Users can review, edit and delete their own memories. Automatic extraction uses an additional local model request and can be disabled with `AUTO_SAVE_MEMORIES=false`. Per-user response preferences (bright/calm/professional voice, friendly/direct/playful tone and concise/balanced/detailed answers) are stored in SQLite and applied only to that account's chat prompt. Administrators can edit the shared core persona and humour level; safety and privacy guardrails are appended after custom style guidance.
 
 ## Document libraries
 
