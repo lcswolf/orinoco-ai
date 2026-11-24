@@ -70,18 +70,26 @@ _SENSITIVE_MEMORY_TERMS = (
     "depression", "anxiety", "bipolar", "schizophrenia", "autism", "adhd",
     "epilepsy", "hiv", "aids", "pregnancy", "pregnant", "disability",
     "disabled", "blood pressure", "cholesterol", "therapy", "therapist",
-    "treatment", "symptom", "prescription", "surgery",
+    "treatment", "symptom", "prescription", "surgery", "doctor", "hospital",
+    "clinic", "injury", "injured", "broken arm", "broken leg", "fracture",
+    "counselling", "counseling", "rehab", "addiction", "overdose", "trauma",
+    "ptsd", "ocd", "disorder", "meds",
     "religion", "christian", "muslim", "jewish", "hindu", "buddhist",
-    "sikh", "atheist", "agnostic", "political party", "politics",
+    "sikh", "atheist", "agnostic", "church", "mosque", "synagogue", "temple",
+    "prayer", "worship", "political party", "politics", "election", "voting",
+    "i voted", "conservative", "tory", "socialist", "libertarian",
     "labour party", "conservative party", "liberal democrat", "green party",
     "reform uk", "plaid cymru", "sexual orientation", "gay", "lesbian",
     "bisexual", "transgender", "criminal record", "conviction", "arrested",
-    "felony", "offence", "offense", "ethnicity", "ethnic background", "race",
+    "felony", "offence", "offense", "charged", "prison", "probation",
+    "ethnicity", "ethnic background", "race", "national insurance",
+    "ni number", "social security number", "passport number", "tax id",
 )
 _EMAIL_PATTERN = re.compile(r"\b[^\s@]+@[^\s@]+\.[^\s@]+\b")
 _PHONE_PATTERN = re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)")
 _ADDRESS_PATTERN = re.compile(r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr|close|court|ct|crescent|way|place|pl|terrace|ter)\b", re.IGNORECASE)
 _UK_POSTCODE_PATTERN = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.IGNORECASE)
+_DOB_PATTERN = re.compile(r"\b(?:date of birth|dob|born on|my birthday is)\b", re.IGNORECASE)
 
 
 def extract_memory_candidates(raw: str) -> list[str]:
@@ -112,6 +120,7 @@ def extract_memory_candidates(raw: str) -> list[str]:
             or _PHONE_PATTERN.search(candidate)
             or _ADDRESS_PATTERN.search(candidate)
             or _UK_POSTCODE_PATTERN.search(candidate)
+            or _DOB_PATTERN.search(candidate)
         ):
             continue
         key = lowered.rstrip(".")
