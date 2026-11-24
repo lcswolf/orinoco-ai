@@ -27,6 +27,11 @@ def store_document(data: bytes, *, user_id: int | None, scope: str, extension: s
     folder = Path("shared") if scope == "shared" else Path("private") / str(user_id)
     directory = root / folder
     directory.mkdir(parents=True, exist_ok=True)
+    try:
+        root.chmod(0o700)
+        directory.chmod(0o700)
+    except OSError:
+        pass
     relative = folder / f"{uuid4().hex}{extension.lower()}"
     target = root / relative
     temporary = target.with_suffix(target.suffix + ".tmp")
