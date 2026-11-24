@@ -23,9 +23,11 @@ from orinoco.db import (
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 MAX_LOGIN_FAILURES = 5
+MAX_LOGIN_FAILURES_PER_IP = 30
 LOGIN_WINDOW_SECONDS = 15 * 60
 MAX_TRACKED_LOGIN_IDENTITIES = 10_000
 _login_failures: OrderedDict[str, deque[float]] = OrderedDict()
+_login_ip_failures: OrderedDict[str, deque[float]] = OrderedDict()
 
 
 class LoginRequest(BaseModel):
@@ -68,21 +70,54 @@ def _login_failures_for(username: str) -> deque[float]:
     return failures
 
 
-def _check_login_rate(username: str) -> None:
-    """Apply a short in-process delay after repeated failed login attempts."""
+def _login_ip_failures_for(remote_ip: str) -> deque[float]:
+    """Return a bounded failure queue for a client address."""
+    failures = _login_ip_failures.get(remote_ip)
+    if failures is None:
+        if len(_login_ip_failures) >= MAX_TRACKED_LOGIN_IDENTITIES:
+            _login_ip_failures.popitem(last=False)
+        failures = deque()
+        _login_ip_failures[remote_ip] = failures
+    else:
+        _login_ip_failures.move_to_end(remote_ip)
+    return failures
+
+
+def _check_login_bucket(
+    key: str,
+    failures: deque[float],
+    maximum: int,
+    tracker: OrderedDict[str, deque[float]],
+) -> None:
+    """Apply a rolling-window limit to one username or remote-address bucket."""
     now = time.monotonic()
-    failures = _login_failures_for(username)
     while failures and now - failures[0] > LOGIN_WINDOW_SECONDS:
         failures.popleft()
     if not failures:
-        _login_failures.pop(username, None)
+        tracker.pop(key, None)
         return
-    if len(failures) >= MAX_LOGIN_FAILURES:
+    if len(failures) >= maximum:
         retry_after = max(1, int(LOGIN_WINDOW_SECONDS - (now - failures[0])))
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many unsuccessful sign-in attempts. Please wait and try again.",
             headers={"Retry-After": str(retry_after)},
+        )
+
+
+def _check_login_rate(username: str, remote_ip: str | None = None) -> None:
+    """Throttle repeated failures per username and per observed client address.
+
+    The address is request.client.host only; untrusted forwarded headers are
+    deliberately ignored. A reverse proxy should apply its own IP-level limit.
+    """
+    _check_login_bucket(username, _login_failures_for(username), MAX_LOGIN_FAILURES, _login_failures)
+    if remote_ip:
+        _check_login_bucket(
+            remote_ip,
+            _login_ip_failures_for(remote_ip),
+            MAX_LOGIN_FAILURES_PER_IP,
+            _login_ip_failures,
         )
 
 
@@ -110,7 +145,8 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     """Authenticate an active account and establish its signed browser session."""
     _require_csrf(request)
     username = payload.username.strip().lower()
-    _check_login_rate(username)
+    remote_ip = request.client.host if request.client else None
+    _check_login_rate(username, remote_ip)
     initialise_database(get_database_path())
     user = authenticate_user(
         username,
@@ -118,7 +154,10 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
         database_path=get_database_path(),
     )
     if user is None:
-        _login_failures_for(username).append(time.monotonic())
+        failed_at = time.monotonic()
+        _login_failures_for(username).append(failed_at)
+        if remote_ip:
+            _login_ip_failures_for(remote_ip).append(failed_at)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The username or password was not recognised.",
