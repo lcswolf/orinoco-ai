@@ -107,8 +107,8 @@ python -m orinoco.backups restore /path/to/backup.oribak --confirm
 ```
 
 Restore refuses to run without `--confirm`, validates the encrypted archive
-and SQLite database before replacing data, and leaves a `.pre-restore`
-database/document recovery copy. Keep the process stopped throughout restore.
+and SQLite database before replacing data, and leaves `.pre-restore` recovery copies of the database, document directory
+and file-based session secret when those items existed before restore. Keep the process stopped throughout restore.
 If `ORINOCO_SECRET_KEY` is supplied through the environment, preserve that
 secret separately; the backup cannot read it back from the process environment.
 After restore, check `/healthz`, `/readyz`, sign-in, conversations and documents.
