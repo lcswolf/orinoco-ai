@@ -363,3 +363,61 @@ def test_backup_verification_rejects_duplicate_archive_paths(tmp_path, monkeypat
 
     with pytest.raises(backups.BackupError, match="duplicate archive paths"):
         backups.verify_backup(encrypted)
+
+
+def test_backup_verification_rejects_empty_sqlite_database(tmp_path, monkeypatch) -> None:
+    """SQLite integrity alone must not allow an empty, unusable backup database."""
+    import io
+    import json
+    import tarfile
+
+    configure_backup_paths(monkeypatch, tmp_path)
+    empty_database = tmp_path / "empty.sqlite3"
+    sqlite3.connect(empty_database).close()
+    archive = tmp_path / "empty-database.tar.gz"
+    manifest = json.dumps({"format": "orinoco-backup-v1"}).encode("utf-8")
+
+    with tarfile.open(archive, "w:gz") as tar:
+        for name, payload in (
+            ("database.sqlite3", empty_database.read_bytes()),
+            ("manifest.json", manifest),
+        ):
+            member = tarfile.TarInfo(name)
+            member.size = len(payload)
+            tar.addfile(member, io.BytesIO(payload))
+
+    encrypted = tmp_path / "empty-database.oribak"
+    backups._encrypt_file(archive, encrypted, backups._backup_key())
+
+    with pytest.raises(backups.BackupError, match="missing required Orinoco tables"):
+        backups.verify_backup(encrypted)
+
+
+def test_backup_verification_rejects_future_database_schema(tmp_path, monkeypatch) -> None:
+    """A backup from a newer Orinoco schema must not be treated as restorable here."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA user_version = 99")
+
+    backup = backups.create_backup()
+
+    with pytest.raises(backups.BackupError, match="newer than this Orinoco build"):
+        backups.verify_backup(backup)
+
+
+def test_backup_verification_rejects_foreign_key_violations(tmp_path, monkeypatch) -> None:
+    """A valid SQLite file with orphaned application rows is not a valid backup."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute(
+            """
+            INSERT INTO conversations (user_id, title, created_at, updated_at)
+            VALUES (999999, 'orphaned', '2026-11-24T00:00:00+00:00', '2026-11-24T00:00:00+00:00')
+            """
+        )
+
+    backup = backups.create_backup()
+
+    with pytest.raises(backups.BackupError, match="foreign-key consistency errors"):
+        backups.verify_backup(backup)
