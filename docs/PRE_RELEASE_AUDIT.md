@@ -1,6 +1,6 @@
 # Orinoco pre-release audit
 
-**Status: in progress — do not deploy to a public VPS yet.**
+**Status: in progress — do not deploy to a public VPS yet.**\n\nLatest completed CI run: 106 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The current container build and runtime smoke test are still pending.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
