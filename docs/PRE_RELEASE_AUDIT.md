@@ -20,6 +20,14 @@ This is the working checklist for a repository-wide review before the first prod
 - Frontend behaviour, accessibility, responsive layout and safe rendering of untrusted text.
 - CI coverage, dependency health, comments/docstrings and user-facing documentation.
 
+## Authentication review — in progress
+
+### Username lockout denial-of-service — corrected
+
+The first login throttle keyed failed attempts globally by username. That meant a remote client could intentionally lock a known account for the full rolling window by submitting repeated incorrect passwords. The username bucket is now scoped to the username and observed client-address pair, while a separate per-address bucket continues to limit attempts across different usernames. A regression test verifies that a second client is not locked out by the first client's failures. Both trackers remain process-local, so a production reverse proxy must enforce its own shared rate limits, especially where multiple application workers or replicas are used.
+
+Session cookies remain signed, HTTP-only, SameSite=Lax and Secure by default. Password changes and account status changes increment the account session version and revoke older cookies. The file-based signing secret is persistent and owner-only; changing the configured signing secret invalidates existing sessions. Trusted-proxy configuration and a documented operational rotation rehearsal remain deployment checks.
+
 ## Confirmed findings and corrections
 
 ### First-admin bootstrap command — corrected
