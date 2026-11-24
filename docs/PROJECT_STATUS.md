@@ -25,9 +25,12 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
 - Encrypted local backup creation, verification and confirmed restore CLI using AES-256-GCM.
 - S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification; restore keeps pre-restore database, document and session-secret recovery copies.
+- Supervised daily encrypted backup scheduler (03:00 in the configured timezone by default), optional verified S3 upload, configurable 1–365 day local retention and persistent failure status.
+- Session-secret symlink rejection and restrictive file permissions; safe backup restore recovery-path checks.
+- CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed 118 tests, including first-admin bootstrap, bounded login throttling, account-wide session revocation, sensitive-memory filtering, loopback-only inference enforcement, Office archive expansion limits, SSRF redirect and response-size protections, encrypted backup upload/restore, document cleanup failure handling, storage path traversal/symlink protection, browser security headers, timezone configuration and SQLite schema upgrade protection. The latest audit-hardened custom container image, including account-wide session revocation and document-storage hardening, has built and passed its expanded runtime smoke test. No image has been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed 134 tests, with one non-failing Starlette/httpx TestClient deprecation warning. Coverage includes first-admin bootstrap, login throttling, account-wide session revocation, sensitive-memory filtering, loopback-only inference, Office archive expansion limits, SSRF redirect/response-size protections, encrypted backup upload/restore, document cleanup and storage-path protection, browser security headers, timezone configuration, SQLite schema upgrades, daily backup scheduling/retention, Egg wiring and chat recovery when memory persistence fails. The audit-hardened custom image has built successfully in CI; the expanded smoke test is being updated to confirm the daily scheduler process is running. No image has been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -46,22 +49,22 @@ The latest completed GitHub Actions Python test run passed 118 tests, including 
 
 ## Not implemented yet
 
-- Automatic daily backup scheduling, retention and remote restore convenience; safe application update/rollback.
+- Remote bucket lifecycle retention and restore-from-remote convenience; safe application update/rollback.
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Original Womble-inspired mascot artwork and final UK-oriented interface treatment.
 - Administrator-editable core personality and per-user voice, tone and answer-detail preferences.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
-- Production security review, MFA, account recovery and server-side session revocation across all devices.
+- Production security review, MFA/account recovery, reverse-proxy/IP rate limits and resource quotas.
 
 ## Next implementation sequence
 
-1. Complete the repository-wide pre-release audit and re-run the final image build/smoke test.
-2. Add automatic daily backup scheduling and retention, including failure visibility.
-3. Add safe application update, database migration and rollback tooling.
-4. Add Discord text integration; consider voice only after the core is stable.
-5. Publish the stable image and import/test the finished Egg on the user's Panel.
+1. Finish the repository-wide pre-release audit, dependency audit and final container smoke test.
+2. Add safe application update, database migration and rollback tooling.
+3. Complete the agreed persona settings and original Orinoco mascot/UK interface treatment.
+4. Validate the Egg on a disposable server in the user's Panel and perform a real backup/restore drill.
+5. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
 
 ## Resource assumptions
 
