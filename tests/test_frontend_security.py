@@ -40,3 +40,20 @@ def test_conversation_delete_control_is_explicit_and_csrf_protected() -> None:
     assert 'method: "DELETE"' in script
     assert 'headers: { "X-CSRF-Token": csrf, Accept: "application/json" }' in script
     assert '"/api/conversations/" + encodeURIComponent(conversationId)' in script
+
+
+def test_response_preferences_and_admin_persona_controls_are_accessible() -> None:
+    """The UI exposes account preferences to users and core persona controls to admins."""
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "orinoco" / "static" / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="preferences-form"' in html
+    assert 'id="preference-voice"' in html
+    assert 'id="preference-tone"' in html
+    assert 'id="preference-detail"' in html
+    assert 'id="admin-persona-tools" hidden' in html
+    assert 'id="core-persona"' in html
+    assert 'id="humour-level"' in html
+    assert 'fetch("/api/preferences"' in script
+    assert 'fetch("/api/admin/persona"' in script
+    assert 'method: "PUT"' in script
