@@ -175,3 +175,10 @@ h1 em { color: #8bd9bd; font-style: normal; }
 .settings-dialog[open] { animation: settings-in .18s ease-out; }
 @keyframes settings-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 720px) { .settings-content { padding: 20px; } }
+
+.settings-form textarea { width: 100%; min-height: 64px; resize: vertical; padding: 10px 11px; border: 1px solid rgba(175,206,197,.2); border-radius: 8px; outline: none; background: #0e1b24; color: var(--text); font: inherit; font-size: 12px; line-height: 1.5; }
+.settings-form textarea:focus { border-color: rgba(119,216,189,.65); box-shadow: 0 0 0 3px rgba(119,216,189,.08); }
+.memory-item { align-items: flex-start; }
+.memory-item .admin-user-copy span { line-height: 1.5; overflow-wrap: anywhere; }
+.memory-source { color: #6f9290 !important; font-size: 8px !important; text-transform: uppercase; letter-spacing: .7px; }
+.memory-item button { flex: 0 0 auto; }
