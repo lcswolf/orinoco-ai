@@ -163,7 +163,7 @@ def _resolve_client_ip(request: Request) -> str | None:
     return None
 
 
-def _login_identity_key(username: str, remote_ip: str | None) -> str:
+def _login_identity_key(username: str, remote_ip: str) -> str:
     """Scope a username failure bucket to the observed client to avoid account lockout DoS."""
     # A global username-only bucket would let anyone lock a victim out by
     # submitting five bad passwords. Pairing username and client address keeps
@@ -171,7 +171,7 @@ def _login_identity_key(username: str, remote_ip: str | None) -> str:
     return f"{username}\\x1f{remote_ip}" if remote_ip else username
 
 
-def _check_login_rate(username: str, remote_ip: str | None = None) -> None:
+def _check_login_rate(username: str, remote_ip: str) -> None:
     """Throttle repeated failures per username/client pair and per client address.
 
     The address is request.client.host only; untrusted forwarded headers are
@@ -218,7 +218,6 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     _require_csrf(request)
     username = payload.username.strip().lower()
     remote_ip = _resolve_client_ip(request)
-    identity_key = _login_identity_key(username, remote_ip)
     if remote_ip is not None:
         _check_login_rate(username, remote_ip)
     initialise_database(get_database_path())
@@ -230,6 +229,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     if user is None:
         if remote_ip is not None:
             failed_at = time.monotonic()
+            identity_key = _login_identity_key(username, remote_ip)
             _login_failures_for(identity_key).append(failed_at)
             _login_ip_failures_for(remote_ip).append(failed_at)
         raise HTTPException(
@@ -238,7 +238,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
         )
 
     if remote_ip is not None:
-        _login_failures.pop(identity_key, None)
+        _login_failures.pop(_login_identity_key(username, remote_ip), None)
     # Rotate the session after authentication to prevent session fixation.
     request.session.clear()
     request.session["user_id"] = user.id
