@@ -37,6 +37,12 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY",
         "ORINOCO_BACKUP_TIME",
         "ORINOCO_BACKUP_RETENTION_DAYS",
+        "ORINOCO_USER_DOCUMENT_QUOTA_BYTES",
+        "ORINOCO_USER_DOCUMENT_QUOTA_FILES",
+        "ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES",
+        "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES",
+        "ORINOCO_MAX_REQUEST_BODY_BYTES",
+        "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
     }
 
 
@@ -126,3 +132,22 @@ def test_daily_backup_schedule_defaults_and_visibility() -> None:
     assert variables["ORINOCO_BACKUP_TIME"]["user_editable"] is True
     assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["default_value"] == "14"
     assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["rules"] == "required|integer|min:1|max:365"
+
+
+
+def test_resource_limit_egg_defaults_are_conservative_and_admin_only() -> None:
+    """Resource limits are exposed to the administrator but not ordinary server users."""
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variables = {item["env_variable"]: item for item in egg["variables"]}
+
+    expected = {
+        "ORINOCO_USER_DOCUMENT_QUOTA_BYTES": "52428800",
+        "ORINOCO_USER_DOCUMENT_QUOTA_FILES": "20",
+        "ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES": "209715200",
+        "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES": "50",
+        "ORINOCO_MAX_REQUEST_BODY_BYTES": "12582912",
+        "ORINOCO_CHAT_REQUESTS_PER_MINUTE": "10",
+    }
+    for name, default in expected.items():
+        assert variables[name]["default_value"] == default
+        assert variables[name]["user_editable"] is False
