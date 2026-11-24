@@ -226,6 +226,51 @@ def test_automatic_memory_saving_can_be_disabled(tmp_path, monkeypatch) -> None:
 
 
 
+
+def test_per_user_memory_opt_out_skips_extraction(tmp_path, monkeypatch) -> None:
+    """A user's private opt-out prevents the extra local memory-extraction request."""
+    from orinoco.db import update_user_preferences
+
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.delenv("AUTO_SAVE_MEMORIES", raising=False)
+    initialise_database(database)
+    user = create_user("privateoptout", "a-long-test-password-123", database_path=database)
+    update_user_preferences(
+        user.id,
+        voice="bright",
+        tone="friendly",
+        answer_detail="balanced",
+        auto_save_memories=False,
+        database_path=database,
+    )
+
+    class CountingOllamaClient:
+        calls = 0
+
+        async def chat(self, messages: list[dict[str, str]]) -> str:
+            self.calls += 1
+            return "Hello from Orinoco."
+
+        async def aclose(self) -> None:
+            return None
+
+    client_instance = CountingOllamaClient()
+    monkeypatch.setattr(chat_routes, "OllamaClient", lambda: client_instance)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "privateoptout", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "I enjoy hiking at the weekend."},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["saved_memories"] == []
+    assert client_instance.calls == 1
+
+
 def test_chat_receives_only_authorised_document_excerpts(tmp_path, monkeypatch) -> None:
     database = tmp_path / "orinoco.sqlite3"
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
