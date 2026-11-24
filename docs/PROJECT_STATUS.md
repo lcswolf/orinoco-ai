@@ -27,7 +27,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification; restore keeps pre-restore database, document and session-secret recovery copies.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed 106 tests, including first-admin bootstrap, sensitive-memory filtering, Office archive expansion limits, encrypted backup upload/restore, document cleanup failure handling, browser security headers, timezone configuration and SQLite schema upgrade protection. The audit-hardened container image build is being re-run. No image has been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed 108 tests, including first-admin bootstrap, sensitive-memory filtering, loopback-only inference enforcement, Office archive expansion limits, encrypted backup upload/restore, document cleanup failure handling, browser security headers, timezone configuration and SQLite schema upgrade protection. The audit-hardened container image build is being re-run. No image has been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
