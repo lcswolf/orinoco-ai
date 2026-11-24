@@ -505,3 +505,39 @@ def test_chat_rate_limit_is_scoped_to_each_user(monkeypatch) -> None:
     # A separate account and a separate test/database instance retain their allowances.
     chat_routes._check_chat_rate(202)
     chat_routes._check_chat_rate(101, "another-database.sqlite3")
+
+
+
+def test_generation_queue_rejects_excess_waiters_and_releases_capacity(monkeypatch) -> None:
+    """A full local generation queue returns 503 instead of growing without bound."""
+    import asyncio
+
+    from fastapi import HTTPException
+
+    async def exercise_queue() -> None:
+        monkeypatch.setattr(
+            chat_routes,
+            "generation_capacity",
+            asyncio.BoundedSemaphore(1),
+        )
+        first_request = chat_routes._reserve_generation_slot()
+        await anext(first_request)
+
+        second_request = chat_routes._reserve_generation_slot()
+        try:
+            try:
+                await anext(second_request)
+            except HTTPException as exc:
+                assert exc.status_code == 503
+                assert exc.headers["Retry-After"] == "5"
+            else:
+                raise AssertionError("expected a full generation queue to reject the request")
+        finally:
+            await first_request.aclose()
+
+        # Releasing the first request restores capacity for the next caller.
+        third_request = chat_routes._reserve_generation_slot()
+        await anext(third_request)
+        await third_request.aclose()
+
+    asyncio.run(exercise_queue())
