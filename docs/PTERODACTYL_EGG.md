@@ -11,7 +11,8 @@ This Egg targets the legacy Pterodactyl 1.x import format and is intended for Pa
 - `docker/supervisord.conf` — supervises the web app, Ollama and first-run model download.
 - `docker/ollama-start.sh` — starts Ollama bound only to loopback.
 - `docker/model-init.sh` — downloads the selected model into persistent server storage when enabled.
-- `docker/web-start.sh` — starts the web app on the primary Pterodactyl allocation.\n- `orinoco/backups.py` — encrypted backup, restore and S3-compatible upload commands.
+- `docker/web-start.sh` — starts the web app on the primary Pterodactyl allocation.
+- `orinoco/backups.py` — encrypted backup, restore and S3-compatible upload commands.
 
 The planned image name is `ghcr.io/lcswolf/orinoco-ai:stable`.
 
