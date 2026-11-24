@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hmac
+import ipaddress
+import os
 import secrets
 import time
 from collections import OrderedDict, deque
@@ -105,6 +107,59 @@ def _check_login_bucket(
         )
 
 
+def _resolve_client_ip(request: Request) -> str | None:
+    """Resolve a client address only from a direct peer or an explicitly trusted proxy.
+
+    Uvicorn proxy-header handling stays disabled. In production, if the host
+    proxy has not yet been measured and allow-listed, return None so a shared
+    proxy address cannot create a username-wide lockout bucket. The Nginx edge
+    remains responsible for per-client throttling until that allowlist exists.
+    """
+    peer = request.client.host if request.client else None
+    if not peer:
+        return None
+    try:
+        peer_address = ipaddress.ip_address(peer)
+    except ValueError:
+        # Test clients and non-IP ASGI transports can still be isolated by
+        # their transport identifier; production network peers are IP literals.
+        return peer
+
+    raw_trusted = os.environ.get("ORINOCO_TRUSTED_PROXY_IPS", "").strip()
+    trusted_networks = []
+    for item in raw_trusted.split(","):
+        if not item.strip():
+            continue
+        try:
+            trusted_networks.append(ipaddress.ip_network(item.strip(), strict=False))
+        except ValueError:
+            # Invalid entries are ignored; a malformed allowlist never grants trust.
+            continue
+
+    if os.environ.get("ORINOCO_ENV", "development").lower() == "production" and not trusted_networks:
+        return None
+
+    if any(peer_address in network for network in trusted_networks):
+        forwarded = request.headers.get("x-forwarded-for", "").strip()
+        # Nginx is configured to overwrite this header with one resolved address.
+        # Reject chains rather than guessing which hop is the real client.
+        if not forwarded or "," in forwarded:
+            return None
+        try:
+            forwarded_address = ipaddress.ip_address(forwarded)
+        except ValueError:
+            return None
+        # Shared/private proxy addresses (for example, Tailscale Serve via
+        # loopback) are not unique client identities; rely on edge ACLs/limits.
+        return forwarded_address.compressed if forwarded_address.is_global else None
+
+    if peer_address.is_global:
+        return peer_address.compressed
+    if os.environ.get("ORINOCO_ENV", "development").lower() != "production":
+        return peer_address.compressed
+    return None
+
+
 def _login_identity_key(username: str, remote_ip: str | None) -> str:
     """Scope a username failure bucket to the observed client to avoid account lockout DoS."""
     # A global username-only bucket would let anyone lock a victim out by
@@ -161,7 +216,8 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     username = payload.username.strip().lower()
     remote_ip = request.client.host if request.client else None
     identity_key = _login_identity_key(username, remote_ip)
-    _check_login_rate(username, remote_ip)
+    if remote_ip is not None:
+        _check_login_rate(username, remote_ip)
     initialise_database(get_database_path())
     user = authenticate_user(
         username,
@@ -169,16 +225,17 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
         database_path=get_database_path(),
     )
     if user is None:
-        failed_at = time.monotonic()
-        _login_failures_for(identity_key).append(failed_at)
-        if remote_ip:
+        if remote_ip is not None:
+            failed_at = time.monotonic()
+            _login_failures_for(identity_key).append(failed_at)
             _login_ip_failures_for(remote_ip).append(failed_at)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The username or password was not recognised.",
         )
 
-    _login_failures.pop(identity_key, None)
+    if remote_ip is not None:
+        _login_failures.pop(identity_key, None)
     # Rotate the session after authentication to prevent session fixation.
     request.session.clear()
     request.session["user_id"] = user.id
