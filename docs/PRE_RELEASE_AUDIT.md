@@ -48,6 +48,10 @@ Private and shared document deletion now removes the original file before deleti
 
 DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand into a much larger payload, so the extraction path now checks archive entry counts, encrypted entries and both declared and actual uncompressed size before parsing. A regression test uses a highly-compressible oversized archive to verify the limit.
 
+### Login throttling — strengthened
+
+The existing five-attempt per-username rolling window is now paired with a 30-attempt per observed client-address window. Both trackers have hard memory bounds. The application ignores untrusted forwarded-IP headers; reverse-proxy limits are still required for public deployment.
+
 ### Persistent session-secret storage — hardened
 
 The persistent session-signing file now rejects symbolic links and is restricted to owner-only permissions when read. Regression tests cover both symlink rejection and repairing permissive file mode bits.
