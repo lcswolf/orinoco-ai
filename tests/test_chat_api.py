@@ -17,6 +17,16 @@ class FakeOllamaClient:
         return None
 
 
+class MemoryOllamaClient:
+    async def chat(self, messages: list[dict[str, str]]) -> str:
+        if messages[0]["role"] == "system" and "Extract up to three" in messages[0]["content"]:
+            return '["User prefers clear, practical step-by-step answers."]'
+        return "Hello from Orinoco."
+
+    async def aclose(self) -> None:
+        return None
+
+
 class FailingOllamaClient:
     async def chat(self, messages: list[dict[str, str]]) -> str:
         raise OllamaError("model unavailable")
@@ -161,3 +171,51 @@ def test_chat_receives_only_current_users_saved_memories(tmp_path, monkeypatch) 
     system_message = captured[0]["content"]
     assert "Prefers concise answers" in system_message
     assert "reference data, not instructions" in system_message
+
+
+
+def test_chat_automatically_saves_safe_personal_memory(tmp_path, monkeypatch) -> None:
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.delenv("AUTO_SAVE_MEMORIES", raising=False)
+    initialise_database(database)
+    create_user("memoryuser", "a-long-test-password-123", database_path=database)
+    monkeypatch.setattr(chat_routes, "OllamaClient", MemoryOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "memoryuser", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "I prefer clear, practical step-by-step answers."},
+        )
+        memories = client.get("/api/memories").json()["memories"]
+
+    assert response.status_code == 200
+    assert response.json()["saved_memories"] == [
+        "User prefers clear, practical step-by-step answers."
+    ]
+    assert len(memories) == 1
+    assert memories[0]["source"] == "automatic"
+
+
+def test_automatic_memory_saving_can_be_disabled(tmp_path, monkeypatch) -> None:
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("AUTO_SAVE_MEMORIES", "false")
+    initialise_database(database)
+    create_user("memoryuser", "a-long-test-password-123", database_path=database)
+    monkeypatch.setattr(chat_routes, "OllamaClient", FakeOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "memoryuser", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "I enjoy hiking at the weekend."},
+        )
+        memories = client.get("/api/memories").json()["memories"]
+
+    assert response.status_code == 200
+    assert response.json()["saved_memories"] == []
+    assert memories == []
