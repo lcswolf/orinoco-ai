@@ -93,8 +93,8 @@ python -m orinoco.backups upload /home/container/data/backups/orinoco-YYYYMMDDTH
 ```
 
 The command uploads only encrypted `.oribak` files, sends no public ACL,
-records a SHA-256 checksum as object metadata, and checks the remote object
-size and checksum metadata before reporting success. This is an explicit CLI
+records a SHA-256 checksum as object metadata, checks the remote object size,
+then downloads and hashes the stored bytes before reporting success. This is an explicit CLI
 operation at present; automatic daily scheduling, retention and restore-from-
 remote convenience are not yet implemented. Keep the encryption key and
 object-storage credentials separate from the backup bucket.
