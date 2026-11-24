@@ -10,6 +10,8 @@ from collections import OrderedDict, deque
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from orinoco.auth.sessions import get_session_user
+
 from orinoco.db import (
     User,
     authenticate_user,
@@ -167,9 +169,8 @@ async def change_password(
 ) -> dict[str, bool]:
     """Verify the current password and update the authenticated account's hash."""
     _require_csrf(request)
-    user_id = request.session.get("user_id")
-    if not isinstance(user_id, int):
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
+    user = get_session_user(request)
+    user_id = user.id
 
     initialise_database(get_database_path())
     try:
