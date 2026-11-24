@@ -159,6 +159,8 @@ def test_production_database_directory_permission_failure_is_fatal(tmp_path, mon
     from pathlib import Path
 
     database = tmp_path / "private" / "orinoco.sqlite3"
+    database.parent.mkdir()
+    database.parent.chmod(0o755)
     monkeypatch.setenv("ORINOCO_ENV", "production")
     original_chmod = Path.chmod
 
@@ -180,6 +182,9 @@ def test_production_database_file_permission_failure_is_fatal(tmp_path, monkeypa
     if not hasattr(os, "fchmod"):
         pytest.skip("File descriptor chmod is not supported on this platform.")
     database = tmp_path / "private" / "orinoco.sqlite3"
+    database.parent.mkdir(mode=0o700)
+    database.touch()
+    database.chmod(0o644)
     monkeypatch.setenv("ORINOCO_ENV", "production")
     monkeypatch.setattr(
         os,
