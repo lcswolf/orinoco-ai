@@ -98,6 +98,7 @@ def test_backup_key_is_private_and_blank_by_default() -> None:
     assert key["default_value"] == ""
     assert key["user_viewable"] is False
     assert key["user_editable"] is False
+    assert key["rules"] == "required|string|max:128"
 
 
 def test_inactive_discord_and_voice_features_cannot_be_enabled_from_server_settings() -> None:
