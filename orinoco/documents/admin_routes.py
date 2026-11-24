@@ -43,7 +43,6 @@ async def get_shared_documents(request: Request) -> dict[str, object]:
 
 @router.post("", status_code=201)
 async def upload_shared_document(
-    """Validate, extract and store a document in the shared read-only library."""
     request: Request,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
