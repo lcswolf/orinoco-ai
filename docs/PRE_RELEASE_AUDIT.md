@@ -137,7 +137,8 @@ The README, architecture, Egg and development guide now distinguish implemented 
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm 136 passing tests, a clean pip-audit scan and a scheduler-enabled container build/smoke test.\n- [ ] Repeat all checks on the final release commit after remaining audit work.
+- [x] Confirm 136 passing tests, a clean pip-audit scan and a scheduler-enabled container build/smoke test.
+- [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
 ## Release gate
