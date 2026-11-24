@@ -24,6 +24,7 @@ const chatHint = document.getElementById("chat-hint");
 const settingsButton = document.getElementById("settings-button");
 const settingsDialog = document.getElementById("settings-dialog");
 const adminTools = document.getElementById("admin-tools");
+const adminPersonaTools = document.getElementById("admin-persona-tools");
 const memoriesLink = document.getElementById("memories-link");
 const documentsLink = document.getElementById("documents-link");
 const chatLink = document.getElementById("chat-link");
@@ -97,6 +98,7 @@ function showAccount(user) {
   if (user) {
     settingsButton.disabled = false;
     adminTools.hidden = user.role !== "admin";
+    adminPersonaTools.hidden = user.role !== "admin";
     sharedDocumentTools.hidden = user.role !== "admin";
     memoriesLink.classList.remove("unavailable");
     memoriesLink.setAttribute("aria-disabled", "false");
@@ -119,6 +121,7 @@ function showAccount(user) {
   } else {
     settingsButton.disabled = true;
     adminTools.hidden = true;
+    adminPersonaTools.hidden = true;
     sharedDocumentTools.hidden = true;
     memoriesLink.classList.add("unavailable");
     memoriesLink.setAttribute("aria-disabled", "true");
@@ -683,13 +686,48 @@ async function loadAdminUsers() {
   }
 }
 
+
+async function loadPreferences() {
+  const feedback = document.getElementById("preferences-feedback");
+  try {
+    const response = await fetch("/api/preferences", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not load response preferences.");
+    document.getElementById("preference-voice").value = result.voice;
+    document.getElementById("preference-tone").value = result.tone;
+    document.getElementById("preference-detail").value = result.answer_detail;
+    feedback.hidden = true;
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not load response preferences.", true);
+  }
+}
+
+async function loadAdminPersona() {
+  const feedback = document.getElementById("persona-feedback");
+  try {
+    const response = await fetch("/api/admin/persona", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not load the core personality.");
+    document.getElementById("core-persona").value = result.core_persona;
+    document.getElementById("humour-level").value = result.humour_level;
+    document.getElementById("humour-value").textContent = result.humour_level + "%";
+    feedback.hidden = true;
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not load the core personality.", true);
+  }
+}
+
 settingsButton.addEventListener("click", async () => {
   if (!currentUser) return;
   document.getElementById("password-feedback").hidden = true;
   document.getElementById("user-feedback").hidden = true;
+  document.getElementById("preferences-feedback").hidden = true;
+  document.getElementById("persona-feedback").hidden = true;
   document.getElementById("password-form").reset();
   document.getElementById("create-user-form").reset();
   settingsDialog.showModal();
+  await loadPreferences();
+  if (currentUser.role === "admin") await loadAdminPersona();
   await loadMemories();
   await loadDocuments();
   if (currentUser.role === "admin") {
@@ -698,6 +736,65 @@ settingsButton.addEventListener("click", async () => {
 });
 
 document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
+
+
+document.getElementById("preferences-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const feedback = document.getElementById("preferences-feedback");
+  const button = document.getElementById("preferences-submit");
+  button.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/preferences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({
+        voice: document.getElementById("preference-voice").value,
+        tone: document.getElementById("preference-tone").value,
+        answer_detail: document.getElementById("preference-detail").value,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not save response preferences.");
+    showFeedback(feedback, "Your response preferences have been saved.");
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not save response preferences.", true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("humour-level").addEventListener("input", (event) => {
+  document.getElementById("humour-value").textContent = event.target.value + "%";
+});
+
+document.getElementById("persona-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const feedback = document.getElementById("persona-feedback");
+  const button = document.getElementById("persona-submit");
+  button.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/admin/persona", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({
+        core_persona: document.getElementById("core-persona").value,
+        humour_level: Number(document.getElementById("humour-level").value),
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not save the core personality.");
+    document.getElementById("core-persona").value = result.core_persona;
+    document.getElementById("humour-level").value = result.humour_level;
+    document.getElementById("humour-value").textContent = result.humour_level + "%";
+    showFeedback(feedback, "The shared Orinoco personality has been saved.");
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not save the core personality.", true);
+  } finally {
+    button.disabled = false;
+  }
+});
 
 document.getElementById("password-form").addEventListener("submit", async (event) => {
   event.preventDefault();
