@@ -700,7 +700,7 @@ def update_assistant_persona(
     cleaned = " ".join(core_persona.split())
     if not cleaned or len(cleaned) > 2000:
         raise ValueError("Core persona must contain 1–2000 characters.")
-    if not isinstance(humour_level, int) or not 0 <= humour_level <= 100:
+    if isinstance(humour_level, bool) or not isinstance(humour_level, int) or not 0 <= humour_level <= 100:
         raise ValueError("Humour level must be a whole number between 0 and 100.")
     now = datetime.now(UTC).isoformat()
     with _database(database_path) as connection:
