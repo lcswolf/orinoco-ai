@@ -66,7 +66,11 @@ def _connect(database_path: Path) -> sqlite3.Connection:
     try:
         database_path.parent.chmod(0o700)
     except OSError as exc:
-        if production:
+        try:
+            directory_mode = stat.S_IMODE(database_path.parent.stat().st_mode)
+        except OSError:
+            directory_mode = 0o777
+        if production and directory_mode & 0o077:
             raise RuntimeError("Unable to restrict permissions on the database directory.") from exc
 
     if database_path.is_symlink():
@@ -93,7 +97,7 @@ def _connect(database_path: Path) -> sqlite3.Connection:
         try:
             os.fchmod(descriptor, 0o600)
         except (AttributeError, OSError) as exc:
-            if production:
+            if production and stat.S_IMODE(opened_stat.st_mode) & 0o077:
                 raise RuntimeError("Unable to restrict permissions on the database file.") from exc
 
         # Keep this descriptor open while SQLite opens the path. Comparing the
