@@ -1,12 +1,13 @@
 # Development
 
-This guide covers the current custom interface, authentication, local chat and memory foundations. Orinoco is not yet a complete assistant.
+This guide covers the current custom interface, authentication, local chat, personal memory, document and optional web-search foundations. Orinoco is not yet production-ready.
 
 ## Requirements
 
 - Python 3.12
 - Git
-- Optional: Ollama installed locally if you want to use the interface with a local model
+- Optional: a local Ollama service for model responses
+- Optional: a SearXNG instance for web search
 
 ## Run locally
 
@@ -14,51 +15,42 @@ From the repository root:
 
 ```bash
 python -m venv .venv
-```
-
-Activate the environment, then install dependencies:
-
-```bash
 python -m pip install -r requirements.txt
-```
-
-Start the development server:
-
-```bash
 uvicorn orinoco.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Open `http://127.0.0.1:8000/` to view the custom Orinoco interface. Sign in to use chat. The interface checks `/readyz` and displays whether the configured local Ollama model is available. `/healthz` checks only that the web process is responding.
+Open `http://127.0.0.1:8000/`. Sign in to use chat. The interface checks `/readyz` for the configured local Ollama model. `/healthz` checks only that the web process is responding.
 
-Chats are stored in SQLite and scoped to the signed-in account. The chat API uses the local Ollama service on loopback; it does not call an external AI inference API.
+Chats, memories and documents are scoped to the signed-in account. The chat API uses local Ollama on loopback and does not call an external AI inference API.
 
 ## Account bootstrap
 
-The repository includes SQLite account storage and Argon2 password hashing. A local-only command creates the first administrator:
+Create the first administrator locally:
 
 ```bash
 ORINOCO_DATABASE_PATH=./data/orinoco.sqlite3 python -m orinoco.admin create-admin
 ```
 
-The command asks for a username and password interactively; it does not place the password in shell history. Use a password of at least 12 characters. Administrators can create standard accounts from the account settings panel. Public self-registration is disabled.
+The command asks for a username and password interactively. Use a password of at least 12 characters. Administrators can create standard accounts from account settings. Public self-registration is disabled.
 
 ## Personal memories
 
-Orinoco can extract a small number of durable, non-sensitive personal facts after a chat turn. These are stored against the signed-in account, included only in that account's future chat context, and can be reviewed, edited or deleted from **My memories** in settings.
-
-Automatic memory extraction uses an additional local model request and can be disabled with:
-
-```bash
-AUTO_SAVE_MEMORIES=false
-```
-
-The extractor is deliberately conservative and filters common secret/contact/address patterns and selected sensitive categories. It is not infallible; users should review saved memories.
+Orinoco can extract durable, non-sensitive personal facts after a chat turn. Users can review, edit and delete their own memories. Automatic extraction uses an additional local model request and can be disabled with `AUTO_SAVE_MEMORIES=false`.
 
 ## Document libraries
 
-Signed-in users can upload private TXT, Markdown, PDF, DOCX, XLSX and PPTX files (maximum 10 MiB per file). Administrators can upload documents to the shared library, which standard users can read but cannot modify. Text is extracted locally and indexed in SQLite FTS5; relevant excerpts from only the current user's private files and the shared library may be added to that user's chat prompt as untrusted reference material.
+Signed-in users can upload private TXT, Markdown, PDF, DOCX, XLSX and PPTX files (maximum 10 MiB each). Administrators can upload to the shared read-only library. Extracted text is stored in SQLite and indexed with FTS5. Chat retrieves bounded excerpts only from the current user's private documents and the shared library. Scanned PDFs without embedded text are not OCR-processed.
 
-Scanned PDFs without extractable text are not OCR-processed. Uploaded files and extracted text are stored in the private data directory/database and must be included in encrypted off-server backups. They are not used to train a model.
+## Web research
+
+The Research page uses a configured SearXNG instance. Set:
+
+```bash
+ENABLE_WEB_SEARCH=true
+SEARXNG_URL=https://your-searxng.example
+```
+
+Search queries are sent to that SearXNG instance and any upstream search providers it uses. Do not include private information in a web search. Direct opening and summarisation of user-provided URLs is not implemented yet.
 
 ## Run tests
 
@@ -70,40 +62,19 @@ node --check orinoco/static/app.js
 
 ## Build the container image
 
-From the repository root:
-
 ```bash
 docker build -f docker/Dockerfile -t orinoco:dev .
 ```
 
-The image uses a non-root `container` account and the `/home/container` working directory expected by Pterodactyl. Pterodactyl supplies a `STARTUP` environment variable to the entrypoint. The entrypoint expands simple `{{VARIABLE}}` placeholders and executes the command without evaluating it through a shell.
-
-The intended container startup command is:
-
-```bash
-supervisord -n -c /opt/orinoco/docker/supervisord.conf
-```
+The image uses a non-root `container` account and the `/home/container` working directory expected by Pterodactyl. Pterodactyl supplies a `STARTUP` environment variable to the entrypoint, which expands simple `{{VARIABLE}}` placeholders without evaluating them through a shell.
 
 ## Current limitations
 
-- No conversation deletion/editing, pagination or streaming responses.
-- No OCR for scanned PDFs, advanced semantic/vector search or document pagination.
-- No web search or URL summarisation.
-- No Discord or voice integration.
-- The Pterodactyl Egg and container image are preview/development artefacts and have not been deployed to the user's Panel.
+- Safe direct URL fetching and webpage summarisation.
+- Search results automatically included in chat answers.
+- Conversation editing/deletion, pagination and streaming.
+- OCR and advanced semantic document search.
+- Discord and voice integrations.
+- Backup/restore tooling and production deployment.
 
 Do not expose this development scaffold as a public assistant service.
-
-## Code documentation conventions
-
-Keep the code understandable for a future maintainer who did not make the original change:
-
-- Give each Python module a short module docstring explaining its responsibility.
-- Add docstrings to public functions, classes, API handlers and non-obvious helpers. Describe purpose, ownership boundaries, important side effects and failure behaviour where relevant.
-- Explain security-sensitive decisions next to the code: account ownership checks, CSRF/session handling, path validation, untrusted retrieved content and secret handling.
-- Comment the reason for non-obvious limits, compatibility workarounds and operational defaults. Prefer explaining *why* over restating *what* the next line does.
-- Add short section comments to larger frontend scripts and shell entrypoints so their responsibilities are easy to locate.
-- Keep comments accurate when behaviour changes. Remove obsolete comments rather than allowing them to become misleading.
-- Do not comment every obvious assignment or duplicate the code in prose. Tests should explain expected behaviour through clear test names and focused assertions.
-
-When adding a feature, update the relevant architecture/development documentation and tests in the same change. Configuration variables should be documented with their defaults, accepted values and whether they affect persistent data or security.
