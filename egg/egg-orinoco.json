@@ -260,6 +260,15 @@
       "user_viewable": true,
       "user_editable": false,
       "rules": "required|integer|min:1"
+    },
+    {
+      "name": "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
+      "description": "Maximum chat submissions allowed per user in a rolling minute. Defaults to 10; valid range is 1–120. This protects the single local inference queue.",
+      "env_variable": "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
+      "default_value": "10",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1|max:120"
     }
   ]
 }
