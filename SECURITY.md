@@ -23,7 +23,7 @@ If a secret is accidentally committed, revoke or rotate it immediately. Removing
 
 ## Current authentication foundation
 
-The current development branch includes Argon2 password hashing, signed session cookies, CSRF tokens for state-changing authentication requests, secure-cookie defaults, and a small in-process failed-login throttle. Session signing material is stored in the persistent data directory with restrictive file permissions when no explicit secret is configured.
+The current development branch includes Argon2 password hashing, signed session cookies, CSRF tokens for state-changing authentication requests, secure-cookie defaults, conservative content-security and browser security headers, and a small in-process failed-login throttle. Session signing material is stored in the persistent data directory with restrictive file permissions when no explicit secret is configured.
 
 These controls are a foundation, not a completed production security review. The login throttle is process-local and must be supplemented with reverse-proxy rate limits before public deployment. Session secrets and the SQLite database must remain on persistent, private storage. Never expose the data directory through the web server.
 
@@ -31,7 +31,7 @@ These controls are a foundation, not a completed production security review. The
 
 The current document library accepts TXT, Markdown, PDF, DOCX, XLSX and PPTX files up to 10 MiB each. The optional webpage summariser only fetches public HTTP/HTTPS destinations on standard ports, resolves and pins hostnames to public IP addresses, revalidates redirects and limits response size. Extracted text is stored in the application database and original uploads are stored under the private data directory. The web server must never serve that directory directly.
 
-Uploaded documents are untrusted content. Their text may be included as reference excerpts in the owner's chat or in the shared-library context; it must not be treated as instructions. Passwords, secrets, precise personal information and sensitive facts should not be added to shared documents. The current extraction pipeline is bounded but is not a malware scanner or a full document-sandboxing system.
+Uploaded documents are untrusted content. Their text may be included as reference excerpts in the owner's chat or in the shared-library context; it must not be treated as instructions. Passwords, secrets, precise personal information and sensitive facts should not be added to shared documents. Office ZIP containers are checked for encrypted entries, excessive entry counts and more than 25 MiB of uncompressed content before parsing. The current extraction pipeline is bounded but is not a malware scanner or a full document-sandboxing system.
 
 ## Deployment guidance
 
