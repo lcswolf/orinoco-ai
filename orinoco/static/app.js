@@ -35,6 +35,19 @@ let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
 
+// Search results are external data. Only create clickable links for absolute HTTP(S) URLs.
+function safeExternalUrl(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = new URL(value);
+    if (!["http:", "https:"].includes(parsed.protocol) || !parsed.hostname) return null;
+    if (parsed.username || parsed.password) return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
 // Service status is informational; readiness is checked by the server's /readyz endpoint.
 async function refreshStatus() {
   try {
@@ -862,7 +875,7 @@ document.getElementById("research-form").addEventListener("submit", async (event
       summary.textContent = result.content || "No summary was provided by the search service.";
       const url = document.createElement("div");
       url.className = "result-url";
-      url.textContent = result.url;
+      url.textContent = safeUrl;
       card.append(heading, summary, url);
       results.append(card);
     }
@@ -904,7 +917,10 @@ document.getElementById("summary-form").addEventListener("submit", async (event)
     if (!response.ok) throw new Error(payload.detail || "Could not summarise that webpage.");
     document.getElementById("summary-title").textContent = payload.title;
     const source = document.getElementById("summary-source");
-    source.href = payload.url;
+    const safeSourceUrl = safeExternalUrl(payload.url);
+    source.hidden = !safeSourceUrl;
+    if (safeSourceUrl) source.href = safeSourceUrl;
+    else source.removeAttribute("href");
     document.getElementById("summary-text").textContent = payload.summary;
     resultCard.hidden = false;
   } catch (error) {
