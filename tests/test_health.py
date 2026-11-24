@@ -51,3 +51,23 @@ def test_ready_endpoint_returns_503_when_model_is_missing(monkeypatch) -> None:
 
     assert response.status_code == 503
     assert response.json()["status"] == "model_missing"
+
+
+def test_root_serves_custom_orinoco_interface() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Hello! my little nugget" in response.text
+    assert "/static/app.css" in response.text
+    assert "/static/app.js" in response.text
+
+
+def test_static_assets_are_served() -> None:
+    css = client.get("/static/app.css")
+    js = client.get("/static/app.js")
+
+    assert css.status_code == 200
+    assert "orinoco" in css.text.lower()
+    assert js.status_code == 200
+    assert "/readyz" in js.text
