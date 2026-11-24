@@ -241,6 +241,22 @@ async def conversation_detail(
     return conversation
 
 
+
+@router.delete("/conversations/{conversation_id}")
+async def remove_conversation(conversation_id: int, request: Request) -> dict[str, bool]:
+    """Delete a conversation and its messages only when the signed-in account owns it."""
+    _require_csrf(request)
+    user = _current_user(request)
+    deleted = delete_conversation(
+        user.id,
+        conversation_id,
+        database_path=get_database_path(),
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return {"deleted": True}
+
+
 @router.post("/chat")
 async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
     """Build account-scoped context, call local inference, and persist the exchange."""
