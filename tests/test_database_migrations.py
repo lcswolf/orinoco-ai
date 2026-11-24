@@ -58,3 +58,31 @@ def test_newer_database_schema_is_never_downgraded_or_modified(tmp_path) -> None
         ).fetchone()[0]
 
     assert tables == 0
+
+
+def test_database_file_permissions_are_restricted(tmp_path) -> None:
+    """SQLite persistence files should be owner-readable only on POSIX systems."""
+    import os
+
+    database = tmp_path / "private.sqlite3"
+    initialise_database(database)
+
+    if os.name == "posix":
+        assert database.stat().st_mode & 0o777 == 0o600
+
+
+def test_database_refuses_symbolic_link_path(tmp_path) -> None:
+    """A database path must not redirect private persistence into another location."""
+    target = tmp_path / "external.sqlite3"
+    with sqlite3.connect(target) as connection:
+        connection.execute("CREATE TABLE external_data (value TEXT)")
+    link = tmp_path / "orinoco.sqlite3"
+    link.symlink_to(target)
+
+    with pytest.raises(RuntimeError, match="database path must not be a symbolic link"):
+        initialise_database(link)
+
+    with sqlite3.connect(target) as connection:
+        assert connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchone()[0] == "external_data"
