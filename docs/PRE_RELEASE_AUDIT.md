@@ -100,6 +100,10 @@ The runtime now installs the operating-system timezone database so the configure
 
 The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 145 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
 
+### External research link handling — hardened
+
+The audit found that search-result URLs were assigned directly to browser link elements. The frontend now accepts only absolute, credential-free HTTP(S) URLs before creating links, and applies `noopener noreferrer`. The SearXNG adapter also rejects malformed URLs, local hostnames, private/non-global literal IP addresses and reserved test domains. Untrusted titles and snippets continue to be rendered as text nodes, not HTML.
+
 ### Original mascot and woodland interface — integrated
 
 The welcome screen now uses an original Womble-inspired woodland helper SVG, with meaningful alternative text, responsive sizing and no external image/script dependencies. The UI accents have been shifted toward woodland greens and warm brass; the footer identifies the UK-time default. Branding tests check the asset and accessibility hooks.
