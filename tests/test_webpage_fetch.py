@@ -143,3 +143,123 @@ def test_unsafe_webpage_is_rejected_before_model_call(tmp_path, monkeypatch) -> 
         )
 
     assert response.status_code == 422
+
+
+def test_public_fetch_rejects_redirect_to_private_address(monkeypatch) -> None:
+    """A safe first URL must not be allowed to redirect into a private network."""
+    class FakeResponse:
+        status = 302
+        headers = {"Location": "http://127.0.0.1/admin"}
+        url = "https://example.com/start"
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class FakeSession:
+        calls = 0
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def get(self, *args, **kwargs):
+            self.calls += 1
+            return FakeResponse()
+
+    fake_session = FakeSession()
+    monkeypatch.setattr("orinoco.research.webpage.aiohttp.ClientSession", lambda **kwargs: fake_session)
+
+    async def run() -> None:
+        with pytest.raises(SafeFetchError, match="Private and local"):
+            await research_routes.fetch_public_page("https://example.com/start")
+        assert fake_session.calls == 1
+
+    asyncio.run(run())
+
+
+def test_public_fetch_stops_after_redirect_limit(monkeypatch) -> None:
+    """Redirect loops must stop at the documented maximum without following a fifth hop."""
+    class FakeResponse:
+        status = 302
+        headers = {"Location": "https://example.com/next"}
+        url = "https://example.com/next"
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class FakeSession:
+        calls = 0
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def get(self, *args, **kwargs):
+            self.calls += 1
+            return FakeResponse()
+
+    fake_session = FakeSession()
+    monkeypatch.setattr("orinoco.research.webpage.aiohttp.ClientSession", lambda **kwargs: fake_session)
+
+    async def run() -> None:
+        with pytest.raises(SafeFetchError, match="redirected too many times"):
+            await research_routes.fetch_public_page("https://example.com/start")
+        assert fake_session.calls == 4
+
+    asyncio.run(run())
+
+
+def test_public_fetch_enforces_decompressed_response_size_limit(monkeypatch) -> None:
+    """The streamed, decompressed response body must stay within the 2 MiB cap."""
+    from types import SimpleNamespace
+
+    from orinoco.research.webpage import MAX_PAGE_BYTES
+
+    class FakeContent:
+        async def iter_chunked(self, chunk_size):
+            yield b"x" * (MAX_PAGE_BYTES + 1)
+
+    class FakeResponse:
+        status = 200
+        headers = {}
+        url = "https://example.com/article"
+        content_type = "text/html"
+        charset = "utf-8"
+        content = FakeContent()
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class FakeSession:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def get(self, *args, **kwargs):
+            return FakeResponse()
+
+    monkeypatch.setattr(
+        "orinoco.research.webpage.aiohttp.ClientSession",
+        lambda **kwargs: FakeSession(),
+    )
+
+    async def run() -> None:
+        with pytest.raises(SafeFetchError, match="2 MiB limit"):
+            await research_routes.fetch_public_page("https://example.com/article")
+
+    asyncio.run(run())
