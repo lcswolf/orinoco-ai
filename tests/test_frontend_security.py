@@ -98,13 +98,13 @@ def test_static_html_has_unique_ids_and_resolved_accessibility_references() -> N
     import re
 
     html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
-    ids = re.findall(r'\\bid="([^"]+)"', html)
+    ids = re.findall(r'id="([^"]+)"', html)
     id_set = set(ids)
     assert len(ids) == len(id_set)
 
     references = []
     for attribute in ("for", "aria-controls", "aria-labelledby", "aria-describedby"):
-        for value in re.findall(rf'\\b{attribute}="([^"]+)"', html):
+        for value in re.findall(rf'{attribute}="([^"]+)"', html):
             references.extend(value.split())
 
     assert set(references) <= id_set
