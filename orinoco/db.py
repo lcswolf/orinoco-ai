@@ -24,7 +24,7 @@ def get_database_path() -> Path:
 
 
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
-CURRENT_SCHEMA_VERSION = 4
+CURRENT_SCHEMA_VERSION = 5
 
 
 @dataclass(frozen=True)
@@ -35,6 +35,7 @@ class User:
     role: str
     active: bool
     created_at: str
+    session_version: int
 
 
 class AccountError(ValueError):
@@ -71,8 +72,8 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 f"Database schema version {schema_version} is newer than this Orinoco build "
                 f"(supports up to {CURRENT_SCHEMA_VERSION}). Refusing to modify it."
             )
-        # All schema changes through version 4 are additive table/index creation.
-        # CREATE IF NOT EXISTS safely completes an older v1-v3 installation.
+        # Schema upgrades through v5 are additive: create missing tables/indexes,
+        # then add the session version column if an earlier users table lacks it.
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -81,10 +82,17 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 password_hash TEXT NOT NULL,
                 role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
                 active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                session_version INTEGER NOT NULL DEFAULT 1 CHECK (session_version >= 1)
             )
             """
         )
+        user_columns = {row["name"] for row in connection.execute("PRAGMA table_info(users)")}
+        if "session_version" not in user_columns:
+            connection.execute(
+                "ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 1 "
+                "CHECK (session_version >= 1)"
+            )
         connection.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
         connection.execute(
             """
@@ -222,6 +230,7 @@ def create_user(
         role=role,
         active=True,
         created_at=created_at,
+        session_version=1,
     )
 
 
@@ -231,7 +240,7 @@ def list_users(*, database_path: Path = DEFAULT_DATABASE_PATH) -> list[User]:
     with _database(database_path) as connection:
         rows = connection.execute(
             """
-            SELECT id, username, role, active, created_at
+            SELECT id, username, role, active, created_at, session_version
             FROM users
             ORDER BY role DESC, username COLLATE NOCASE ASC
             """
@@ -243,6 +252,7 @@ def list_users(*, database_path: Path = DEFAULT_DATABASE_PATH) -> list[User]:
             role=str(row["role"]),
             active=bool(row["active"]),
             created_at=str(row["created_at"]),
+            session_version=int(row["session_version"]),
         )
         for row in rows
     ]
@@ -269,7 +279,7 @@ def set_user_active(
             if int(active_admins) <= 1:
                 raise AccountError("the last active administrator cannot be suspended")
         connection.execute(
-            "UPDATE users SET active = ? WHERE id = ?",
+            "UPDATE users SET active = ?, session_version = session_version + 1 WHERE id = ?",
             (1 if active else 0, user_id),
         )
         return True
@@ -297,7 +307,7 @@ def change_user_password(
         if not verify_password(current_password, str(row["password_hash"])):
             return False
         connection.execute(
-            "UPDATE users SET password_hash = ? WHERE id = ?",
+            "UPDATE users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?",
             (new_hash, user_id),
         )
         return True
@@ -311,7 +321,7 @@ def get_user_by_username(
     with _database(database_path) as connection:
         row = connection.execute(
             """
-            SELECT id, username, role, active, created_at
+            SELECT id, username, role, active, created_at, session_version
             FROM users WHERE username = ? COLLATE NOCASE
             """,
             (normalized,),
@@ -324,6 +334,7 @@ def get_user_by_username(
         role=str(row["role"]),
         active=bool(row["active"]),
         created_at=str(row["created_at"]),
+        session_version=int(row["session_version"]),
     )
 
 
@@ -807,7 +818,7 @@ def get_user_by_id(
     with _database(database_path) as connection:
         row = connection.execute(
             """
-            SELECT id, username, role, active, created_at
+            SELECT id, username, role, active, created_at, session_version
             FROM users WHERE id = ?
             """,
             (user_id,),
@@ -820,6 +831,7 @@ def get_user_by_id(
         role=str(row["role"]),
         active=bool(row["active"]),
         created_at=str(row["created_at"]),
+        session_version=int(row["session_version"]),
     )
 
 
@@ -834,7 +846,7 @@ def authenticate_user(
     with _database(database_path) as connection:
         row = connection.execute(
             """
-            SELECT id, username, password_hash, role, active, created_at
+            SELECT id, username, password_hash, role, active, created_at, session_version
             FROM users WHERE username = ? COLLATE NOCASE
             """,
             (normalized,),
