@@ -58,6 +58,10 @@ The model-generated memory filter now uses word-boundary matching and covers add
 
 The application now sends a restrictive Content Security Policy, clickjacking protection, MIME sniffing protection, a conservative referrer policy, same-origin resource/opener policies and a Permissions Policy disabling unused camera/microphone/geolocation access. The current frontend uses DOM node creation and textContent for dynamic content rather than HTML string injection. Regression tests check the headers on application, API and static responses.
 
+### SQLite schema version safety — strengthened
+
+The database initializer now completes the known additive v1–v3 table/index upgrades to schema v4, and refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover an early users-only database and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
+
 ### Documentation accuracy — corrected
 
 The README and development guide now distinguish implemented encrypted backup operations from the outstanding scheduler/retention work. The Egg's web-search descriptions now reflect the implemented SearXNG integration rather than describing it as future work.
@@ -65,7 +69,7 @@ The README and development guide now distinguish implemented encrypted backup op
 ## Remaining review work
 
 - [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation.
-- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
+- [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.\n- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
 - [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [ ] Finish review of private/shared document ownership, file permissions, parser edge cases and cleanup failure paths.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
