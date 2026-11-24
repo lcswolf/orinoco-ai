@@ -155,3 +155,39 @@ def test_pdf_decompression_filter_limits_are_lowered(monkeypatch) -> None:
         extract_text("empty.pdf", b"%PDF-test")
 
     assert pypdf.filters.ZLIB_MAX_OUTPUT_LENGTH <= 8 * 1024 * 1024
+
+
+def test_pdf_decoded_page_content_is_bounded(monkeypatch) -> None:
+    """Reject combined page content above the configured decoded-size ceiling."""
+    import pypdf
+
+    class FakeContent:
+        def get_data(self):
+            class OversizedDecodedData:
+                def __len__(self):
+                    return 32 * 1024 * 1024 + 1
+
+            return OversizedDecodedData()
+
+    class FakePage:
+        def get(self, key):
+            assert key == "/Contents"
+            return [object()]
+
+        def get_contents(self):
+            return FakeContent()
+
+        def extract_text(self):
+            raise AssertionError("text extraction should not run for oversized page content")
+
+    class FakeReader:
+        is_encrypted = False
+        pages = [FakePage()]
+
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pypdf, "PdfReader", FakeReader)
+
+    with pytest.raises(ValueError, match="32 MiB safety limit"):
+        extract_text("oversized-page.pdf", b"%PDF-test")
