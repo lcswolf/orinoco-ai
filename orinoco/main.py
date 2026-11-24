@@ -14,6 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from orinoco import __version__
 from orinoco.admin.routes import router as admin_router
 from orinoco.memories.routes import router as memories_router
+from orinoco.research.routes import router as research_router
 from orinoco.documents.routes import router as documents_router
 from orinoco.documents.admin_routes import router as shared_documents_router
 from orinoco.chat.routes import router as chat_router
@@ -43,6 +44,7 @@ app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(admin_router)
 app.include_router(memories_router)
+app.include_router(research_router)
 app.include_router(documents_router)
 app.include_router(shared_documents_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
