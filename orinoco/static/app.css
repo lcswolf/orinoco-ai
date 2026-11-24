@@ -15,6 +15,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--text); }
 button, a { font: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 258px; flex: 0 0 258px; display: flex; flex-direction: column; padding: 27px 18px 18px; background: #0d171f; border-right: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 11px; margin: 0 8px 34px; color: var(--text); text-decoration: none; }
@@ -45,6 +46,7 @@ button:disabled { cursor: default; opacity: .8; }
 .connection.error .status-dot { background: #e58d7f; box-shadow: none; }
 .icon-button { width: 35px; height: 35px; margin-left: 22px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--muted); }
 .mobile-brand { display: none; }
+.sidebar-backdrop { display: none; }
 .mobile-conversations { display: none; }
 .welcome { width: min(720px, calc(100% - 48px)); margin: auto; padding: 58px 0 42px; text-align: center; }
 .welcome-eyebrow { display: flex; align-items: center; justify-content: center; gap: 11px; color: #80bda9; font-size: 9px; font-weight: 700; letter-spacing: 2px; }
@@ -72,7 +74,32 @@ h1 em { color: #8bd9bd; font-style: normal; }
 .footer { display: flex; justify-content: space-between; padding: 18px 35px; border-top: 1px solid var(--line); color: #63797e; font-size: 9px; letter-spacing: .5px; }
 .footer span:first-child { font-weight: 700; letter-spacing: 1.5px; }
 @media (max-width: 720px) {
-  .sidebar { display: none; }
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 41;
+    display: flex;
+    width: min(290px, 86vw);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    flex: 0 0 min(290px, 86vw);
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform .2s ease;
+    box-shadow: 18px 0 45px rgba(0,0,0,.38);
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-backdrop:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    border: 0;
+    padding: 0;
+    background: rgba(4,10,14,.72);
+    backdrop-filter: blur(2px);
+  }
   .topbar { height: 60px; padding: 0 18px; }
   .mobile-brand { display: flex; align-items: center; gap: 9px; border: 0; background: none; color: var(--text); font-size: 16px; }
   .mobile-brand .brand-mark { width: 29px; height: 29px; border-radius: 10px 10px 10px 4px; font-size: 23px; }
