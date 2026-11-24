@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed Python CI run: 136 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest container build has succeeded; the expanded smoke test is being extended to confirm the daily backup scheduler process starts under Supervisor.
+Latest completed Python CI run: 145 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest container build has succeeded; the expanded smoke test is being extended to confirm the daily backup scheduler process starts under Supervisor.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -94,7 +94,11 @@ The runtime now installs the operating-system timezone database so the configure
 
 ### Runtime and CI version pins — checked
 
-The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 136 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 145 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
+
+### Original mascot and woodland interface — integrated
+
+The welcome screen now uses an original Womble-inspired woodland helper SVG, with meaningful alternative text, responsive sizing and no external image/script dependencies. The UI accents have been shifted toward woodland greens and warm brass; the footer identifies the UK-time default. Branding tests check the asset and accessibility hooks.
 
 ### Dependency vulnerability audit — corrected
 
