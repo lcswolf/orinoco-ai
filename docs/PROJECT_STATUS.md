@@ -10,6 +10,9 @@ This page separates confirmed project decisions from implementation work. A plan
 - Custom responsive Orinoco interface shell, served directly by FastAPI.
 - Orinoco's requested greeting and an initial local-model status display.
 - Custom sign-in dialog connected to the authentication API.
+- Working authenticated chat composer with saved conversation list, conversation switching and a mobile recent-chat selector.
+- Local Ollama chat orchestration with one generation at a time, bounded response length and a short conversation context window.
+- Atomic saving of user/assistant message pairs and server-side conversation ownership checks.
 - Signed session cookies with secure, HTTP-only and SameSite=Lax settings.
 - CSRF tokens for login and logout, plus session rotation after successful login.
 - SQLite account storage, Argon2 password hashing, username validation and a local-only first-admin bootstrap command.
@@ -46,9 +49,8 @@ The latest completed GitHub Actions Python test run passed all 26 tests. The exp
 
 ## Not implemented yet
 
-- Authenticated chat endpoint and working chat composer.
 - User-management routes and administrator screens.
-- Database-backed conversations and per-user chat history.
+- Conversation deletion/editing, pagination and streaming responses.
 - Per-user memory review and correction controls.
 - Document ingestion, retrieval and shared/private libraries.
 - Web search and safe URL fetching.
