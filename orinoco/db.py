@@ -727,10 +727,18 @@ def search_documents(
 ) -> list[dict[str, str]]:
     import re
 
-    terms = re.findall(r"[A-Za-z0-9_]{2,}", query.lower())[:8]
+    stop_words = {
+        "what", "does", "my", "the", "and", "for", "about", "tell", "me",
+        "this", "that", "please", "can", "you", "is", "are", "in", "on",
+        "of", "to", "a", "an", "it", "i", "we", "our", "your",
+    }
+    terms = [
+        term for term in re.findall(r"[A-Za-z0-9_]{2,}", query.lower())
+        if term not in stop_words
+    ][:8]
     if not terms:
         return []
-    match_query = " AND ".join(f'"{term}"' for term in terms)
+    match_query = " OR ".join(f'"{term}"' for term in terms)
     with _database(database_path) as connection:
         rows = connection.execute(
             """
