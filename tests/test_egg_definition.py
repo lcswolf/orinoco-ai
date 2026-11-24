@@ -21,6 +21,8 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "AI_MODEL",
         "AUTO_DOWNLOAD_MODEL",
         "MODEL_CONTEXT",
+        "AUTO_SAVE_MEMORIES",
+        "ORINOCO_DATABASE_PATH",
         "AI_CONCURRENCY",
         "ENABLE_DISCORD",
         "DISCORD_TOKEN",
