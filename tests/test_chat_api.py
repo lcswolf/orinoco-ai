@@ -35,6 +35,10 @@ def sign_in(client: TestClient, username: str, password: str) -> None:
     assert response.status_code == 200
 
 
+def csrf(client: TestClient) -> str:
+    return client.get("/api/auth/csrf").json()["csrf_token"]
+
+
 def test_authenticated_chat_saves_conversation_and_reply(tmp_path, monkeypatch) -> None:
     database = tmp_path / "orinoco.sqlite3"
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
