@@ -27,7 +27,7 @@
       </nav>
       <div class="sidebar-spacer"></div>
       <div class="privacy-note"><span class="privacy-dot"></span><span>Private by design<br><small>Local AI · Your own server</small></span></div>
-      <div class="user-placeholder"><span class="avatar">Y</span><span><strong>Your account</strong><small>Account sign-in coming next</small></span></div>
+      <div class="user-placeholder"><span class="avatar" id="user-avatar">?</span><span><strong id="user-name">Not signed in</strong><small id="user-role">Your private workspace</small></span></div>
     </aside>
 
     <main class="main-panel">
@@ -35,6 +35,7 @@
         <button class="mobile-brand" type="button" aria-label="Orinoco menu"><span class="brand-mark">o</span><strong>orinoco</strong></button>
         <div class="topbar-spacer"></div>
         <div class="connection" id="connection-status"><span class="status-dot"></span><span>Checking local model…</span></div>
+        <button class="account-action" id="account-action" type="button">Sign in</button>
         <button class="icon-button" type="button" aria-label="Settings are coming soon" disabled>⚙</button>
       </header>
 
@@ -66,5 +67,20 @@
       <footer class="footer"><span>ORINOCO</span><span>Made to be yours.</span></footer>
     </main>
   </div>
+
+  <dialog class="login-dialog" id="login-dialog" aria-labelledby="login-title">
+    <form id="login-form">
+      <div class="dialog-brand"><span class="brand-mark" aria-hidden="true">o</span><span>orinoco</span></div>
+      <h2 id="login-title">Welcome back</h2>
+      <p class="dialog-copy">Sign in to your private Orinoco workspace.</p>
+      <label for="login-username">Username</label>
+      <input id="login-username" name="username" type="text" autocomplete="username" minlength="3" maxlength="32" required>
+      <label for="login-password">Password</label>
+      <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+      <p class="login-error" id="login-error" role="alert" hidden></p>
+      <button class="login-submit" id="login-submit" type="submit">Sign in</button>
+      <button class="dialog-cancel" id="login-cancel" type="button">Not now</button>
+    </form>
+  </dialog>
 </body>
 </html>
