@@ -313,10 +313,16 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
             staged_documents.mkdir()
 
         database_backup = database_path.with_suffix(database_path.suffix + ".pre-restore")
+        database_existed = database_path.exists()
         if database_backup.exists():
             raise BackupError(f"Recovery file already exists: {database_backup}")
-        if database_path.exists():
-            shutil.copy2(database_path, database_backup)
+        if database_existed:
+            # Use SQLite online backup so committed WAL data is preserved too.
+            _copy_database_snapshot(database_backup)
+        secret_existed = secret_path.exists()
+        secret_backup = root / "session_secret.pre-restore"
+        if secret_existed:
+            shutil.copy2(secret_path, secret_backup)
         old_documents = document_root.with_name(document_root.name + ".pre-restore")
         if old_documents.exists():
             raise BackupError(f"Recovery directory already exists: {old_documents}")
@@ -339,6 +345,13 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
                 old_documents.rename(document_root)
             if database_backup.exists():
                 os.replace(database_backup, database_path)
+            elif not database_existed:
+                database_path.unlink(missing_ok=True)
+            if secret_backup.exists():
+                secret_path.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(secret_backup, secret_path)
+            elif not secret_existed:
+                secret_path.unlink(missing_ok=True)
             raise
 
     return manifest
