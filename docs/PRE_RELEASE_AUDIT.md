@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest GitHub Actions Python test run [#858](https://github.com/lcswolf/orinoco-ai/actions/runs/45500190136) passed on commit `515463b4`; dependency auditing and frontend JavaScript syntax checks also passed. This run includes backup/database/archive hardening, scheduler retries, PDF and document-storage limits, trusted-proxy login handling, offline TTY-only admin password recovery, Egg model-selection checks, accessible mobile-interface regressions, SQLite permission/path checks and model-context budgeting. Matching container build/smoke run [#378](https://github.com/lcswolf/orinoco-ai/actions/runs/45499991017) is still in progress on runtime commit `a334208c` and does not publish the image. A live Pterodactyl import, deployment and recovery drill remain outstanding.
+Latest GitHub Actions Python test run [#858](https://github.com/lcswolf/orinoco-ai/actions/runs/45500190136) passed on commit `515463b4`; dependency auditing and frontend JavaScript syntax checks also passed. This run includes backup/database/archive hardening, scheduler retries, PDF and document-storage limits, trusted-proxy login handling, offline TTY-only admin password recovery, Egg model-selection checks, accessible mobile-interface regressions, SQLite permission/path checks and model-context budgeting. Matching container build/smoke run [#378](https://github.com/lcswolf/orinoco-ai/actions/runs/45499991017) also passed on runtime commit `a334208c` without publishing the image. A live Pterodactyl import, deployment and recovery drill remain outstanding.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -201,6 +201,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add bounded Office ZIP expansion checks and regression coverage.
 - [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.
 - [ ] Finish review of private/shared document ownership, parser edge cases and cleanup paths. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes (and global limits for other routes) so oversized and chunked multipart bodies are rejected before application parsing.
+- [x] Bound model prompts to the configured context: preserve system/current messages, trim older history/reference data, and return HTTP 422 when the current request cannot fit (covered by context-budget tests).
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
@@ -220,7 +221,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
 - [x] Confirm the latest Python test suite, dependency audit and frontend JavaScript syntax checks passed on commit `515463b4` (run #858).
-- [ ] Confirm the container build and smoke test passes on runtime commit `a334208c` (run #378); image remains unpublished.
+- [x] Confirm the container build and smoke test passed on runtime commit `a334208c` (run #378); image remains unpublished.
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
