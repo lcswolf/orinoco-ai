@@ -2,6 +2,7 @@
 set -eu
 
 PORT="${SERVER_PORT:-8000}"
+export TZ="${TIMEZONE:-Europe/London}"
 case "$PORT" in
     ''|*[!0-9]*) echo "ERROR: SERVER_PORT must be numeric." >&2; exit 2 ;;
 esac
