@@ -1,4 +1,4 @@
-"""Enable the `python -m orinoco.admin` first-admin setup command."""
+"""Enable the local administrator bootstrap and password-recovery commands."""
 
 from orinoco.admin.cli import main
 
