@@ -44,6 +44,14 @@ There were two implementations of the same `/api/memories` routes. The applicati
 
 Several database function docstrings had been placed inside conditionals or transaction blocks, where Python did not recognise them as function docstrings. They have been moved to the correct function positions to improve maintainability and generated help/documentation.
 
+### Backup database verification — strengthened
+
+SQLite can return `ok` from `PRAGMA integrity_check` for an empty database. Backup verification and restore now also require the essential Orinoco tables, reject a database schema newer than the running build, and run `PRAGMA foreign_key_check`. This prevents an empty or structurally inconsistent SQLite file from being accepted as a usable backup. Regression tests cover empty databases, future schema versions and orphaned foreign-key rows.
+
+### Encrypted archive path validation — regression coverage expanded
+
+Regression tests now exercise path traversal, Windows drive/backslash path syntax, symbolic-link archive members and duplicate archive paths using validly encrypted test archives. The extraction code rejects these entries before writing them into the temporary restore directory. The tests still need to pass in CI before this audit item can be marked complete.
+
 ### Remote backup verification — strengthened
 
 The first S3-compatible upload implementation checked object size and client-supplied SHA-256 metadata. Metadata alone does not prove the bytes stored by the remote service match the source. Upload verification now downloads the stored object and hashes the returned bytes as well. Symbolic-link backup sources are rejected before resolving the path. Regression tests cover altered remote bytes and symbolic-link inputs.
@@ -185,7 +193,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
-- [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
+- [ ] Confirm CI passes the new backup database and encrypted-archive regression tests; finish any remaining archive/key-handling edge cases.
 - [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.
 - [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
