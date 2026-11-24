@@ -385,8 +385,14 @@ def upload_backup(backup_path: Path) -> dict[str, object]:
     import boto3
 
     settings = _s3_settings()
-    backup_path = backup_path.expanduser().resolve()
-    if not backup_path.is_file() or backup_path.is_symlink():
+    backup_path = backup_path.expanduser()
+    if backup_path.is_symlink():
+        raise BackupError("The backup to upload must be an existing regular file, not a symbolic link.")
+    try:
+        backup_path = backup_path.resolve(strict=True)
+    except OSError as exc:
+        raise BackupError("The backup to upload must be an existing regular file.") from exc
+    if not backup_path.is_file():
         raise BackupError("The backup to upload must be an existing regular file.")
     if backup_path.suffix != ".oribak":
         raise BackupError("Only encrypted .oribak backup files can be uploaded.")
@@ -422,6 +428,21 @@ def upload_backup(backup_path: Path) -> dict[str, object]:
     remote_checksum = (remote.get("Metadata") or {}).get("sha256", "")
     if remote.get("ContentLength") != backup_path.stat().st_size or remote_checksum != checksum:
         raise BackupError("Remote backup verification failed: size or SHA-256 metadata did not match.")
+
+    # Verify the bytes returned by object storage, not just metadata supplied by
+    # this client during upload. This detects truncated or altered remote data.
+    downloaded = client.get_object(Bucket=settings["bucket"], Key=object_key)
+    remote_body = downloaded.get("Body")
+    if remote_body is None:
+        raise BackupError("Remote backup verification failed: the object body was missing.")
+    remote_digest = hashlib.sha256()
+    try:
+        for chunk in iter(lambda: remote_body.read(CHUNK_SIZE), b""):
+            remote_digest.update(chunk)
+    finally:
+        remote_body.close()
+    if remote_digest.hexdigest() != checksum:
+        raise BackupError("Remote backup verification failed: downloaded object SHA-256 did not match.")
 
     return {
         "bucket": settings["bucket"],
