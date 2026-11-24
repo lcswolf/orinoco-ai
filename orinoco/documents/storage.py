@@ -77,9 +77,24 @@ def store_document(data: bytes, *, user_id: int | None, scope: str, extension: s
         raise ValueError("unsupported document extension")
 
     root = get_document_root()
+    if root.is_symlink():
+        raise ValueError("document root must not be a symbolic link")
+    root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("document root must be a regular directory")
+
     folder = Path("shared") if scope == "shared" else Path("private") / str(user_id)
-    directory = root / folder
-    directory.mkdir(parents=True, exist_ok=True)
+    directory = root
+    # Check each existing component before creating the next one. Checking only
+    # the final file would still allow a symlinked parent (for example
+    # documents/private/<user>) to redirect writes outside the storage root.
+    for component in folder.parts:
+        directory = directory / component
+        if directory.is_symlink():
+            raise ValueError("document storage directories must not contain symbolic links")
+        directory.mkdir(exist_ok=True, mode=0o700)
+        if directory.is_symlink() or not directory.is_dir():
+            raise ValueError("document storage path must contain regular directories")
     try:
         root.chmod(0o700)
         directory.chmod(0o700)
@@ -121,9 +136,11 @@ def resolve_document_path(relative_path: str) -> Path:
     relative = Path(relative_path)
     if relative.is_absolute() or not relative.parts or ".." in relative.parts:
         raise ValueError("invalid document storage path")
-    candidate = root / relative
-    if candidate.is_symlink():
-        raise ValueError("symbolic links are not valid document storage paths")
+    candidate = root
+    for component in relative.parts:
+        candidate = candidate / component
+        if candidate.is_symlink():
+            raise ValueError("symbolic links are not valid document storage paths")
     candidate = candidate.resolve()
     try:
         candidate.relative_to(root)
