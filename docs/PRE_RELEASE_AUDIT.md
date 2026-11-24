@@ -152,6 +152,10 @@ The new pip-audit CI step found seven advisories affecting the resolved `cryptog
 
 A dedicated Supervisor-managed process completes at most one successful backup cycle per local calendar day (03:00 by default in the configured timezone). It creates an encrypted local backup, optionally uploads and byte-verifies it to the configured S3-compatible bucket, and prunes expired local backups only after the complete backup cycle succeeds. Failed or interrupted attempts remain retryable and are retried after a 15-minute backoff; a day is not marked complete until the cycle succeeds. The default local retention is 14 days and is configurable from 1 to 365. Failures are written to the Pterodactyl console and a private status JSON file. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding.
 
+### Post-migration relational integrity — strengthened
+
+The one-shot migration command now runs both SQLite's structural `integrity_check` and `foreign_key_check` after applying schema changes. A migration is not reported as successful if it leaves orphaned conversations, messages, memories or documents. A regression test injects an orphaned conversation after schema initialisation and confirms the command fails closed. This is automated regression coverage; the new test still needs a passing CI run before this item is marked verified.
+
 ### Backup-gated update migrations — implemented
 
 The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. The operator runbook explains how to run these commands as temporary Pterodactyl startup commands while the application is stopped. Automated image switching and a live upgrade/rollback drill remain outstanding.
