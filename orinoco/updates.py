@@ -12,6 +12,7 @@ import json
 import os
 import sqlite3
 import sys
+import tarfile
 from pathlib import Path
 
 from orinoco.backups import BackupError, create_backup, upload_backup, verify_backup
@@ -95,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             result = migrate_database(backup_path=args.backup)
         print(json.dumps(result, indent=2))
         return 0
-    except (RuntimeError, OSError, sqlite3.Error, ValueError) as exc:
+    except (RuntimeError, OSError, sqlite3.Error, ValueError, tarfile.TarError) as exc:
         print(f"Orinoco update error: {exc}", file=sys.stderr)
         return 1
 
