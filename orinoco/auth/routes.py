@@ -214,7 +214,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     """Authenticate an active account and establish its signed browser session."""
     _require_csrf(request)
     username = payload.username.strip().lower()
-    remote_ip = request.client.host if request.client else None
+    remote_ip = _resolve_client_ip(request)
     identity_key = _login_identity_key(username, remote_ip)
     if remote_ip is not None:
         _check_login_rate(username, remote_ip)
