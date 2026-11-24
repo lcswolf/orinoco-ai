@@ -139,7 +139,6 @@ async def logout(request: Request) -> dict[str, bool]:
 
 @router.post("/password")
 async def change_password(
-    """Verify the current password and update the authenticated account's hash."""
     payload: PasswordChangeRequest,
     request: Request,
 ) -> dict[str, bool]:
