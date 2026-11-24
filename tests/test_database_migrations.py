@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-from orinoco.db import CURRENT_SCHEMA_VERSION, initialise_database
+from orinoco.db import CURRENT_SCHEMA_VERSION, authenticate_user, create_user, initialise_database
 
 
 def test_legacy_v1_database_is_upgraded_additively(tmp_path) -> None:
