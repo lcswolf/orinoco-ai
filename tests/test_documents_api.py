@@ -178,3 +178,37 @@ def test_document_search_is_scoped_to_owner_and_shared_library(tmp_path) -> None
     assert len(search_documents(first.id, "secret phrase", database_path=database)) == 1
     assert search_documents(second.id, "secret phrase", database_path=database) == []
     assert len(search_documents(second.id, "installation phrase", database_path=database)) == 1
+
+
+def test_failed_private_file_cleanup_keeps_document_record(tmp_path, monkeypatch) -> None:
+    """A failed unlink must not silently remove the only record of private data."""
+    from orinoco.documents import routes as document_routes
+
+    database = tmp_path / "orinoco.sqlite3"
+    storage = tmp_path / "documents"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(storage))
+    initialise_database(database)
+    create_user("docuser", "a-long-test-password-123", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "docuser", "a-long-test-password-123")
+        upload = client.post(
+            "/api/documents",
+            headers={"X-CSRF-Token": csrf(client)},
+            files={"file": ("notes.txt", b"Keep this document record if unlink fails.", "text/plain")},
+        )
+        document_id = upload.json()["document"]["id"]
+
+        def fail_remove(path: str) -> None:
+            raise OSError("simulated filesystem permission failure")
+
+        monkeypatch.setattr(document_routes, "remove_document_file", fail_remove)
+        deletion = client.delete(
+            f"/api/documents/{document_id}",
+            headers={"X-CSRF-Token": csrf(client)},
+        )
+        listing = client.get("/api/documents").json()["documents"]
+
+    assert deletion.status_code == 500
+    assert any(item["id"] == document_id for item in listing)
