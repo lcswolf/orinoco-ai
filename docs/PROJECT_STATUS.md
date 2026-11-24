@@ -21,7 +21,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0 and an install script that prepares persistent data folders.
 - GitHub Actions workflows for Python tests and Docker image build validation.
 
-The latest Python test run passed 13 tests before the custom interface tests were added. New interface tests are now committed and their CI run is pending. The expanded image has been built in CI; a container runtime smoke test is being added. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest GitHub Actions Python test run passed all 15 tests, including checks for the custom interface and static assets. The expanded image build and container runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
