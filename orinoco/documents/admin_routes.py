@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/admin/shared-documents", tags=["administration"]
 
 
 def _require_admin(request: Request) -> User:
+    """Require an active administrator before accessing the shared library controls."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         raise HTTPException(status_code=401, detail="Please sign in to continue.")
@@ -35,12 +36,14 @@ def _require_admin(request: Request) -> User:
 
 @router.get("")
 async def get_shared_documents(request: Request) -> dict[str, object]:
+    """List documents in the administrator-managed shared reference library."""
     _require_admin(request)
     return {"documents": list_documents(0, shared_only=True, database_path=get_database_path())}
 
 
 @router.post("", status_code=201)
 async def upload_shared_document(
+    """Validate, extract and store a document in the shared read-only library."""
     request: Request,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
@@ -51,6 +54,7 @@ async def upload_shared_document(
 
 @router.delete("/{document_id}")
 async def delete_shared_document(document_id: int, request: Request) -> dict[str, bool]:
+    """Remove a shared document after an administrator ownership check."""
     _require_csrf(request)
     _require_admin(request)
     stored_path = delete_document(
