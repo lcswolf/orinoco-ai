@@ -18,6 +18,7 @@ const chatThread = document.getElementById("chat-thread");
 const chatInput = document.getElementById("chat-input");
 const chatForm = document.getElementById("chat-form");
 const sendButton = document.getElementById("send-message");
+const webSearchToggle = document.getElementById("chat-web-search");
 const chatHint = document.getElementById("chat-hint");
 const settingsButton = document.getElementById("settings-button");
 const settingsDialog = document.getElementById("settings-dialog");
@@ -92,6 +93,7 @@ function showAccount(user) {
     newChatButton.disabled = false;
     chatInput.disabled = false;
     sendButton.disabled = false;
+    webSearchToggle.disabled = false;
     chatInput.placeholder = "Message Orinoco…";
     chatHint.textContent = "Your conversation is private and saved to your account.";
   } else {
@@ -112,6 +114,8 @@ function showAccount(user) {
     newChatButton.disabled = true;
     chatInput.disabled = true;
     sendButton.disabled = true;
+    webSearchToggle.disabled = true;
+    webSearchToggle.checked = false;
     chatInput.placeholder = "Sign in to start a private conversation…";
     chatHint.textContent = "Sign in to start a private conversation. Your chats are saved to your own account.";
     currentConversationId = null;
@@ -333,6 +337,7 @@ chatForm.addEventListener("submit", async (event) => {
       body: JSON.stringify({
         message,
         conversation_id: currentConversationId,
+        web_search: webSearchToggle.checked,
       }),
     });
     const result = await response.json();
@@ -344,7 +349,10 @@ chatForm.addEventListener("submit", async (event) => {
     }
 
     currentConversationId = result.conversation_id;
-    appendMessage("assistant", result.assistant_message);
+    const sourceText = Array.isArray(result.web_sources) && result.web_sources.length
+      ? "\\n\\nSources:\\n" + result.web_sources.map((source, index) => "[" + (index + 1) + "] " + source.title + " — " + source.url).join("\\n")
+      : "";
+    appendMessage("assistant", result.assistant_message + sourceText);
     if (Array.isArray(result.saved_memories) && result.saved_memories.length) {
       appendMessage("assistant", "I saved a useful note to your personal memories. You can review or delete it in My memories.", "notice");
     }
