@@ -126,3 +126,22 @@ def test_admin_password_reset_refuses_noninteractive_password_input(tmp_path, mo
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
 
     assert main() == 2
+
+
+def test_initial_admin_bootstrap_refuses_noninteractive_password_input(tmp_path, monkeypatch) -> None:
+    """The first-admin command must not echo the bootstrap password into process logs."""
+    from orinoco.db import initialise_database, list_users
+
+    database = tmp_path / "accounts.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    monkeypatch.setattr("sys.stdin", SimpleNamespace(isatty=lambda: False))
+    monkeypatch.setattr("builtins.input", lambda prompt: (_ for _ in ()).throw(AssertionError("must not prompt")))
+    monkeypatch.setattr(
+        "orinoco.admin.cli.getpass.getpass",
+        lambda prompt: (_ for _ in ()).throw(AssertionError("password must not be read")),
+    )
+    monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "create-admin"])
+
+    assert main() == 2
+    assert list_users(database_path=database) == []
