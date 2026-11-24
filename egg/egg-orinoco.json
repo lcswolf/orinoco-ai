@@ -12,7 +12,7 @@
   "images": [
     "ghcr.io/lcswolf/orinoco-ai:stable"
   ],
-  "startup": "python -m uvicorn orinoco.main:app --host 0.0.0.0 --port {{SERVER_PORT}}",
+  "startup": "supervisord -n -c /opt/orinoco/docker/supervisord.conf",
   "config": {
     "files": "{}",
     "startup": "{\n  \"done\": \"Application startup complete.\"\n}",
