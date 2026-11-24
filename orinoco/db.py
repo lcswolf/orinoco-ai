@@ -120,7 +120,35 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
             "CREATE INDEX IF NOT EXISTS idx_memories_user_updated "
             "ON memories(user_id, updated_at DESC)"
         )
-        connection.execute("PRAGMA user_version = 3")
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                owner_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                scope TEXT NOT NULL CHECK (scope IN ('private', 'shared')),
+                original_name TEXT NOT NULL,
+                stored_path TEXT NOT NULL UNIQUE,
+                file_type TEXT NOT NULL,
+                size_bytes INTEGER NOT NULL CHECK (size_bytes > 0),
+                sha256 TEXT NOT NULL,
+                extracted_text TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                CHECK (
+                    (scope = 'private' AND owner_user_id IS NOT NULL)
+                    OR (scope = 'shared' AND owner_user_id IS NULL)
+                )
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_documents_owner "
+            "ON documents(owner_user_id, created_at DESC)"
+        )
+        connection.execute(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts "
+            "USING fts5(original_name, extracted_text, tokenize='unicode61')"
+        )
+        connection.execute("PRAGMA user_version = 4")
     try:
         database_path.chmod(0o600)
     except OSError:
@@ -551,6 +579,180 @@ def delete_memory(
             (memory_id, user_id),
         )
         return cursor.rowcount == 1
+
+
+
+def create_document(
+    *,
+    owner_user_id: int | None,
+    scope: str,
+    original_name: str,
+    stored_path: str,
+    file_type: str,
+    size_bytes: int,
+    sha256: str,
+    extracted_text: str,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> int:
+    if scope not in {"private", "shared"}:
+        raise ValueError("document scope must be private or shared")
+    if (scope == "private") != (owner_user_id is not None):
+        raise ValueError("private documents require an owner; shared documents do not")
+    if not extracted_text.strip() or len(extracted_text) > 200000:
+        raise ValueError("extracted document text must contain 1–200000 characters")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO documents (
+                owner_user_id, scope, original_name, stored_path, file_type,
+                size_bytes, sha256, extracted_text, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                owner_user_id, scope, original_name, stored_path, file_type,
+                size_bytes, sha256, extracted_text, now,
+            ),
+        )
+        document_id = int(cursor.lastrowid)
+        connection.execute(
+            "INSERT INTO documents_fts(rowid, original_name, extracted_text) VALUES (?, ?, ?)",
+            (document_id, original_name, extracted_text),
+        )
+        return document_id
+
+
+def list_documents(
+    user_id: int,
+    *,
+    shared_only: bool = False,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> list[dict[str, object]]:
+    with _database(database_path) as connection:
+        if shared_only:
+            rows = connection.execute(
+                """
+                SELECT id, scope, original_name, file_type, size_bytes, created_at
+                FROM documents WHERE scope = 'shared'
+                ORDER BY created_at DESC, id DESC
+                """
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                """
+                SELECT id, scope, original_name, file_type, size_bytes, created_at
+                FROM documents
+                WHERE scope = 'shared' OR owner_user_id = ?
+                ORDER BY created_at DESC, id DESC
+                """,
+                (user_id,),
+            ).fetchall()
+    return [
+        {
+            "id": int(row["id"]),
+            "scope": str(row["scope"]),
+            "original_name": str(row["original_name"]),
+            "file_type": str(row["file_type"]),
+            "size_bytes": int(row["size_bytes"]),
+            "created_at": str(row["created_at"]),
+        }
+        for row in rows
+    ]
+
+
+def get_document(
+    user_id: int,
+    document_id: int,
+    *,
+    allow_shared: bool = True,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> dict[str, object] | None:
+    with _database(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT id, owner_user_id, scope, original_name, stored_path,
+                   file_type, size_bytes, sha256, extracted_text, created_at
+            FROM documents
+            WHERE id = ? AND (owner_user_id = ? OR (scope = 'shared' AND ? = 1))
+            """,
+            (document_id, user_id, 1 if allow_shared else 0),
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "id": int(row["id"]),
+        "owner_user_id": row["owner_user_id"],
+        "scope": str(row["scope"]),
+        "original_name": str(row["original_name"]),
+        "stored_path": str(row["stored_path"]),
+        "file_type": str(row["file_type"]),
+        "size_bytes": int(row["size_bytes"]),
+        "sha256": str(row["sha256"]),
+        "extracted_text": str(row["extracted_text"]),
+        "created_at": str(row["created_at"]),
+    }
+
+
+def delete_document(
+    user_id: int,
+    document_id: int,
+    *,
+    allow_shared: bool = False,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> str | None:
+    with _database(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT stored_path FROM documents
+            WHERE id = ? AND (
+                (scope = 'private' AND owner_user_id = ?)
+                OR (scope = 'shared' AND ? = 1)
+            )
+            """,
+            (document_id, user_id, 1 if allow_shared else 0),
+        ).fetchone()
+        if row is None:
+            return None
+        connection.execute("DELETE FROM documents_fts WHERE rowid = ?", (document_id,))
+        connection.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        return str(row["stored_path"])
+
+
+def search_documents(
+    user_id: int,
+    query: str,
+    *,
+    limit: int = 3,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> list[dict[str, str]]:
+    import re
+
+    terms = re.findall(r"[A-Za-z0-9_]{2,}", query.lower())[:8]
+    if not terms:
+        return []
+    match_query = " AND ".join(f'"{term}"' for term in terms)
+    with _database(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT d.id, d.original_name,
+                   snippet(documents_fts, 1, '[', ']', ' … ', 18) AS excerpt
+            FROM documents_fts
+            JOIN documents d ON d.id = documents_fts.rowid
+            WHERE documents_fts MATCH ?
+              AND (d.scope = 'shared' OR d.owner_user_id = ?)
+            ORDER BY rank
+            LIMIT ?
+            """,
+            (match_query, user_id, max(1, min(limit, 5))),
+        ).fetchall()
+    return [
+        {
+            "id": str(row["id"]),
+            "name": str(row["original_name"]),
+            "excerpt": str(row["excerpt"])[:1600],
+        }
+        for row in rows
+    ]
 
 
 def get_user_by_id(
