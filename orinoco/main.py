@@ -1,20 +1,20 @@
-"""Minimal Orinoco API entry point.
-
-This is the initial API foundation, not the finished assistant UI.
-"""
+"""Orinoco web application entry point."""
 
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from orinoco import __version__
 
 OLLAMA_API_BASE = os.environ.get("ORINOCO_OLLAMA_API", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.environ.get("AI_MODEL", "qwen2.5:1.5b")
+STATIC_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(
     title="Orinoco",
@@ -23,15 +23,13 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/", include_in_schema=False)
-async def index() -> dict[str, str]:
-    return {
-        "name": "Orinoco",
-        "status": "starting",
-        "message": "The Orinoco application foundation is running.",
-    }
+async def index() -> FileResponse:
+    """Serve the custom Orinoco web interface."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/healthz", include_in_schema=False)
