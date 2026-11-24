@@ -11,6 +11,7 @@ SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".xlsx", ".pptx"}
 
 
 def extract_text(filename: str, data: bytes) -> str:
+    """Validate an uploaded file and extract bounded UTF-8 text for document search."""
     extension = Path(filename).suffix.lower()
     if extension not in SUPPORTED_EXTENSIONS:
         raise ValueError("Supported file types are TXT, Markdown, PDF, DOCX, XLSX and PPTX.")
@@ -38,6 +39,7 @@ def extract_text(filename: str, data: bytes) -> str:
 
 
 def _extract_pdf(data: bytes) -> str:
+    """Extract text from a non-encrypted PDF within the page limit."""
     from pypdf import PdfReader
 
     try:
@@ -54,6 +56,7 @@ def _extract_pdf(data: bytes) -> str:
 
 
 def _extract_docx(data: bytes) -> str:
+    """Extract paragraph and table text from a DOCX document."""
     from docx import Document
 
     try:
@@ -68,6 +71,7 @@ def _extract_docx(data: bytes) -> str:
 
 
 def _extract_xlsx(data: bytes) -> str:
+    """Extract bounded cell values from workbook sheets without loading them all into memory."""
     from openpyxl import load_workbook
 
     try:
@@ -93,6 +97,7 @@ def _extract_xlsx(data: bytes) -> str:
 
 
 def _extract_pptx(data: bytes) -> str:
+    """Extract text from presentation shapes while enforcing the slide limit."""
     from pptx import Presentation
 
     try:
