@@ -35,7 +35,7 @@ from orinoco.db import (
     save_exchange,
     search_documents,
 )
-from orinoco.llm.ollama import OllamaClient, OllamaError
+from orinoco.llm.ollama import OllamaClient, OllamaContextError, OllamaError
 from orinoco.llm.runtime import generation_capacity, generation_lock
 from orinoco.research.searxng import SearchUnavailable, SearXNGClient
 
@@ -487,6 +487,11 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
                 # an otherwise successful assistant reply. Keep details in logs.
                 logger.exception("Automatic memory saving failed for user ID %s.", user.id)
                 saved_memories = []
+        except OllamaContextError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(exc),
+            ) from exc
         except OllamaError as exc:
             raise HTTPException(
                 status_code=503,
