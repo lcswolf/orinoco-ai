@@ -102,6 +102,7 @@ The repository is organised by responsibility so that features can grow without 
 | `orinoco/llm/` | Local Ollama HTTP client |
 | `orinoco/research/` | SearXNG search client and SSRF-resistant public webpage fetching |
 | `orinoco/backups.py` | Encrypted backup, restore and S3-compatible upload CLI |
+| `orinoco/updates.py` | Verified pre-update backup and backup-gated SQLite migration CLI |
 | `orinoco/db.py` | SQLite schema and account-scoped persistence operations |
 | `orinoco/static/` | Browser interface (HTML, CSS and JavaScript) |
 | `docker/` | Image definition, Pterodactyl entrypoint and supervised service startup |
