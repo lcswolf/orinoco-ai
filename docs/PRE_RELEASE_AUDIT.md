@@ -96,6 +96,10 @@ The runtime now installs the operating-system timezone database so the configure
 
 The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 134 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
 
+### Dependency vulnerability audit — corrected
+
+The new pip-audit CI step found seven advisories affecting the resolved `cryptography 46.0.7` package, which the old version range still allowed. The minimum was raised to the patched `50.0.2` release line. A subsequent CI dependency audit reported no known vulnerabilities. Weekly Dependabot updates now monitor Python packages and GitHub Actions.
+
 ### Daily encrypted backup scheduling — implemented
 
 A dedicated Supervisor-managed process runs one backup per local calendar day (03:00 by default in the configured timezone). It creates an encrypted local backup, optionally uploads and byte-verifies it to the configured S3-compatible bucket, and prunes expired local backups only after the complete backup cycle succeeds. The default local retention is 14 days and is configurable from 1 to 365. Failures are written to the Pterodactyl console and a private status JSON file. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding.
@@ -129,7 +133,7 @@ The README, architecture, Egg and development guide now distinguish implemented 
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
 - [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
-- [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.\n- [ ] Confirm the new pip-audit CI job is clean; review dependency versions and build reproducibility.
+- [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.\n- [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.\n- [ ] Continue reviewing dependency updates and build reproducibility.
 - [ ] Run the final complete test suite and dependency audit; build and smoke-test the same release commit, including the backup scheduler process.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
