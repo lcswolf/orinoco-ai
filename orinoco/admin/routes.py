@@ -85,7 +85,6 @@ async def get_users(request: Request) -> dict[str, object]:
 
 @router.post("/users", status_code=status.HTTP_201_CREATED)
 async def add_user(
-    """Create a standard account after administrator and CSRF checks."""
     payload: CreateUserRequest,
     request: Request,
 ) -> dict[str, object]:
@@ -106,7 +105,6 @@ async def add_user(
 
 @router.patch("/users/{user_id}")
 async def update_user_status(
-    """Suspend or reactivate another account without allowing self-lockout."""
     user_id: int,
     payload: UserStatusRequest,
     request: Request,
