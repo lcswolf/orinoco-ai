@@ -7,8 +7,10 @@ import hmac
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 
-from orinoco.db import User, get_database_path, get_user_by_id, initialise_database
-from orinoco.memory.store import add_memory, delete_memory, list_memories, update_memory
+from orinoco.db import (
+    User, create_memory, delete_memory, get_database_path, get_user_by_id,
+    initialise_database, list_memories, update_memory,
+)
 
 router = APIRouter(prefix="/api/memories", tags=["memories"])
 
@@ -47,7 +49,7 @@ def _current_user(request: Request) -> User:
 @router.get("")
 async def get_memories(request: Request) -> dict[str, object]:
     user = _current_user(request)
-    return {"memories": list_memories(user.id)}
+    return {"memories": list_memories(user.id, database_path=get_database_path())}
 
 
 @router.post("", status_code=201)
@@ -55,7 +57,8 @@ async def add_memory_route(payload: MemoryRequest, request: Request) -> dict[str
     _require_csrf(request)
     user = _current_user(request)
     try:
-        memory = add_memory(user.id, payload.content)
+        memory_id = create_memory(user.id, payload.content, database_path=get_database_path())
+        memory = next(item for item in list_memories(user.id, database_path=get_database_path()) if item["id"] == memory_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"id": memory["id"], "content": memory["content"], "source": "manual"}
@@ -66,7 +69,7 @@ async def edit_memory(memory_id: int, payload: MemoryRequest, request: Request) 
     _require_csrf(request)
     user = _current_user(request)
     try:
-        updated = update_memory(user.id, memory_id, payload.content)
+        updated = update_memory(user.id, memory_id, payload.content, database_path=get_database_path())
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     if not updated:
@@ -78,6 +81,6 @@ async def edit_memory(memory_id: int, payload: MemoryRequest, request: Request) 
 async def remove_memory(memory_id: int, request: Request) -> dict[str, bool]:
     _require_csrf(request)
     user = _current_user(request)
-    if not delete_memory(user.id, memory_id):
+    if not delete_memory(user.id, memory_id, database_path=get_database_path()):
         raise HTTPException(status_code=404, detail="Memory not found.")
     return {"deleted": True}
