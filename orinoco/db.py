@@ -104,7 +104,23 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation "
             "ON messages(conversation_id, id)"
         )
-        connection.execute("PRAGMA user_version = 2")
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS memories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                content TEXT NOT NULL,
+                source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'automatic')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_memories_user_updated "
+            "ON memories(user_id, updated_at DESC)"
+        )
+        connection.execute("PRAGMA user_version = 3")
     try:
         database_path.chmod(0o600)
     except OSError:
