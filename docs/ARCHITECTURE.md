@@ -97,7 +97,9 @@ The repository is organised by responsibility so that features can grow without 
 | `orinoco/memories/` | Authenticated personal-memory API |
 | `orinoco/memory/store.py` | Compatibility helpers backed by the shared database layer |
 | `orinoco/documents/` | Upload validation, bounded Office archive checks, text extraction, private/shared routes and file storage |
-| `orinoco/llm/` | Local Ollama HTTP client |\n| `orinoco/research/` | SearXNG search client and SSRF-resistant public webpage fetching |\n| `orinoco/backups.py` | Encrypted backup, restore and S3-compatible upload CLI |
+| `orinoco/llm/` | Local Ollama HTTP client |
+| `orinoco/research/` | SearXNG search client and SSRF-resistant public webpage fetching |
+| `orinoco/backups.py` | Encrypted backup, restore and S3-compatible upload CLI |
 | `orinoco/db.py` | SQLite schema and account-scoped persistence operations |
 | `orinoco/static/` | Browser interface (HTML, CSS and JavaScript) |
 | `docker/` | Image definition, Pterodactyl entrypoint and supervised service startup |
