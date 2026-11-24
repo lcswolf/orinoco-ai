@@ -28,7 +28,7 @@ Orinoco aims to provide a friendly, private assistant that can be hosted on a mo
 
 ## Planned deployment
 
-The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 2.x (latest stable) managing Orinoco through a custom Egg and Docker image. The container foundation includes a pinned Ollama CPU runtime, a supervisor, first-run model download and separate liveness/readiness checks.
+The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 1.13.0 (stable 1.x release line) managing Orinoco through a custom Egg and Docker image. The container foundation includes a pinned Ollama CPU runtime, a supervisor, first-run model download and separate liveness/readiness checks.
 
 ## Repository status
 
