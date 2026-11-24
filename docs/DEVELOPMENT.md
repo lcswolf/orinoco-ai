@@ -93,3 +93,17 @@ supervisord -n -c /opt/orinoco/docker/supervisord.conf
 - The Pterodactyl Egg and container image are preview/development artefacts and have not been deployed to the user's Panel.
 
 Do not expose this development scaffold as a public assistant service.
+
+## Code documentation conventions
+
+Keep the code understandable for a future maintainer who did not make the original change:
+
+- Give each Python module a short module docstring explaining its responsibility.
+- Add docstrings to public functions, classes, API handlers and non-obvious helpers. Describe purpose, ownership boundaries, important side effects and failure behaviour where relevant.
+- Explain security-sensitive decisions next to the code: account ownership checks, CSRF/session handling, path validation, untrusted retrieved content and secret handling.
+- Comment the reason for non-obvious limits, compatibility workarounds and operational defaults. Prefer explaining *why* over restating *what* the next line does.
+- Add short section comments to larger frontend scripts and shell entrypoints so their responsibilities are easy to locate.
+- Keep comments accurate when behaviour changes. Remove obsolete comments rather than allowing them to become misleading.
+- Do not comment every obvious assignment or duplicate the code in prose. Tests should explain expected behaviour through clear test names and focused assertions.
+
+When adding a feature, update the relevant architecture/development documentation and tests in the same change. Configuration variables should be documented with their defaults, accepted values and whether they affect persistent data or security.
