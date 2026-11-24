@@ -31,6 +31,8 @@ from orinoco.documents.storage import get_document_root
 
 MAGIC = b"ORINOCO-BACKUP-1\n"
 CHUNK_SIZE = 1024 * 1024
+MAX_ARCHIVE_FILES = 100_000
+MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
 DEFAULT_BACKUP_ROOT = Path("/home/container/backups")
 DEFAULT_SECRET_PATH = Path("/home/container/data/.session_secret")
 ALLOWED_FILES = {"database.sqlite3", "manifest.json", "session_secret"}
@@ -147,6 +149,10 @@ def _build_archive(staging: Path, archive: Path) -> dict[str, object]:
     if document_root.exists():
         if document_root.is_symlink():
             raise BackupError("Document storage must not be a symbolic link.")
+        # Reject links before copytree so a link cannot make the backup include
+        # files from outside Orinoco's private document directory.
+        if any(item.is_symlink() for item in document_root.rglob("*")):
+            raise BackupError("Document storage contains a symbolic link.")
         target_documents = staging / "documents"
         shutil.copytree(document_root, target_documents, symlinks=False)
         document_count = sum(1 for item in target_documents.rglob("*") if item.is_file())
@@ -210,8 +216,14 @@ def create_backup(destination: Path | None = None) -> Path:
 def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
     """Validate every archive member and extract only regular, expected files."""
     seen: set[str] = set()
+    total_bytes = 0
     with tarfile.open(archive, "r:gz") as tar:
         for member in tar:
+            if len(seen) >= MAX_ARCHIVE_FILES:
+                raise BackupError("Backup contains too many archive entries.")
+            total_bytes += max(0, member.size)
+            if total_bytes > MAX_ARCHIVE_BYTES:
+                raise BackupError("Backup expands beyond the 2 GiB safety limit.")
             path = PurePosixPath(member.name)
             if path.is_absolute() or ".." in path.parts or not path.parts:
                 raise BackupError("Backup contains an unsafe file path.")
@@ -241,7 +253,7 @@ def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
     if not required.issubset(seen):
         raise BackupError("Backup is missing required database or manifest files.")
     manifest = json.loads((extraction_root / "manifest.json").read_text(encoding="utf-8"))
-    if manifest.get("format") != "orinoco-backup-v1":
+    if not isinstance(manifest, dict) or manifest.get("format") != "orinoco-backup-v1":
         raise BackupError("Backup manifest version is not supported.")
     return manifest
 
