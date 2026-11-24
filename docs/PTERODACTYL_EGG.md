@@ -14,7 +14,7 @@ This Egg targets the legacy Pterodactyl 1.x import format and is intended for Pa
 - `docker/web-start.sh` — starts the web app on the primary Pterodactyl allocation.
 - `orinoco/backups.py` — encrypted backup, restore and S3-compatible upload commands.
 
-The planned image name is `ghcr.io/lcswolf/orinoco-ai:stable`.
+The planned image name is `ghcr.io/lcswolf/orinoco-ai:stable`. See [Updating and Rollback](UPDATING.md) for the one-shot Pterodactyl startup-command procedure for manual backups and restore.
 
 ## Runtime layout
 
