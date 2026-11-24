@@ -354,3 +354,33 @@ def test_memory_persistence_failure_does_not_discard_successful_chat_reply(tmp_p
     assert response.json()["assistant_message"] == "Hello from Orinoco."
     assert len(conversations) == 1
     assert conversations[0]["message_count"] == 2
+
+
+def test_conversation_delete_requires_csrf_and_removes_owned_history(tmp_path, monkeypatch) -> None:
+    """The delete endpoint is CSRF-protected and removes only the signed-in user's chat."""
+    database = tmp_path / "delete-chat.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("deleteowner", "a-long-test-password-123", database_path=database)
+    monkeypatch.setattr(chat_routes, "OllamaClient", FakeOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "deleteowner", "a-long-test-password-123")
+        token = csrf(client)
+        created = client.post(
+            "/api/conversations",
+            headers={"X-CSRF-Token": token},
+            json={"title": "Delete me"},
+        )
+        conversation_id = created.json()["id"]
+        without_csrf = client.delete(f"/api/conversations/{conversation_id}")
+        deleted = client.delete(
+            f"/api/conversations/{conversation_id}",
+            headers={"X-CSRF-Token": token},
+        )
+        detail = client.get(f"/api/conversations/{conversation_id}")
+
+    assert without_csrf.status_code == 403
+    assert deleted.status_code == 200
+    assert deleted.json() == {"deleted": True}
+    assert detail.status_code == 404
