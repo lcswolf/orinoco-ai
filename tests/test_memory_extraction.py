@@ -33,3 +33,10 @@ def test_memory_extractor_rejects_common_sensitive_categories() -> None:
     raw = '["User has type 2 diabetes.", "User is Christian.", "User supports the Labour Party.", "User enjoys hiking."]'
 
     assert extract_memory_candidates(raw) == ["User enjoys hiking."]
+
+
+def test_memory_extractor_rejects_more_indirect_sensitive_personal_facts() -> None:
+    """Avoid storing health, faith, voting, identity-number and birth-date facts even when phrased casually."""
+    raw = '["I broke my arm last year.", "I attend church every Sunday.", "I voted Labour.", "My National Insurance number is AB123456C.", "My birthday is 12 March.", "I enjoy hiking."]'
+
+    assert extract_memory_candidates(raw) == ["I enjoy hiking."]
