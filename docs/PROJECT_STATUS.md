@@ -25,7 +25,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed all 80 tests, including SearXNG search, SSRF protections and local webpage summarisation. The container image build and runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed 81 tests. The custom container image built and passed its runtime smoke test in GitHub Actions. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -49,7 +49,7 @@ The latest completed GitHub Actions Python test run passed all 80 tests, includi
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
-- Backup, restore, update and rollback tooling.
+- Encrypted local backup creation, verification and confirmed restore CLI; off-site transfer, scheduling, update and rollback remain outstanding.
 - Production security review, MFA, account recovery and server-side session revocation across all devices.
 
 ## Next implementation sequence
@@ -57,7 +57,7 @@ The latest completed GitHub Actions Python test run passed all 80 tests, includi
 1. Finish the container image build and runtime smoke test.
 2. Add safe URL opening and summarisation, with strict SSRF protections.
 3. Add optional search-result context to chat.
-4. Add backups, restore and update/rollback tooling.
+4. Complete off-site backup transfer and scheduling, then add safe update/rollback tooling.
 5. Add Discord text integration; consider voice only after the core is stable.
 6. Publish the stable image and import/test the finished Egg on the user's Panel.
 
