@@ -48,6 +48,7 @@ class OllamaClient:
         )
 
     async def chat(self, messages: Sequence[dict[str, str]]) -> str:
+        """Validate and send chat messages to the local Ollama API."""
         if not messages:
             raise ValueError("at least one message is required")
 
@@ -91,4 +92,5 @@ class OllamaClient:
         return content
 
     async def aclose(self) -> None:
+        """Release the HTTP client and its pooled connections."""
         await self._client.aclose()
