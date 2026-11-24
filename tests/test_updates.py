@@ -103,3 +103,31 @@ def test_update_cli_emits_json_and_returns_success(monkeypatch, capsys) -> None:
     assert updates.main(["prepare"]) == 0
     output = json.loads(capsys.readouterr().out)
     assert output["verified"] is True
+
+
+def test_migration_rejects_foreign_key_inconsistency_after_schema_changes(tmp_path, monkeypatch) -> None:
+    """The migration command must not report success with orphaned application rows."""
+    database = tmp_path / "orinoco.sqlite3"
+    initialise_database(database)
+    backup = tmp_path / "before.oribak"
+    backup.write_bytes(b"placeholder encrypted archive")
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setattr(updates, "verify_backup", lambda path: {"verified": True})
+    real_initialise = updates.initialise_database
+
+    def initialise_with_orphan(database_path: Path) -> None:
+        real_initialise(database_path)
+        # Simulate a migration defect that bypasses SQLite's per-connection FK
+        # enforcement. The post-migration integrity check must still catch it.
+        with sqlite3.connect(database_path) as connection:
+            connection.execute(
+                """
+                INSERT INTO conversations (user_id, title, created_at, updated_at)
+                VALUES (999999, 'orphaned', '2026-11-24T00:00:00+00:00', '2026-11-24T00:00:00+00:00')
+                """
+            )
+
+    monkeypatch.setattr(updates, "initialise_database", initialise_with_orphan)
+
+    with pytest.raises(updates.UpdateError, match="foreign-key consistency errors"):
+        updates.migrate_database(backup_path=backup)
