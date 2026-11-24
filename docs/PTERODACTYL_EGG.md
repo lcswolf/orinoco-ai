@@ -1,8 +1,8 @@
-# Pterodactyl Egg (Panel 1.x)
+# Pterodactyl Egg (Panel 2.x)
 
 **Status: preview definition. Do not deploy yet.**
 
-This Egg targets the legacy Pterodactyl 1.x import format and is intended for Panel 1.13.0. It remains a preview because the expanded Orinoco runtime image is still being built and tested; it has not yet been published to GHCR or imported into a live Panel.
+This Egg is authored in the `PTDL_v1` JSON format and is intended for the user's existing Pterodactyl Panel 2.x installation. Import compatibility and runtime behaviour have not yet been validated on that Panel version. It remains a preview: the matching Orinoco image has not been published to GHCR or imported into a live Panel.
 
 ## Files
 
