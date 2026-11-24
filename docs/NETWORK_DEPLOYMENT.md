@@ -145,6 +145,8 @@ Example Caddyfile:
 ```caddyfile
 {
     email {$ACME_EMAIL}
+    # Some clients omit SNI when connecting to a literal IP address.
+    default_sni {$ORINOCO_PUBLIC_IPV4}
 }
 
 {$ORINOCO_DOMAIN} {
