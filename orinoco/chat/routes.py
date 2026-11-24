@@ -9,7 +9,8 @@ import re
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from orinoco.auth.sessions import get_session_userfrom pydantic import BaseModel, Field, field_validator
+from orinoco.auth.sessions import get_session_user
+from pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import (
     User,
