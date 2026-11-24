@@ -728,7 +728,7 @@ def search_documents(
     import re
 
     stop_words = {
-        "what", "does", "my", "the", "and", "for", "about", "tell", "me",
+        "what", "does", "my", "the", "and", "for", "about", "tell", "me", "say",
         "this", "that", "please", "can", "you", "is", "are", "in", "on",
         "of", "to", "a", "an", "it", "i", "we", "our", "your",
     }
@@ -756,8 +756,6 @@ def search_documents(
             ).fetchall()
 
         rows = run_search(" AND ".join(f'"{term}"' for term in terms))
-        if not rows and len(terms) > 1:
-            rows = run_search(" OR ".join(f'"{term}"' for term in terms))
 
     return [
         {
