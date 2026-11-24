@@ -89,3 +89,14 @@ def test_settings_and_memory_controls_exist_in_custom_interface() -> None:
     )
     for element_id in required_ids:
         assert element_id in response.text
+
+
+def test_browser_security_headers_are_applied_to_app_and_static_assets() -> None:
+    """Static UI and API responses should carry the same restrictive browser policy."""
+    for path in ("/", "/healthz", "/static/app.js"):
+        response = client.get(path)
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-frame-options"] == "DENY"
+        assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+        assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+        assert "script-src 'self'" in response.headers["content-security-policy"]
