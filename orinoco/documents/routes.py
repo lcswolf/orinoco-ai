@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import mimetypes
 from pathlib import Path
 
@@ -28,7 +30,7 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 def _require_csrf(request: Request) -> None:
     expected = request.session.get("csrf_token")
     supplied = request.headers.get("x-csrf-token")
-    if not isinstance(expected, str) or not isinstance(supplied, str) or not __import__("hmac").compare_digest(expected, supplied):
+    if not isinstance(expected, str) or not isinstance(supplied, str) or not hmac.compare_digest(expected, supplied):
         raise HTTPException(status_code=403, detail="Refresh the page and try again.")
 
 
@@ -79,7 +81,7 @@ async def _store_upload(file: UploadFile, *, user_id: int, scope: str) -> dict[s
             stored_path=stored_path,
             file_type=extension.lstrip("."),
             size_bytes=len(data),
-            sha256=__import__("hashlib").sha256(data).hexdigest(),
+            sha256=hashlib.sha256(data).hexdigest(),
             extracted_text=extracted,
             database_path=database_path,
         )
