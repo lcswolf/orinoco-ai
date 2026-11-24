@@ -738,21 +738,27 @@ def search_documents(
     ][:8]
     if not terms:
         return []
-    match_query = " AND ".join(f'"{term}"' for term in terms)
+
     with _database(database_path) as connection:
-        rows = connection.execute(
-            """
-            SELECT d.id, d.original_name,
-                   snippet(documents_fts, 1, '', '', ' … ', 18) AS excerpt
-            FROM documents_fts
-            JOIN documents d ON d.id = documents_fts.rowid
-            WHERE documents_fts MATCH ?
-              AND (d.scope = 'shared' OR d.owner_user_id = ?)
-            ORDER BY rank
-            LIMIT ?
-            """,
-            (match_query, user_id, max(1, min(limit, 5))),
-        ).fetchall()
+        def run_search(match_query: str):
+            return connection.execute(
+                """
+                SELECT d.id, d.original_name,
+                       snippet(documents_fts, 1, '', '', ' … ', 18) AS excerpt
+                FROM documents_fts
+                JOIN documents d ON d.id = documents_fts.rowid
+                WHERE documents_fts MATCH ?
+                  AND (d.scope = 'shared' OR d.owner_user_id = ?)
+                ORDER BY rank
+                LIMIT ?
+                """,
+                (match_query, user_id, max(1, min(limit, 5))),
+            ).fetchall()
+
+        rows = run_search(" AND ".join(f'"{term}"' for term in terms))
+        if not rows and len(terms) > 1:
+            rows = run_search(" OR ".join(f'"{term}"' for term in terms))
+
     return [
         {
             "id": str(row["id"]),
@@ -761,7 +767,6 @@ def search_documents(
         }
         for row in rows
     ]
-
 
 def get_user_by_id(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
