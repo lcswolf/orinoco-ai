@@ -31,7 +31,7 @@ The image pins Ollama 0.40.18, disables Ollama cloud features and limits model c
 - Explicit web-search workspace using a configured SearXNG service.
 - Liveness endpoint `/healthz` and model readiness endpoint `/readyz`.
 
-Direct URL fetching/summarisation, Discord and voice are still under development. The SearXNG feature requires the administrator to configure `SEARXNG_URL` and enable `ENABLE_WEB_SEARCH`. Search queries are sent to that configured service and its upstream providers.
+User-triggered public webpage fetching and local summarisation are implemented with DNS-pinned public-IP resolution and redirect checks. Discord and voice are still under development. The SearXNG feature requires the administrator to configure `SEARXNG_URL` and enable `ENABLE_WEB_SEARCH`. Search queries are sent to that configured service and its upstream providers.
 
 ## Egg variables and security
 
