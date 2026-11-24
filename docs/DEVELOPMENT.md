@@ -70,6 +70,8 @@ other routes. The proxy limit is essential for chunked requests that omit
 `Content-Length`; the application middleware is defence in depth, not a
 replacement for edge enforcement.
 
+The chat route also reserves a bounded in-flight slot before building context. By default, one request can use the model while up to eight additional chat requests are admitted; further requests receive HTTP 503 with `Retry-After: 5` instead of waiting in an unbounded in-memory queue. Set `ORINOCO_MAX_PENDING_GENERATIONS` from 0 to 32 in the Egg to change the additional in-flight allowance. A value of 0 allows only one chat request at a time. This is process-local and is intended for the initial single-worker VPS; multiple workers need a shared queue/limiter.
+
 Chat submissions are limited to 10 per user per rolling minute by default; set
 `ORINOCO_CHAT_REQUESTS_PER_MINUTE` between 1 and 120 in the Egg to adjust this
 limit. The initial local inference queue remains serial. This in-process throttle
