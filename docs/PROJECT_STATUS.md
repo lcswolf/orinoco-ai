@@ -18,7 +18,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Administrator-managed shared document library, read-only to standard users.
 - Supported document formats: TXT, Markdown, PDF, DOCX, XLSX and PPTX, up to 10 MiB per file.
 - SQLite FTS5 keyword retrieval from the current user's private documents and authorised shared documents.
-- Explicit authenticated web-search workspace and SearXNG client, when an administrator configures and enables SearXNG.
+- Explicit authenticated web-search workspace and per-message opt-in web search in chat, using an administrator-configured SearXNG endpoint.
 - User-triggered public webpage summarisation using local Ollama, with DNS-pinned public-IP resolution, blocked private/local addresses, redirect validation and bounded response sizes.
 - Liveness endpoint /healthz and local-model readiness endpoint /readyz.
 - Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
@@ -44,7 +44,7 @@ The latest completed GitHub Actions Python test run passed 81 tests. The custom 
 
 ## Not implemented yet
 
-- Search results automatically incorporated into chat answers.
+- Off-site backup transfer, automatic backup scheduling and safe application update/rollback.
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Discord integration and voice features.
