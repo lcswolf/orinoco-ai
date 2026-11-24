@@ -83,3 +83,19 @@ def test_backup_key_is_private_and_blank_by_default() -> None:
     assert key["default_value"] == ""
     assert key["user_viewable"] is False
     assert key["user_editable"] is False
+
+
+def test_inactive_discord_and_voice_features_cannot_be_enabled_from_server_settings() -> None:
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variables = {item["env_variable"]: item for item in egg["variables"]}
+
+    assert variables["ENABLE_DISCORD"]["default_value"] == "false"
+    assert variables["ENABLE_DISCORD"]["user_editable"] is False
+    assert variables["ENABLE_VOICE"]["default_value"] == "false"
+    assert variables["ENABLE_VOICE"]["user_editable"] is False
+
+
+def test_container_installs_timezone_database_for_london_timezone() -> None:
+    dockerfile = (ROOT / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    assert "tzdata" in dockerfile
+    assert "TZ=Europe/London" in dockerfile
