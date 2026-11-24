@@ -39,7 +39,7 @@ def test_legacy_v1_database_is_upgraded_additively(tmp_path) -> None:
 
     assert version == CURRENT_SCHEMA_VERSION
     assert "session_version" in user_columns
-    assert {"users", "conversations", "messages", "memories", "documents", "documents_fts"} <= tables
+    assert {"users", "conversations", "messages", "memories", "documents", "documents_fts", "user_preferences", "assistant_persona"} <= tables
 
 
 def test_newer_database_schema_is_never_downgraded_or_modified(tmp_path) -> None:
