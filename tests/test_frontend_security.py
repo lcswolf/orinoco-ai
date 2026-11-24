@@ -78,3 +78,14 @@ def test_mobile_navigation_is_keyboard_accessible_and_not_inert() -> None:
     assert "focusable[focusable.length - 1]" in script
     assert ".sidebar.mobile-open" in css
     assert "a:focus-visible, button:focus-visible" in css
+
+
+def test_mobile_topbar_fits_narrow_screens_and_keeps_status_accessible() -> None:
+    """Compact mobile controls must retain accessible labels and status text."""
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    css = (ROOT / "orinoco" / "static" / "app.css").read_text(encoding="utf-8")
+
+    assert 'id="connection-status" role="status" aria-live="polite"' in html
+    assert "@media (max-width: 480px)" in css
+    assert ".delete-chat-action::before" in css
+    assert ".connection > span:last-child" in css
