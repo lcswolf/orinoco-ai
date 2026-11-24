@@ -16,17 +16,20 @@ router = APIRouter(prefix="/api/memories", tags=["memories"])
 
 
 class MemoryRequest(BaseModel):
+    """Validated memory text accepted by the personal-memory API."""
     content: str = Field(min_length=1, max_length=1000)
 
     @field_validator("content")
     @classmethod
     def content_must_not_be_blank(cls, value: str) -> str:
+        """Reject memory content that is empty after trimming whitespace."""
         if not value.strip():
             raise ValueError("memory must not be blank")
         return value
 
 
 def _require_csrf(request: Request) -> None:
+    """Require a valid CSRF token before changing personal memories."""
     expected = request.session.get("csrf_token")
     supplied = request.headers.get("x-csrf-token")
     if not isinstance(expected, str) or not isinstance(supplied, str) or not hmac.compare_digest(expected, supplied):
@@ -34,6 +37,7 @@ def _require_csrf(request: Request) -> None:
 
 
 def _current_user(request: Request) -> User:
+    """Resolve the active account from the signed request session."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         raise HTTPException(status_code=401, detail="Please sign in to continue.")
@@ -48,12 +52,14 @@ def _current_user(request: Request) -> User:
 
 @router.get("")
 async def get_memories(request: Request) -> dict[str, object]:
+    """List only personal memories belonging to the signed-in account."""
     user = _current_user(request)
     return {"memories": list_memories(user.id, database_path=get_database_path())}
 
 
 @router.post("", status_code=201)
 async def add_memory_route(payload: MemoryRequest, request: Request) -> dict[str, object]:
+    """Create a manual memory owned by the signed-in account."""
     _require_csrf(request)
     user = _current_user(request)
     try:
@@ -66,6 +72,7 @@ async def add_memory_route(payload: MemoryRequest, request: Request) -> dict[str
 
 @router.patch("/{memory_id}")
 async def edit_memory(memory_id: int, payload: MemoryRequest, request: Request) -> dict[str, bool]:
+    """Update a memory only when the signed-in account owns it."""
     _require_csrf(request)
     user = _current_user(request)
     try:
@@ -79,6 +86,7 @@ async def edit_memory(memory_id: int, payload: MemoryRequest, request: Request) 
 
 @router.delete("/{memory_id}")
 async def remove_memory(memory_id: int, request: Request) -> dict[str, bool]:
+    """Delete a memory only when the signed-in account owns it."""
     _require_csrf(request)
     user = _current_user(request)
     if not delete_memory(user.id, memory_id, database_path=get_database_path()):
