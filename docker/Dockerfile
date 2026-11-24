@@ -27,7 +27,9 @@ RUN useradd --create-home --home-dir /home/container --shell /usr/sbin/nologin c
 WORKDIR /opt/orinoco
 
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && /usr/local/bin/ollama --version \
+    && supervisord --version
 
 COPY orinoco ./orinoco
 COPY docker/entrypoint.py /usr/local/bin/orinoco-entrypoint
