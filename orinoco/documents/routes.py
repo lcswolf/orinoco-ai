@@ -23,7 +23,12 @@ from orinoco.db import (
     list_documents,
 )
 from orinoco.documents.extract import MAX_UPLOAD_BYTES, extract_text
-from orinoco.documents.storage import remove_document_file, resolve_document_path, store_document
+from orinoco.documents.storage import (
+    document_storage_lock,
+    remove_document_file,
+    resolve_document_path,
+    store_document,
+)
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 logger = logging.getLogger(__name__)
@@ -72,31 +77,33 @@ async def _store_upload(file: UploadFile, *, user_id: int, scope: str) -> dict[s
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     extension = Path(filename).suffix.lower()
-    stored_path = store_document(
-        data,
-        user_id=user_id if scope == "private" else None,
-        scope=scope,
-        extension=extension,
-    )
     database_path = get_database_path()
-    try:
-        document_id = create_document(
-            owner_user_id=user_id if scope == "private" else None,
+    # Keep the file write and metadata insert atomic relative to backups/deletes.
+    with document_storage_lock():
+        stored_path = store_document(
+            data,
+            user_id=user_id if scope == "private" else None,
             scope=scope,
-            original_name=filename,
-            stored_path=stored_path,
-            file_type=extension.lstrip("."),
-            size_bytes=len(data),
-            sha256=hashlib.sha256(data).hexdigest(),
-            extracted_text=extracted,
-            database_path=database_path,
+            extension=extension,
         )
-    except Exception:
         try:
-            remove_document_file(stored_path)
-        except (OSError, ValueError):
-            logger.exception("Could not clean up an unregistered document upload.")
-        raise
+            document_id = create_document(
+                owner_user_id=user_id if scope == "private" else None,
+                scope=scope,
+                original_name=filename,
+                stored_path=stored_path,
+                file_type=extension.lstrip("."),
+                size_bytes=len(data),
+                sha256=hashlib.sha256(data).hexdigest(),
+                extracted_text=extracted,
+                database_path=database_path,
+            )
+        except Exception:
+            try:
+                remove_document_file(stored_path)
+            except (OSError, ValueError):
+                logger.exception("Could not clean up an unregistered document upload.")
+            raise
     return {
         "id": document_id,
         "scope": scope,
