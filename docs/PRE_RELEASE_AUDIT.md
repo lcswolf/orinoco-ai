@@ -60,6 +60,10 @@ Several prompt-context separators had been double-escaped, causing the model to 
 
 The model-generated memory filter now uses word-boundary matching and covers additional common medical, financial, religious, political, sexual-orientation and criminal-history terms. This is a conservative keyword filter, not a guarantee that every sensitive fact can be recognised; the prompt, user review controls and privacy review remain important.
 
+### Static injection-pattern review — checked
+
+The current source scan found no use of `eval`, `shell=True`, `pickle.loads` or frontend `innerHTML`. The Pterodactyl entrypoint tokenises its startup command with `shlex.split` and replaces the process with `execvp`; it does not evaluate the command through a shell. Continue to review new code against the same rules.
+
 ### Browser security headers — added
 
 The application now sends a restrictive Content Security Policy, clickjacking protection, MIME sniffing protection, a conservative referrer policy, same-origin resource/opener policies and a Permissions Policy disabling unused camera/microphone/geolocation access. The current frontend uses DOM node creation and textContent for dynamic content rather than HTML string injection. Regression tests check the headers on application, API and static responses.
