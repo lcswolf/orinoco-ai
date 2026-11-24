@@ -19,6 +19,7 @@ class PreferencesRequest(BaseModel):
     voice: str = Field(pattern="^(bright|calm|professional)$")
     tone: str = Field(pattern="^(friendly|direct|playful)$")
     answer_detail: str = Field(pattern="^(concise|balanced|detailed)$")
+    auto_save_memories: bool | None = None
 
 
 def _require_csrf(request: Request) -> None:
@@ -34,7 +35,7 @@ def _require_csrf(request: Request) -> None:
 
 
 @router.get("")
-async def read_preferences(request: Request) -> dict[str, str]:
+async def read_preferences(request: Request) -> dict[str, object]:
     """Return only the signed-in user's own preference values."""
     user = get_session_user(request)
     return get_user_preferences(user.id, database_path=get_database_path())
@@ -44,16 +45,18 @@ async def read_preferences(request: Request) -> dict[str, str]:
 async def save_preferences(
     payload: PreferencesRequest,
     request: Request,
-) -> dict[str, str]:
+) -> dict[str, object]:
     """Update only the signed-in user's whitelisted response preferences."""
     _require_csrf(request)
     user = get_session_user(request)
     try:
+        current = get_user_preferences(user.id, database_path=get_database_path())
         return update_user_preferences(
             user.id,
             voice=payload.voice,
             tone=payload.tone,
             answer_detail=payload.answer_detail,
+            auto_save_memories=(current["auto_save_memories"] if payload.auto_save_memories is None else payload.auto_save_memories),
             database_path=get_database_path(),
         )
     except ValueError as exc:
