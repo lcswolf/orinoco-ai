@@ -113,8 +113,8 @@
       "description": "Administrator-configured SearXNG service endpoint used by the implemented web research feature. Leave blank to keep web search unavailable.",
       "env_variable": "SEARXNG_URL",
       "default_value": "",
-      "user_viewable": true,
-      "user_editable": true,
+      "user_viewable": false,
+      "user_editable": false,
       "rules": "nullable|string|max:512"
     },
     {
