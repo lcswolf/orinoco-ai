@@ -329,7 +329,7 @@ mobileConversations.addEventListener("change", () => {
 
 deleteChatButton.addEventListener("click", async () => {
   if (!currentConversationId || !currentUser || sendingMessage) return;
-  if (!window.confirm("Delete this conversation and all its messages? This cannot be undone.")) return;
+  if (!window.confirm("Delete this conversation and all its messages from Orinoco? Encrypted backups may retain previous copies until their retention expires.")) return;
   const conversationId = currentConversationId;
   deleteChatButton.disabled = true;
   try {
