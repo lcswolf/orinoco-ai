@@ -60,6 +60,32 @@ SEARXNG_URL=https://your-searxng.example
 
 Search queries are sent to that SearXNG instance and any upstream search providers it uses. Do not include private information in a web search. Users can also paste a public URL into the Research page for local summarisation. The fetcher pins DNS resolutions to public IP addresses, blocks private/local networks and non-standard ports, validates redirects, and limits downloaded content. Only public HTTP/HTTPS pages are supported.
 
+## Request and document storage limits
+
+The application rejects declared HTTP request bodies larger than
+`ORINOCO_MAX_REQUEST_BODY_BYTES` (12 MiB by default) before FastAPI parses
+them. Configure the reverse proxy as well: use an approximately 11 MiB request
+body limit for the document-upload route and enforce a global limit for all
+other routes. The proxy limit is essential for chunked requests that omit
+`Content-Length`; the application middleware is defence in depth, not a
+replacement for edge enforcement.
+
+Individual document uploads are limited to 10 MiB. Private libraries default
+to 20 files and 50 MiB combined per account. The administrator-managed shared
+library defaults to 50 files and 200 MiB combined. The Egg exposes these
+settings as `ORINOCO_USER_DOCUMENT_QUOTA_FILES`,
+`ORINOCO_USER_DOCUMENT_QUOTA_BYTES`,
+`ORINOCO_SHARED_DOCUMENT_QUOTA_FILES`, and
+`ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES`. Byte values are integers. Keep
+individual upload size and total library quotas aligned with the VPS's actual
+persistent-storage allowance; increasing a quota does not increase disk space.
+
+Quota checks are applied while holding the document-storage lock, preventing
+concurrent uploads within the single application process from consuming the
+same remaining allowance. If Orinoco is later deployed with multiple web
+workers or replicas, move quota reservation into a single atomic database
+transaction before increasing worker count.
+
 ## Encrypted backups and recovery
 
 The backup CLI creates an AES-256-GCM encrypted `.oribak` file. It includes a
