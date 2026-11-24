@@ -80,7 +80,7 @@ The README and development guide now distinguish implemented encrypted backup op
 
 - [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.\n- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
-- [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.\n- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases.
+- [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.\n- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.\n- [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
