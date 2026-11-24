@@ -14,7 +14,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Ollama's official installer needs curl and zstd at build time. They are
 # removed afterwards; the CPU-only runtime uses the host's CPU and RAM.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl zstd \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl zstd tzdata \
     && curl -fsSL -o /tmp/ollama-install.sh https://ollama.com/install.sh \
     && OLLAMA_VERSION="${OLLAMA_VERSION}" sh /tmp/ollama-install.sh \
     && rm -f /tmp/ollama-install.sh \
