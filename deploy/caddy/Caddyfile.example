@@ -1,0 +1,29 @@
+{
+    # ACME account contact address for certificate lifecycle notices.
+    email {$ACME_EMAIL}
+
+    # Some clients omit SNI when connecting to a literal IP address.
+    default_sni {$ORINOCO_PUBLIC_IPV4}
+}
+
+# Public subdomain. Use a DNS-only A record for the initial deployment.
+{$ORINOCO_DOMAIN} {
+    reverse_proxy 127.0.0.1:8081 {
+        # Replace any client-supplied forwarding value with the real peer.
+        header_up X-Forwarded-For {remote_host}
+    }
+}
+
+# Public HTTPS by IP and port. Requires Caddy 2.11+ and Let's Encrypt's
+# shortlived ACME profile for the 160-hour IP-address certificate.
+https://{$ORINOCO_PUBLIC_IPV4}:8443 {
+    tls {
+        issuer acme {
+            profile shortlived
+        }
+    }
+
+    reverse_proxy 127.0.0.1:8081 {
+        header_up X-Forwarded-For {remote_host}
+    }
+}
