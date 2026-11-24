@@ -225,3 +225,28 @@ def test_remote_backup_upload_rejects_symlink_source(tmp_path, monkeypatch) -> N
     monkeypatch.setenv("ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY", "test-secret")
     with pytest.raises(backups.BackupError, match="symbolic link"):
         backups.upload_backup(link)
+
+
+def test_failed_restore_rolls_back_session_secret(tmp_path, monkeypatch) -> None:
+    """A late restore failure must not leave the previous session secret replaced."""
+    from pathlib import Path
+
+    database, documents, _ = configure_backup_paths(monkeypatch, tmp_path)
+    backup = backups.create_backup()
+    secret_path = tmp_path / "data" / ".session_secret"
+    secret_path.write_text("current-session-secret-that-must-survive-rollback", encoding="utf-8")
+    original_chmod = Path.chmod
+
+    def fail_live_secret_chmod(path, mode, *args, **kwargs):
+        if path == secret_path:
+            raise OSError("simulated session secret permission failure")
+        return original_chmod(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "chmod", fail_live_secret_chmod)
+    with pytest.raises(OSError, match="simulated session secret"):
+        backups.restore_backup(backup, confirm=True)
+
+    assert secret_path.read_text(encoding="utf-8") == "current-session-secret-that-must-survive-rollback"
+    assert (documents / "private" / "note.txt").read_text(encoding="utf-8") == "private backup content"
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("SELECT username FROM users").fetchone()[0] == "backup-user"
