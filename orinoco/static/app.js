@@ -37,6 +37,79 @@ let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
 
+// Mobile navigation is a keyboard-accessible drawer; the desktop sidebar stays in normal flow.
+const mobileBrand = document.querySelector(".mobile-brand");
+const sidebar = document.getElementById("sidebar");
+const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+const mobileNavQuery = window.matchMedia("(max-width: 720px)");
+
+function syncMobileNavigation() {
+  const mobile = mobileNavQuery.matches;
+  const open = mobile && sidebar.classList.contains("mobile-open");
+  sidebar.inert = mobile && !open;
+  if (mobile) sidebar.setAttribute("aria-hidden", String(!open));
+  else sidebar.removeAttribute("aria-hidden");
+  sidebarBackdrop.hidden = !open;
+  mobileBrand.setAttribute("aria-expanded", String(open));
+}
+
+function closeMobileNavigation(restoreFocus = true) {
+  sidebar.classList.remove("mobile-open");
+  syncMobileNavigation();
+  if (restoreFocus && mobileNavQuery.matches) mobileBrand.focus();
+}
+
+function openMobileNavigation() {
+  if (!mobileNavQuery.matches) return;
+  sidebar.classList.add("mobile-open");
+  syncMobileNavigation();
+  sidebar.querySelector(".nav-link")?.focus();
+}
+
+mobileBrand.addEventListener("click", () => {
+  if (sidebar.classList.contains("mobile-open")) closeMobileNavigation();
+  else openMobileNavigation();
+});
+sidebarBackdrop.addEventListener("click", () => closeMobileNavigation());
+sidebar.querySelectorAll(".nav-link").forEach((link) => {
+  link.addEventListener("click", () => closeMobileNavigation());
+});
+sidebar.addEventListener("click", (event) => {
+  if (event.target.closest("#new-chat, #conversation-list button")) closeMobileNavigation();
+});
+document.addEventListener("keydown", (event) => {
+  if (!mobileNavQuery.matches || !sidebar.classList.contains("mobile-open")) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeMobileNavigation();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = Array.from(sidebar.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+  ));
+  if (!focusable.length) {
+    event.preventDefault();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+if (typeof mobileNavQuery.addEventListener === "function") {
+  mobileNavQuery.addEventListener("change", syncMobileNavigation);
+} else {
+  mobileNavQuery.addListener(syncMobileNavigation);
+}
+syncMobileNavigation();
+
+
 // Keep destructive chat controls disabled unless an owned conversation is selected.
 function syncDeleteChatButton() {
   deleteChatButton.disabled = !currentUser || !currentConversationId || sendingMessage;
