@@ -47,6 +47,7 @@ async def upload_shared_document(
     request: Request,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
+    """Validate, extract and store a document in the shared read-only library."""
     _require_csrf(request)
     admin = _require_admin(request)
     return {"document": await _store_upload(file, user_id=admin.id, scope="shared")}
