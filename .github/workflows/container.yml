@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Orinoco container image
+    name: Build and smoke-test Orinoco container image
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -41,4 +41,47 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: false
+          load: true
           tags: orinoco-ai:ci
+
+      - name: Start container and verify services
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup() {
+            docker logs orinoco-smoke || true
+            docker rm -f orinoco-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker run --detach \
+            --name orinoco-smoke \
+            --publish 8080:8080 \
+            --env 'STARTUP=supervisord -n -c /opt/orinoco/docker/supervisord.conf' \
+            --env SERVER_PORT=8080 \
+            --env AUTO_DOWNLOAD_MODEL=false \
+            --env AI_MODEL=qwen2.5:1.5b \
+            --env MODEL_CONTEXT=2048 \
+            --env AI_CONCURRENCY=1 \
+            orinoco-ai:ci
+
+          ready=false
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:8080/healthz >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$ready" != true ]; then
+            echo "Orinoco web health endpoint did not become available."
+            exit 1
+          fi
+
+          docker exec orinoco-smoke python -c \
+            "import urllib.request; urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=5).read()"
+
+          ready_code=$(curl --silent --output /tmp/orinoco-ready.json --write-out "%{http_code}" http://127.0.0.1:8080/readyz)
+          test "$ready_code" = "503"
+          grep -q "model_missing" /tmp/orinoco-ready.json
