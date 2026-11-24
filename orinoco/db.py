@@ -27,6 +27,21 @@ _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
 CURRENT_SCHEMA_VERSION = 7
 
 
+class MemoryLimitExceeded(ValueError):
+    """Raised when an account reaches its configured personal-memory allowance."""
+
+
+def _max_memories_per_user() -> int:
+    """Read the administrator-configured memory count limit for one account."""
+    try:
+        maximum = int(os.environ.get("ORINOCO_MAX_MEMORIES_PER_USER", "100"))
+    except ValueError as exc:
+        raise RuntimeError("ORINOCO_MAX_MEMORIES_PER_USER must be an integer.") from exc
+    if not 1 <= maximum <= 1000:
+        raise RuntimeError("ORINOCO_MAX_MEMORIES_PER_USER must be between 1 and 1000.")
+    return maximum
+
+
 @dataclass(frozen=True)
 class User:
     """Represents the public account fields returned by persistence operations; password hashes are never included."""
@@ -753,13 +768,29 @@ def create_memory(
         raise ValueError("memory source must be manual or automatic")
     now = datetime.now(UTC).isoformat()
     with _database(database_path) as connection:
+        # Keep the count check and insert in one SQL statement so concurrent
+        # requests cannot both consume the final memory slot.
         cursor = connection.execute(
             """
             INSERT INTO memories (user_id, content, source, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            SELECT ?, ?, ?, ?, ?
+            WHERE (SELECT COUNT(*) FROM memories WHERE user_id = ?) < ?
             """,
-            (user_id, cleaned, source, now, now),
+            (
+                user_id,
+                cleaned,
+                source,
+                now,
+                now,
+                user_id,
+                _max_memories_per_user(),
+            ),
         )
+        if cursor.rowcount != 1:
+            raise MemoryLimitExceeded(
+                "This account has reached its personal-memory limit. "
+                "Delete an older memory before adding another."
+            )
         return int(cursor.lastrowid)
 
 
