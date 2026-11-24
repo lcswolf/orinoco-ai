@@ -71,9 +71,9 @@ def _document_quota(scope: str) -> tuple[int, int]:
         max_files = int(os.environ.get(file_name, str(default_files)))
     except ValueError as exc:
         raise RuntimeError(f"{byte_name} and {file_name} must be positive integers.") from exc
-    if max_bytes < MAX_UPLOAD_BYTES or max_files < 1:
+    if max_bytes < 1 or max_files < 1:
         raise RuntimeError(
-            f"{byte_name} must be at least {MAX_UPLOAD_BYTES} and {file_name} must be at least 1."
+            f"{byte_name} and {file_name} must be positive integers."
         )
     return max_bytes, max_files
 
