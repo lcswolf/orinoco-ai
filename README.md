@@ -2,7 +2,7 @@
 
 A self-hosted personal AI assistant with local inference, persistent memory, Discord integration and web research.
 
-> **Project status: early implementation.** The custom interface and local runtime foundations are being built; Orinoco is not yet a usable assistant.
+> **Project status: early implementation.** The custom interface, local model runtime and first authentication milestone are in place; Orinoco is not yet a complete assistant.
 
 ## Project goals
 
@@ -12,7 +12,7 @@ Planned capabilities include:
 
 - A custom Orinoco web interface, built for this project rather than based on Open WebUI.
 - Local model inference through Ollama, without relying on external AI inference APIs.
-- A private web interface with administrator and standard-user accounts.
+- Private administrator and standard-user accounts.
 - Per-user chat history and personal memories, with controls to review, correct and delete memories.
 - Private user documents and an administrator-managed shared knowledge library.
 - Optional web research and summaries of user-provided URLs, with source links.
@@ -34,7 +34,9 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 ## Repository status
 
-The repository includes a custom responsive interface shell, FastAPI liveness/readiness endpoints, tests, a supervised Ollama runtime and a **preview Pterodactyl 1.x Egg**. The interface can report whether the selected local model is available, but authenticated chat, user accounts, a database, memories, Discord and search are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
+The repository includes a custom responsive interface, sign-in dialog, CSRF-protected login/logout API, signed secure sessions, SQLite account storage, Argon2 password hashing, a local administrator bootstrap command, FastAPI liveness/readiness endpoints, tests and a supervised Ollama runtime.
+
+Authenticated chat, conversation history, user-management screens, memories, documents, Discord and search are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
 See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
