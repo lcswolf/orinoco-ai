@@ -259,7 +259,7 @@
       "default_value": "12582912",
       "user_viewable": true,
       "user_editable": false,
-      "rules": "required|integer|min:1"
+      "rules": "required|integer|min:1024"
     },
     {
       "name": "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
