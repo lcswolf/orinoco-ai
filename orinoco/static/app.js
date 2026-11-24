@@ -47,6 +47,7 @@ const mobileNavQuery = window.matchMedia("(max-width: 720px)");
 
 function syncMobileNavigation() {
   const mobile = mobileNavQuery.matches;
+  if (!mobile) sidebar.classList.remove("mobile-open");
   const open = mobile && sidebar.classList.contains("mobile-open");
   sidebar.inert = mobile && !open;
   mainPanel.inert = open;
