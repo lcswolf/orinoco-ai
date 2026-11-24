@@ -293,3 +293,73 @@ def test_s3_sdk_failure_is_reported_as_backup_error(tmp_path, monkeypatch) -> No
     monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=lambda *args, **kwargs: fake_s3))
     with pytest.raises(backups.BackupError, match="upload or remote verification failed"):
         backups.upload_backup(backup)
+
+
+@pytest.mark.parametrize(
+    "member_name",
+    [
+        "../escape.txt",
+        "documents/../../escape.txt",
+        "C:/escape.txt",
+        "documents\\\\windows-path.txt",
+    ],
+)
+def test_backup_verification_rejects_unsafe_archive_paths(
+    tmp_path, monkeypatch, member_name: str
+) -> None:
+    """Reject traversal and cross-platform path tricks before archive extraction."""
+    import io
+    import tarfile
+
+    configure_backup_paths(monkeypatch, tmp_path)
+    archive = tmp_path / "unsafe.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        payload = b"must not be extracted"
+        member = tarfile.TarInfo(member_name)
+        member.size = len(payload)
+        tar.addfile(member, io.BytesIO(payload))
+
+    encrypted = tmp_path / "unsafe.oribak"
+    backups._encrypt_file(archive, encrypted, backups._backup_key())
+
+    with pytest.raises(backups.BackupError, match="unsafe"):
+        backups.verify_backup(encrypted)
+
+
+def test_backup_verification_rejects_archive_symlinks(tmp_path, monkeypatch) -> None:
+    """A validly encrypted archive must not be able to restore a symbolic link."""
+    import tarfile
+
+    configure_backup_paths(monkeypatch, tmp_path)
+    archive = tmp_path / "symlink.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        member = tarfile.TarInfo("documents/private/outside-link")
+        member.type = tarfile.SYMTYPE
+        member.linkname = "../../outside.txt"
+        tar.addfile(member)
+
+    encrypted = tmp_path / "symlink.oribak"
+    backups._encrypt_file(archive, encrypted, backups._backup_key())
+
+    with pytest.raises(backups.BackupError, match="unsupported filesystem entry"):
+        backups.verify_backup(encrypted)
+
+
+def test_backup_verification_rejects_duplicate_archive_paths(tmp_path, monkeypatch) -> None:
+    """Duplicate names are rejected instead of allowing ambiguous overwrite order."""
+    import io
+    import tarfile
+
+    configure_backup_paths(monkeypatch, tmp_path)
+    archive = tmp_path / "duplicate.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        for payload in (b"first", b"second"):
+            member = tarfile.TarInfo("documents/private/note.txt")
+            member.size = len(payload)
+            tar.addfile(member, io.BytesIO(payload))
+
+    encrypted = tmp_path / "duplicate.oribak"
+    backups._encrypt_file(archive, encrypted, backups._backup_key())
+
+    with pytest.raises(backups.BackupError, match="duplicate archive paths"):
+        backups.verify_backup(encrypted)
