@@ -421,3 +421,28 @@ def test_backup_verification_rejects_foreign_key_violations(tmp_path, monkeypatc
 
     with pytest.raises(backups.BackupError, match="foreign-key consistency errors"):
         backups.verify_backup(backup)
+
+
+def test_backup_snapshot_includes_committed_wal_data(tmp_path, monkeypatch) -> None:
+    """The online SQLite snapshot must include committed rows still in the WAL."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    connection = sqlite3.connect(database)
+    try:
+        connection.execute("PRAGMA journal_mode = WAL")
+        connection.execute("CREATE TABLE wal_probe (value TEXT NOT NULL)")
+        connection.execute("INSERT INTO wal_probe (value) VALUES ('committed-in-wal')")
+        connection.commit()
+        wal_path = Path(str(database) + "-wal")
+        assert wal_path.exists()
+
+        backup = backups.create_backup()
+    finally:
+        connection.close()
+
+    with sqlite3.connect(database) as changed:
+        changed.execute("DROP TABLE wal_probe")
+
+    backups.restore_backup(backup, confirm=True)
+
+    with sqlite3.connect(database) as restored:
+        assert restored.execute("SELECT value FROM wal_probe").fetchone()[0] == "committed-in-wal"
