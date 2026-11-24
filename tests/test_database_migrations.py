@@ -139,3 +139,53 @@ def test_negative_database_schema_version_is_rejected_without_modification(tmp_p
         ).fetchone()[0]
 
     assert tables == 0
+
+
+def test_database_rejects_non_regular_files(tmp_path) -> None:
+    """A FIFO or device path must not be opened as the SQLite database."""
+    import os
+
+    if not hasattr(os, "mkfifo"):
+        pytest.skip("Named pipes are not supported on this platform.")
+    database = tmp_path / "orinoco.sqlite3"
+    os.mkfifo(database)
+
+    with pytest.raises(RuntimeError, match="regular file"):
+        initialise_database(database)
+
+
+def test_production_database_directory_permission_failure_is_fatal(tmp_path, monkeypatch) -> None:
+    """Production must not silently continue with a publicly accessible data directory."""
+    from pathlib import Path
+
+    database = tmp_path / "private" / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    original_chmod = Path.chmod
+
+    def fail_database_directory_chmod(path, mode):
+        if path == database.parent:
+            raise PermissionError("simulated permission failure")
+        return original_chmod(path, mode)
+
+    monkeypatch.setattr(Path, "chmod", fail_database_directory_chmod)
+
+    with pytest.raises(RuntimeError, match="Unable to restrict permissions on the database directory"):
+        initialise_database(database)
+
+
+def test_production_database_file_permission_failure_is_fatal(tmp_path, monkeypatch) -> None:
+    """Production must fail closed if the SQLite file cannot be made owner-only."""
+    import os
+
+    if not hasattr(os, "fchmod"):
+        pytest.skip("File descriptor chmod is not supported on this platform.")
+    database = tmp_path / "private" / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    monkeypatch.setattr(
+        os,
+        "fchmod",
+        lambda descriptor, mode: (_ for _ in ()).throw(PermissionError("simulated chmod failure")),
+    )
+
+    with pytest.raises(RuntimeError, match="Unable to restrict permissions on the database file"):
+        initialise_database(database)
