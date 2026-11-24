@@ -35,3 +35,18 @@ def test_admin_bootstrap_refuses_when_any_account_already_exists(tmp_path, monke
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "create-admin"])
 
     assert main() == 2
+
+
+def test_admin_package_exposes_documented_module_command() -> None:
+    """The package entry point must make the documented -m command executable."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-m", "orinoco.admin", "--help"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "create-admin" in result.stdout
