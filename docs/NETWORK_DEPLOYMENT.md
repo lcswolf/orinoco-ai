@@ -43,6 +43,12 @@ Tailnet browser
 
 Caddy is the public TLS endpoint. Nginx is deliberately placed behind it because stock Caddy does not provide the Nginx-style per-client HTTP request limiting used in this plan. Nginx listens on loopback only; it must not be reachable directly from the internet. Tailscale Serve is a separate tailnet-only ingress to that same local Nginx listener.
 
+Ready-to-edit examples are committed at `deploy/caddy/Caddyfile.example`
+and `deploy/nginx/orinoco.conf.example`. The Nginx file belongs in
+`/etc/nginx/conf.d/` (inside the `http` context); replace its example
+Pterodactyl port before validating it. These are templates, not a script that
+automatically changes the host.
+
 ## 1. Nginx edge limits
 
 Install Nginx on the VPS host, not inside the Orinoco container. The example below assumes:
