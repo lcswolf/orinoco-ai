@@ -54,3 +54,17 @@ def test_unsupported_and_oversized_files_are_rejected() -> None:
 
     with pytest.raises(ValueError, match="10 MiB"):
         extract_text("notes.txt", b"x" * (10 * 1024 * 1024 + 1))
+
+
+def test_office_zip_bomb_expansion_is_rejected() -> None:
+    """A compact Office upload must not expand beyond the extraction safety cap."""
+    from zipfile import ZIP_DEFLATED, ZipFile
+
+    buffer = BytesIO()
+    with ZipFile(buffer, "w", compression=ZIP_DEFLATED) as archive:
+        archive.writestr("word/document.xml", b"0" * (25 * 1024 * 1024 + 1))
+
+    compressed = buffer.getvalue()
+    assert len(compressed) < 10 * 1024 * 1024
+    with pytest.raises(ValueError, match="25 MiB safety limit"):
+        extract_text("large.docx", compressed)
