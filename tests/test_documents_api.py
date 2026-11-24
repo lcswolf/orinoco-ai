@@ -92,6 +92,27 @@ def test_private_document_count_quota_is_per_user(tmp_path, monkeypatch) -> None
     assert other_user_upload.status_code == 201
 
 
+def test_private_document_byte_quota_is_enforced(tmp_path, monkeypatch) -> None:
+    """A single upload cannot exceed the account's remaining combined byte allowance."""
+    database = tmp_path / "document-byte-quota.sqlite3"
+    storage = tmp_path / "documents"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(storage))
+    monkeypatch.setenv("ORINOCO_USER_DOCUMENT_QUOTA_BYTES", str(1024 * 1024))
+    initialise_database(database)
+    create_user("bytequota", "a-long-owner-password-123", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "bytequota", "a-long-owner-password-123")
+        response = client.post(
+            "/api/documents",
+            headers={"X-CSRF-Token": csrf(client)},
+            files={"file": ("large.txt", b"x" * (1024 * 1024 + 1), "text/plain")},
+        )
+
+    assert response.status_code == 413
+
+
 def test_private_documents_are_isolated_between_users(tmp_path, monkeypatch) -> None:
     database = tmp_path / "orinoco.sqlite3"
     storage = tmp_path / "documents"
