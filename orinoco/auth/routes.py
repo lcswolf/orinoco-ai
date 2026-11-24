@@ -126,6 +126,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     # Rotate the session after authentication to prevent session fixation.
     request.session.clear()
     request.session["user_id"] = user.id
+    request.session["session_version"] = user.session_version
     request.session["csrf_token"] = secrets.token_urlsafe(32)
     return {"authenticated": True, "user": _public_user(user)}
 
@@ -139,7 +140,11 @@ async def current_account(request: Request) -> dict[str, object]:
 
     initialise_database(get_database_path())
     user = get_user_by_id(user_id, database_path=get_database_path())
-    if user is None or not user.active:
+    if (
+        user is None
+        or not user.active
+        or user.session_version != request.session.get("session_version")
+    ):
         request.session.clear()
         return {"authenticated": False}
 
@@ -183,7 +188,12 @@ async def change_password(
             detail="The current password was not accepted.",
         )
 
+    updated_user = get_user_by_id(user_id, database_path=get_database_path())
+    if updated_user is None or not updated_user.active:
+        request.session.clear()
+        raise HTTPException(status_code=401, detail="Please sign in to continue.")
     request.session.clear()
     request.session["user_id"] = user_id
+    request.session["session_version"] = updated_user.session_version
     request.session["csrf_token"] = secrets.token_urlsafe(32)
     return {"changed": True}
