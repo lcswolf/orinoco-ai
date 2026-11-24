@@ -466,6 +466,93 @@ def add_conversation_message(
         return int(cursor.lastrowid)
 
 
+
+def create_memory(
+    user_id: int,
+    content: str,
+    *,
+    source: str = "manual",
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> int:
+    """Save a memory owned by one user."""
+    cleaned = " ".join(content.split())
+    if not cleaned or len(cleaned) > 1000:
+        raise ValueError("memory must contain 1–1000 characters")
+    if source not in {"manual", "automatic"}:
+        raise ValueError("memory source must be manual or automatic")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO memories (user_id, content, source, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (user_id, cleaned, source, now, now),
+        )
+        return int(cursor.lastrowid)
+
+
+def list_memories(
+    user_id: int,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> list[dict[str, object]]:
+    """List only memories belonging to the requested account."""
+    with _database(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT id, content, source, created_at, updated_at
+            FROM memories
+            WHERE user_id = ?
+            ORDER BY updated_at DESC, id DESC
+            """,
+            (user_id,),
+        ).fetchall()
+    return [
+        {
+            "id": int(row["id"]),
+            "content": str(row["content"]),
+            "source": str(row["source"]),
+            "created_at": str(row["created_at"]),
+            "updated_at": str(row["updated_at"]),
+        }
+        for row in rows
+    ]
+
+
+def update_memory(
+    user_id: int,
+    memory_id: int,
+    content: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    cleaned = " ".join(content.split())
+    if not cleaned or len(cleaned) > 1000:
+        raise ValueError("memory must contain 1–1000 characters")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            "UPDATE memories SET content = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+            (cleaned, now, memory_id, user_id),
+        )
+        return cursor.rowcount == 1
+
+
+def delete_memory(
+    user_id: int,
+    memory_id: int,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            "DELETE FROM memories WHERE id = ? AND user_id = ?",
+            (memory_id, user_id),
+        )
+        return cursor.rowcount == 1
+
+
 def get_user_by_id(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
