@@ -158,3 +158,21 @@ def test_supervisor_and_egg_enable_configured_daily_scheduler() -> None:
     assert variables["ORINOCO_BACKUP_TIME"]["default_value"] == "03:00"
     assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["default_value"] == "14"
     assert variables["ORINOCO_BACKUP_TIME"]["user_editable"] is True
+
+
+def test_scheduler_state_reader_rejects_symbolic_link(tmp_path) -> None:
+    """Do not read scheduler status through a link to an external file."""
+    outside = tmp_path / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    status = tmp_path / "backups" / backup_scheduler.STATE_FILENAME
+    status.parent.mkdir()
+    status.symlink_to(outside)
+
+    with pytest.raises(BackupError, match="status path must not be a symbolic link"):
+        backup_scheduler._read_state(status)
+
+
+def test_retention_helper_rejects_unbounded_days(tmp_path) -> None:
+    """Retention bounds also apply when the helper is called outside the scheduler CLI."""
+    with pytest.raises(ValueError, match="between 1 and 365"):
+        backup_scheduler.prune_local_backups(tmp_path, 0)
