@@ -92,7 +92,7 @@ The repository is organised by responsibility so that features can grow without 
 | Path | Responsibility |
 | --- | --- |
 | `orinoco/main.py` | FastAPI application assembly, static interface and health/readiness endpoints |
-| `orinoco/auth/` | Password hashing, signed sessions and authentication routes |
+| `orinoco/auth/` | Password hashing, signed sessions with per-account revocation versions, and authentication routes |
 | `orinoco/admin/` | Administrator API and first-admin bootstrap command (`python -m orinoco.admin`) |
 | `orinoco/chat/` | Conversation API, prompt construction and local model orchestration |
 | `orinoco/memories/` | Authenticated personal-memory API |
