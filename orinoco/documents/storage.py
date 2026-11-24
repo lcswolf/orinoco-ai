@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import fcntl
 import os
+from contextlib import contextmanager
+from collections.abc import Iterator
 from pathlib import Path
 from uuid import uuid4
 
@@ -14,6 +17,27 @@ DEFAULT_DOCUMENT_ROOT = Path(
 def get_document_root() -> Path:
     """Return the configured root directory for private and shared document files."""
     return Path(os.environ.get("ORINOCO_DOCUMENTS_PATH", str(DEFAULT_DOCUMENT_ROOT)))
+
+
+def document_storage_lock() -> Iterator[None]:
+    """Serialize document file/DB changes with backup snapshots across processes.
+
+    The lock file lives beside the document root, not inside it, so it is not
+    included in document backups. Advisory flock works across Orinoco processes
+    sharing the same persistent Pterodactyl data directory.
+    """
+    root = get_document_root()
+    root.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = root.parent / ".documents.lock"
+    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(lock_path, flags, 0o600)
+    with os.fdopen(descriptor, "r+b") as lock_file:
+        os.fchmod(lock_file.fileno(), 0o600)
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def store_document(data: bytes, *, user_id: int | None, scope: str, extension: str) -> str:
