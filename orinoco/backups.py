@@ -163,8 +163,8 @@ def _session_secret_path() -> Path:
 def _copy_database_snapshot(destination: Path) -> None:
     """Use SQLite's online backup API so committed WAL data is included safely."""
     source_path = get_database_path()
-    if not source_path.is_file():
-        raise BackupError(f"Database file does not exist: {source_path}")
+    if source_path.is_symlink() or not source_path.is_file():
+        raise BackupError("The configured database must be an existing regular file, not a symbolic link.")
     source = sqlite3.connect(source_path, timeout=30)
     target = sqlite3.connect(destination)
     try:
@@ -206,6 +206,8 @@ def _build_archive(staging: Path, archive: Path) -> dict[str, object]:
             (staging / "documents").mkdir()
 
     secret_path = _session_secret_path()
+    if secret_path.is_symlink():
+        raise BackupError("The session secret path must not be a symbolic link.")
     if secret_path.is_file():
         shutil.copy2(secret_path, staging / "session_secret")
     elif os.environ.get("ORINOCO_SECRET_KEY"):
@@ -239,12 +241,19 @@ def _build_archive(staging: Path, archive: Path) -> dict[str, object]:
 def create_backup(destination: Path | None = None) -> Path:
     """Create an encrypted backup file and return its final path."""
     key = _backup_key()
-    backup_root = Path(os.environ.get("ORINOCO_BACKUP_PATH", str(DEFAULT_BACKUP_ROOT)))
+    backup_root = Path(os.environ.get("ORINOCO_BACKUP_PATH", str(DEFAULT_BACKUP_ROOT))).expanduser()
+    if backup_root.is_symlink():
+        raise BackupError("The backup directory must not be a symbolic link.")
     backup_root.mkdir(parents=True, exist_ok=True)
     backup_root.chmod(0o700)
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    output = destination or backup_root / f"orinoco-{timestamp}.oribak"
-    output = output.expanduser().resolve()
+    output = Path(destination) if destination is not None else backup_root / f"orinoco-{timestamp}.oribak"
+    output = output.expanduser()
+    if output.is_symlink():
+        raise BackupError("The backup destination must not be a symbolic link.")
+    if output.suffix != ".oribak":
+        raise BackupError("Encrypted backup destinations must use the .oribak extension.")
+    output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory(prefix="orinoco-backup-") as temporary:
@@ -304,6 +313,7 @@ def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
 def verify_backup(backup_path: Path) -> dict[str, object]:
     """Decrypt, authenticate, inspect and integrity-check a backup without restoring it."""
     key = _backup_key()
+    backup_path = _validate_backup_source(backup_path)
     with tempfile.TemporaryDirectory(prefix="orinoco-verify-") as temporary:
         archive = Path(temporary) / "backup.tar.gz"
         extracted = Path(temporary) / "extracted"
@@ -325,9 +335,14 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
     if not confirm:
         raise BackupError("Restore is destructive. Re-run with --confirm after stopping Orinoco.")
     key = _backup_key()
+    backup_path = _validate_backup_source(backup_path)
     database_path = get_database_path()
+    if database_path.is_symlink():
+        raise BackupError("The configured database path must not be a symbolic link.")
     document_root = get_document_root()
     secret_path = _session_secret_path()
+    if secret_path.is_symlink():
+        raise BackupError("The session secret path must not be a symbolic link.")
 
     with tempfile.TemporaryDirectory(prefix="orinoco-restore-") as temporary:
         root = Path(temporary)
