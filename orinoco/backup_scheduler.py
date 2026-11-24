@@ -20,6 +20,7 @@ from orinoco.backups import BackupError, create_backup, upload_backup
 
 DEFAULT_BACKUP_ROOT = Path("/home/container/data/backups")
 STATE_FILENAME = ".scheduler-status.json"
+RETRY_INTERVAL_SECONDS = 15 * 60
 
 
 def _settings() -> tuple[ZoneInfo, clock_time, int, Path]:
@@ -64,6 +65,33 @@ def _read_state(state_path: Path) -> dict[str, object]:
     except (FileNotFoundError, OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _parse_state_datetime(value: object, timezone: ZoneInfo) -> datetime | None:
+    """Parse a persisted timestamp and normalise it to the scheduler timezone."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone)
+    return parsed.astimezone(timezone)
+
+
+def _last_success_local_date(state: dict[str, object], timezone: ZoneInfo) -> str | None:
+    """Return the local calendar date of the last completed backup, if known."""
+    completed = _parse_state_datetime(state.get("last_success_at"), timezone)
+    return completed.date().isoformat() if completed is not None else None
+
+
+def _retry_at(state: dict[str, object], timezone: ZoneInfo) -> datetime | None:
+    """Return the next allowed retry time after the last recorded attempt."""
+    attempted = _parse_state_datetime(state.get("last_attempt_at"), timezone)
+    if attempted is None:
+        return None
+    return attempted + timedelta(seconds=RETRY_INTERVAL_SECONDS)
 
 
 def _write_state(state_path: Path, state: dict[str, object]) -> None:
@@ -131,7 +159,6 @@ def run_backup_cycle(
 
     state = _read_state(state_path)
     state["last_attempt_at"] = local_now.isoformat()
-    state["last_run_local_date"] = local_now.date().isoformat()
     state["last_error"] = None
     _write_state(state_path, state)
 
@@ -152,7 +179,10 @@ def run_backup_cycle(
 
         removed = prune_local_backups(backup_root, retention_days, now=local_now)
         state["last_pruned_count"] = removed
-        state["last_success_at"] = datetime.now(UTC).isoformat()
+        # A calendar day is complete only after the entire backup cycle,
+        # including any configured off-site verification and local pruning.
+        state["last_run_local_date"] = local_now.date().isoformat()
+        state["last_success_at"] = local_now.astimezone(UTC).isoformat()
         state["last_error"] = None
         print(
             f"Orinoco backup scheduler: completed {backup_path.name}; "
@@ -187,22 +217,28 @@ def main() -> int:
     while True:
         now = datetime.now(timezone)
         state = _read_state(state_path)
-        already_ran_today = state.get("last_run_local_date") == now.date().isoformat()
+        already_succeeded_today = (
+            _last_success_local_date(state, timezone) == now.date().isoformat()
+        )
         scheduled_today = datetime.combine(now.date(), scheduled_time, tzinfo=timezone)
 
-        # If the container starts after today's scheduled time, run once now
-        # rather than silently skipping the day's backup.
-        if not already_ran_today and now >= scheduled_today:
-            run_backup_cycle(
-                timezone=timezone,
-                retention_days=retention_days,
-                backup_root=backup_root,
-                now=now,
-            )
-            time.sleep(30)
-            continue
-
-        next_run = scheduled_today if now < scheduled_today else scheduled_today + timedelta(days=1)
+        # If the container starts after today's scheduled time, catch up. A
+        # failed or interrupted attempt is retried after a short backoff rather
+        # than incorrectly marking the calendar day as complete.
+        if not already_succeeded_today and now >= scheduled_today:
+            retry_at = _retry_at(state, timezone)
+            if retry_at is None or now >= retry_at:
+                run_backup_cycle(
+                    timezone=timezone,
+                    retention_days=retention_days,
+                    backup_root=backup_root,
+                    now=now,
+                )
+                time.sleep(30)
+                continue
+            next_run = retry_at
+        else:
+            next_run = scheduled_today if now < scheduled_today else scheduled_today + timedelta(days=1)
         seconds_until_run = max(1, min(60, int((next_run - now).total_seconds())))
         time.sleep(seconds_until_run)
 
