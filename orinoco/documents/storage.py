@@ -28,7 +28,7 @@ def document_storage_lock() -> Iterator[None]:
     """Serialize document file/DB changes with backup snapshots across processes.
 
     The lock file lives beside the document root, not inside it, so it is not
-    included in document backups. Advisory flock works across Orinoco processes
+    included in document backups. An OS-level file lock works across Orinoco processes
     sharing the same persistent Pterodactyl data directory.
     """
     root = get_document_root()
@@ -54,7 +54,7 @@ def document_storage_lock() -> Iterator[None]:
 
             lock_file.seek(0, os.SEEK_END)
             if lock_file.tell() == 0:
-                lock_file.write(b"\\0")
+                lock_file.write(b"\0")
                 lock_file.flush()
             lock_file.seek(0)
             msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
