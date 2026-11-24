@@ -32,7 +32,7 @@ Open `http://127.0.0.1:8000/healthz`. A healthy response currently confirms only
 ## Run tests
 
 ```bash
-python -m pip install pytest httpx
+python -m pip install -r requirements-dev.txt
 python -m pytest
 ```
 
