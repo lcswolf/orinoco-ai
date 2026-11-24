@@ -10,7 +10,7 @@ from orinoco.auth.sessions import get_session_user
 from pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import (
-    User, create_memory, delete_memory, get_database_path, get_user_by_id,
+    User, MemoryLimitExceeded, create_memory, delete_memory, get_database_path, get_user_by_id,
     initialise_database, list_memories, update_memory,
 )
 
@@ -58,6 +58,8 @@ async def add_memory_route(payload: MemoryRequest, request: Request) -> dict[str
     try:
         memory_id = create_memory(user.id, payload.content, database_path=get_database_path())
         memory = next(item for item in list_memories(user.id, database_path=get_database_path()) if item["id"] == memory_id)
+    except MemoryLimitExceeded as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"id": memory["id"], "content": memory["content"], "source": "manual"}
