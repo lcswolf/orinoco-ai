@@ -74,6 +74,6 @@ The image uses a non-root `container` account and the `/home/container` working 
 - Conversation editing/deletion, pagination and streaming.
 - OCR and advanced semantic document search.
 - Discord and voice integrations.
-- Backup/restore tooling and production deployment.
+- Off-site backup transfer, automatic scheduling and production deployment.
 
 Do not expose this development scaffold as a public assistant service.
