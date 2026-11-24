@@ -78,7 +78,7 @@ The application now sends a restrictive Content Security Policy, clickjacking pr
 
 ### SQLite schema version safety — strengthened
 
-The database initializer now completes the known additive v1–v3 table/index upgrades to schema v4, and refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover an early users-only database and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
+The database initializer now completes the known additive v1–v4 table/index upgrades and the v5 session-version column migration, and refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover an early users-only database, the session-version column and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
 
 ### Local inference boundary — hardened
 
@@ -90,7 +90,7 @@ The runtime now installs the operating-system timezone database so the configure
 
 ### Runtime and CI version pins — checked
 
-The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows have been moved from the older checkout/setup-python major versions to the current Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). CI must be re-run after this update. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests.
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows have been moved from the older checkout/setup-python major versions to the current Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest automated suite passes 115 tests and the latest hardened container image passed its expanded smoke test. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat both on the same commit after the remaining audit work.
 
 ### Documentation accuracy — corrected
 
