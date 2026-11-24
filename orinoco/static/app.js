@@ -41,6 +41,7 @@ let sendingMessage = false;
 const mobileBrand = document.querySelector(".mobile-brand");
 const sidebar = document.getElementById("sidebar");
 const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+const mobileNavClose = document.getElementById("mobile-nav-close");
 const mobileNavQuery = window.matchMedia("(max-width: 720px)");
 
 function syncMobileNavigation() {
@@ -72,6 +73,7 @@ mobileBrand.addEventListener("click", () => {
   else openMobileNavigation();
 });
 sidebarBackdrop.addEventListener("click", () => closeMobileNavigation());
+mobileNavClose.addEventListener("click", () => closeMobileNavigation());
 sidebar.querySelectorAll(".nav-link").forEach((link) => {
   link.addEventListener("click", () => closeMobileNavigation());
 });
