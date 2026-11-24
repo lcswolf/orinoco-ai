@@ -64,6 +64,10 @@ The model-generated memory filter now uses word-boundary matching and covers add
 
 The current source scan found no use of `eval`, `shell=True`, `pickle.loads` or frontend `innerHTML`. The Pterodactyl entrypoint tokenises its startup command with `shlex.split` and replaces the process with `execvp`; it does not evaluate the command through a shell. Continue to review new code against the same rules.
 
+### Login throttle memory use — hardened
+
+The failed-login tracker now has a fixed maximum number of tracked usernames and evicts the least-recently-used entry when full. Its Retry-After value reflects the remaining lockout window instead of always reporting the full window. It remains process-local and username-based, so reverse-proxy/IP-level rate limits are still required before public exposure.
+
 ### Browser security headers — added
 
 The application now sends a restrictive Content Security Policy, clickjacking protection, MIME sniffing protection, a conservative referrer policy, same-origin resource/opener policies and a Permissions Policy disabling unused camera/microphone/geolocation access. The current frontend uses DOM node creation and textContent for dynamic content rather than HTML string injection. Regression tests check the headers on application, API and static responses.
