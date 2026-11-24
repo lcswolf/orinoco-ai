@@ -57,3 +57,22 @@ def test_response_preferences_and_admin_persona_controls_are_accessible() -> Non
     assert 'fetch("/api/preferences"' in script
     assert 'fetch("/api/admin/persona"' in script
     assert 'method: "PUT"' in script
+
+
+def test_mobile_navigation_is_keyboard_accessible_and_not_inert() -> None:
+    """Mobile users can open, traverse and dismiss the navigation drawer."""
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "orinoco" / "static" / "app.js").read_text(encoding="utf-8")
+    css = (ROOT / "orinoco" / "static" / "app.css").read_text(encoding="utf-8")
+
+    assert 'id="sidebar"' in html
+    assert 'aria-controls="sidebar"' in html
+    assert 'aria-expanded="false"' in html
+    assert 'id="sidebar-backdrop"' in html
+    assert "mobileBrand.addEventListener(\"click\"" in script
+    assert "sidebar.inert = mobile && !open" in script
+    assert 'event.key === "Escape"' in script
+    assert 'event.key !== "Tab"' in script
+    assert "focusable[focusable.length - 1]" in script
+    assert ".sidebar.mobile-open" in css
+    assert "a:focus-visible, button:focus-visible" in css
