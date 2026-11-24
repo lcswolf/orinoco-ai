@@ -12,6 +12,7 @@ const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
 const newChatButton = document.getElementById("new-chat");
 const conversationList = document.getElementById("conversation-list");
+const mobileConversations = document.getElementById("mobile-conversations");
 const chatThread = document.getElementById("chat-thread");
 const chatInput = document.getElementById("chat-input");
 const chatForm = document.getElementById("chat-form");
@@ -82,6 +83,7 @@ function showAccount(user) {
     currentConversationId = null;
     clearThread();
     conversationList.replaceChildren();
+    mobileConversations.replaceChildren(new Option("Recent chats", ""));
   }
 }
 
@@ -126,6 +128,7 @@ async function refreshConversations() {
     if (!response.ok) return;
     const result = await response.json();
     conversationList.replaceChildren();
+    mobileConversations.replaceChildren(new Option("Recent chats", ""));
 
     if (!result.conversations.length) {
       const empty = document.createElement("div");
@@ -144,6 +147,9 @@ async function refreshConversations() {
       button.title = item.title;
       button.addEventListener("click", () => loadConversation(item.id));
       conversationList.append(button);
+      const option = new Option(item.title, String(item.id));
+      if (item.id === currentConversationId) option.selected = true;
+      mobileConversations.add(option);
     }
   } catch {
     conversationList.replaceChildren();
@@ -248,6 +254,11 @@ loginForm.addEventListener("submit", async (event) => {
     loginSubmit.disabled = false;
     loginSubmit.textContent = "Sign in";
   }
+});
+
+mobileConversations.addEventListener("change", () => {
+  const id = Number(mobileConversations.value);
+  if (id > 0) loadConversation(id);
 });
 
 newChatButton.addEventListener("click", () => {
