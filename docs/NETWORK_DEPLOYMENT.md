@@ -148,7 +148,10 @@ Example Caddyfile:
 }
 
 {$ORINOCO_DOMAIN} {
-    reverse_proxy 127.0.0.1:8081
+    reverse_proxy 127.0.0.1:8081 {
+        # Do not preserve a client-supplied X-Forwarded-For value.
+        header_up X-Forwarded-For {remote_host}
+    }
 }
 
 https://{$ORINOCO_PUBLIC_IPV4}:8443 {
@@ -158,9 +161,16 @@ https://{$ORINOCO_PUBLIC_IPV4}:8443 {
         }
     }
 
-    reverse_proxy 127.0.0.1:8081
+    reverse_proxy 127.0.0.1:8081 {
+        header_up X-Forwarded-For {remote_host}
+    }
 }
 ```
+
+Use a DNS-only A record for the first deployment so Caddy sees the real
+connecting client. If a CDN or DNS-provider HTTP proxy is later placed in front
+of Caddy, configure Caddy's trusted-proxy CIDRs for that provider and test the
+full forwarded-header chain; do not simply trust all forwarded headers.
 
 The subdomain uses Caddy's normal automatic HTTPS. The IP listener uses a Let's Encrypt IP-address certificate with the `shortlived` ACME profile. These IP certificates are valid for 160 hours (a little over six days), so Caddy must be allowed to renew them automatically. Use the public static IPv4 address, Caddy 2.11 or newer, and ensure the host can receive ACME validation traffic on TCP 80 and 443. The browser URL is `https://PUBLIC_IPV4:8443/`; port 8443 is the user-facing Orinoco IP-access port, not the Pterodactyl allocation.
 
