@@ -14,6 +14,7 @@ class OllamaError(RuntimeError):
 
 
 class OllamaClient:
+    """Send validated chat messages to the local Ollama service; no external inference provider is used."""
     def __init__(
         self,
         *,
