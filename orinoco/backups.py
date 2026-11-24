@@ -266,7 +266,7 @@ def create_backup(destination: Path | None = None) -> Path:
 
 
 def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
-    """Validate every archive member and extract only regular, expected files."""
+    """Validate archive paths, member types and expansion limits before extraction."""
     seen: set[str] = set()
     total_bytes = 0
     with tarfile.open(archive, "r:gz") as tar:
@@ -276,22 +276,43 @@ def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
             total_bytes += max(0, member.size)
             if total_bytes > MAX_ARCHIVE_BYTES:
                 raise BackupError("Backup expands beyond the 2 GiB safety limit.")
+
+            # Tar paths are POSIX-style, but restore may run on Windows too.
+            # Reject Windows separators, drive/alternate-stream syntax and NULs
+            # before converting any archive member into a native Path.
+            if not member.name or "\\" in member.name or "\x00" in member.name or ":" in member.name:
+                raise BackupError("Backup contains an unsafe cross-platform file path.")
             path = PurePosixPath(member.name)
             if path.is_absolute() or ".." in path.parts or not path.parts:
                 raise BackupError("Backup contains an unsafe file path.")
             name = path.as_posix()
+            if len(name) > 1024:
+                raise BackupError("Backup contains an excessively long file path.")
             if name in seen:
                 raise BackupError("Backup contains duplicate archive paths.")
             seen.add(name)
             if member.issym() or member.islnk() or not (member.isfile() or member.isdir()):
                 raise BackupError("Backup contains an unsupported filesystem entry.")
+
             if member.isdir():
-                if path.parts[0] not in ALLOWED_DIRECTORIES:
+                if path.parts[0] != "documents":
                     raise BackupError("Backup contains an unexpected directory.")
                 (extraction_root / Path(*path.parts)).mkdir(parents=True, exist_ok=True)
                 continue
+
+            if name == "documents":
+                raise BackupError("The documents archive root must be a directory.")
             if name not in ALLOWED_FILES and path.parts[0] != "documents":
                 raise BackupError("Backup contains an unexpected file.")
+            if path.parts[0] == "documents" and len(path.parts) < 2:
+                raise BackupError("A document file must be inside the documents directory.")
+            if name == "manifest.json" and member.size > MAX_MANIFEST_BYTES:
+                raise BackupError("Backup manifest exceeds the 1 MiB safety limit.")
+            if name == "session_secret" and member.size > MAX_SESSION_SECRET_BYTES:
+                raise BackupError("Backup session secret exceeds the 4 KiB safety limit.")
+            if path.parts[0] == "documents" and member.size > MAX_DOCUMENT_FILE_BYTES:
+                raise BackupError("A stored document exceeds the 10 MiB file safety limit.")
+
             target = extraction_root / Path(*path.parts)
             target.parent.mkdir(parents=True, exist_ok=True)
             source = tar.extractfile(member)
