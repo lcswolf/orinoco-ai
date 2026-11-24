@@ -44,23 +44,27 @@ jobs:
       - name: Validate Caddy and Nginx proxy templates
         shell: bash
         run: |
-          set -uo pipefail
+          set -euo pipefail
           caddy_log="$RUNNER_TEMP/caddy-validation.log"
           nginx_log="$RUNNER_TEMP/nginx-validation.log"
 
+          set +e
           docker run --rm \
             --env ACME_EMAIL=ops@example.net \
             --env ORINOCO_DOMAIN=orinoco.example.net \
             --env ORINOCO_PUBLIC_IPV4=203.0.113.10 \
             --volume "$PWD/deploy/caddy/Caddyfile.example:/etc/caddy/Caddyfile:ro" \
-            caddy:2.11.0-alpine validate --config /etc/caddy/Caddyfile --adapter caddyfile \
-            2>&1 | tee "$caddy_log"
-          caddy_status=${PIPESTATUS[0]}
+            caddy:2.11.9-alpine validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+            >"$caddy_log" 2>&1
+          caddy_status=$?
+          cat "$caddy_log"
 
           docker run --rm \
             --volume "$PWD/deploy/nginx/orinoco.conf.example:/etc/nginx/conf.d/orinoco.conf:ro" \
-            nginx:1.28-alpine nginx -t 2>&1 | tee "$nginx_log"
-          nginx_status=${PIPESTATUS[0]}
+            nginx:1.28-alpine nginx -t >"$nginx_log" 2>&1
+          nginx_status=$?
+          cat "$nginx_log"
+          set -e
 
           if [ "$caddy_status" -ne 0 ] || [ "$nginx_status" -ne 0 ]; then
             echo "One or more reverse-proxy templates failed validation."
