@@ -46,20 +46,21 @@ if not 1 <= MAX_CHAT_REQUESTS_PER_MINUTE <= 120:
     raise RuntimeError("ORINOCO_CHAT_REQUESTS_PER_MINUTE must be between 1 and 120.")
 CHAT_RATE_WINDOW_SECONDS = 60
 MAX_TRACKED_CHAT_USERS = 10_000
-_chat_request_failures: OrderedDict[int, deque[float]] = OrderedDict()
+_chat_request_failures: OrderedDict[tuple[str, int], deque[float]] = OrderedDict()
 
 
-def _check_chat_rate(user_id: int) -> None:
+def _check_chat_rate(user_id: int, database_key: str | None = None) -> None:
     """Limit one account to ten chat submissions per rolling minute."""
     now = time.monotonic()
-    failures = _chat_request_failures.get(user_id)
+    identity = (database_key or str(get_database_path()), user_id)
+    failures = _chat_request_failures.get(identity)
     if failures is None:
         if len(_chat_request_failures) >= MAX_TRACKED_CHAT_USERS:
             _chat_request_failures.popitem(last=False)
         failures = deque()
-        _chat_request_failures[user_id] = failures
+        _chat_request_failures[identity] = failures
     else:
-        _chat_request_failures.move_to_end(user_id)
+        _chat_request_failures.move_to_end(identity)
 
     while failures and now - failures[0] >= CHAT_RATE_WINDOW_SECONDS:
         failures.popleft()
@@ -316,8 +317,8 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
     """Build account-scoped context, call local inference, and persist the exchange."""
     _require_csrf(request)
     user = _current_user(request)
-    _check_chat_rate(user.id)
     database_path = get_database_path()
+    _check_chat_rate(user.id, str(database_path))
     history: list[dict[str, str]] = []
 
     if payload.conversation_id is not None:
