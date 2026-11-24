@@ -1,5 +1,5 @@
 {
-  "_comment": "Orinoco AI Assistant Egg using PTDL_v1 format; intended for Pterodactyl Panel 2.x, import compatibility not yet validated. Import into a dedicated Nest. Preview only: do not deploy until the matching Orinoco image is published and live-tested.",
+  "_comment": "Orinoco AI Assistant Egg using the PTDL_v1 format for stable Pterodactyl Panel 1.13.0; live import compatibility not yet validated. Import into a dedicated Nest. Preview only: do not deploy until the matching Orinoco image is published and live-tested.",
   "meta": {
     "version": "PTDL_v1",
     "update_url": null
