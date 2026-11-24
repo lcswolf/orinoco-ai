@@ -350,7 +350,7 @@ chatForm.addEventListener("submit", async (event) => {
 
     currentConversationId = result.conversation_id;
     const sourceText = Array.isArray(result.web_sources) && result.web_sources.length
-      ? "\\n\\nSources:\\n" + result.web_sources.map((source, index) => "[" + (index + 1) + "] " + source.title + " — " + source.url).join("\\n")
+      ? "\n\nSources:\n" + result.web_sources.map((source, index) => "[" + (index + 1) + "] " + source.title + " — " + source.url).join("\n")
       : "";
     appendMessage("assistant", result.assistant_message + sourceText);
     if (Array.isArray(result.saved_memories) && result.saved_memories.length) {
