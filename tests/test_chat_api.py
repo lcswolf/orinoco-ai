@@ -502,5 +502,6 @@ def test_chat_rate_limit_is_scoped_to_each_user(monkeypatch) -> None:
     else:
         raise AssertionError("expected the first account to be rate limited")
 
-    # A separate account retains its own allowance.
+    # A separate account and a separate test/database instance retain their allowances.
     chat_routes._check_chat_rate(202)
+    chat_routes._check_chat_rate(101, "another-database.sqlite3")
