@@ -342,9 +342,9 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
     persona = get_assistant_persona(database_path=database_path)
     preferences = get_user_preferences(user.id, database_path=database_path)
     voice_guidance = {
-        "bright": "bright and upbeat",
-        "calm": "calm and measured",
-        "professional": "professional and composed",
+        "bright": "bright, friendly voice",
+        "calm": "calm and measured voice",
+        "professional": "professional and composed voice",
     }[preferences["voice"]]
     tone_guidance = {
         "friendly": "warm and friendly",
