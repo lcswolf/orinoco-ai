@@ -20,6 +20,7 @@ from orinoco.db import (
     delete_document,
     get_database_path,
     get_document,
+    get_document_usage,
     get_user_by_id,
     initialise_database,
     list_documents,
@@ -34,6 +35,47 @@ from orinoco.documents.storage import (
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 logger = logging.getLogger(__name__)
+
+# Conservative defaults for a small self-hosted VPS. Administrators can raise
+# these limits in the Egg after checking available persistent storage.
+DEFAULT_USER_DOCUMENT_QUOTA_BYTES = 50 * 1024 * 1024
+DEFAULT_USER_DOCUMENT_QUOTA_FILES = 20
+DEFAULT_SHARED_DOCUMENT_QUOTA_BYTES = 200 * 1024 * 1024
+DEFAULT_SHARED_DOCUMENT_QUOTA_FILES = 50
+
+
+def _document_quota(scope: str) -> tuple[int, int]:
+    """Return configured byte and file limits for a private or shared library."""
+    import os
+
+    if scope == "private":
+        byte_name, file_name = (
+            "ORINOCO_USER_DOCUMENT_QUOTA_BYTES",
+            "ORINOCO_USER_DOCUMENT_QUOTA_FILES",
+        )
+        default_bytes, default_files = (
+            DEFAULT_USER_DOCUMENT_QUOTA_BYTES,
+            DEFAULT_USER_DOCUMENT_QUOTA_FILES,
+        )
+    else:
+        byte_name, file_name = (
+            "ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES",
+            "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES",
+        )
+        default_bytes, default_files = (
+            DEFAULT_SHARED_DOCUMENT_QUOTA_BYTES,
+            DEFAULT_SHARED_DOCUMENT_QUOTA_FILES,
+        )
+    try:
+        max_bytes = int(os.environ.get(byte_name, str(default_bytes)))
+        max_files = int(os.environ.get(file_name, str(default_files)))
+    except ValueError as exc:
+        raise RuntimeError(f"{byte_name} and {file_name} must be positive integers.") from exc
+    if max_bytes < MAX_UPLOAD_BYTES or max_files < 1:
+        raise RuntimeError(
+            f"{byte_name} must be at least {MAX_UPLOAD_BYTES} and {file_name} must be at least 1."
+        )
+    return max_bytes, max_files
 
 
 def _require_csrf(request: Request) -> None:
@@ -71,8 +113,23 @@ async def _store_upload(file: UploadFile, *, user_id: int, scope: str) -> dict[s
 
     extension = Path(filename).suffix.lower()
     database_path = get_database_path()
-    # Keep the file write and metadata insert atomic relative to backups/deletes.
+    # Check quota and persist while holding the storage lock so concurrent uploads
+    # in this application process cannot both consume the same remaining allowance.
     with document_storage_lock():
+        max_bytes, max_files = _document_quota(scope)
+        document_count, total_bytes = get_document_usage(
+            owner_user_id=user_id if scope == "private" else None,
+            scope=scope,
+            database_path=database_path,
+        )
+        if document_count >= max_files or total_bytes + len(data) > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=(
+                    "Your document library has reached its storage limit. "
+                    "Delete an existing document or ask the administrator to adjust the quota."
+                ),
+            )
         stored_path = store_document(
             data,
             user_id=user_id if scope == "private" else None,
