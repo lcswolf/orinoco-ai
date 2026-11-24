@@ -54,6 +54,8 @@ def test_backup_rejects_wrong_encryption_key(tmp_path, monkeypatch) -> None:
 def test_backup_restore_recovers_database_documents_and_session_secret(tmp_path, monkeypatch) -> None:
     database, documents, _ = configure_backup_paths(monkeypatch, tmp_path)
     backup = backups.create_backup()
+    secret_path = tmp_path / "data" / ".session_secret"
+    secret_path.write_text("current-session-secret-before-restore", encoding="utf-8")
     (documents / "private" / "note.txt").write_text("changed after backup", encoding="utf-8")
     with sqlite3.connect(database) as connection:
         connection.execute("DELETE FROM users")
@@ -63,6 +65,8 @@ def test_backup_restore_recovers_database_documents_and_session_secret(tmp_path,
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT username FROM users").fetchone()[0] == "backup-user"
     assert Path(str(database) + ".pre-restore").exists()
+    assert secret_path.read_text(encoding="utf-8") == "test-session-secret-value-which-is-long-enough"
+    assert Path(str(secret_path) + ".pre-restore").read_text(encoding="utf-8") == "current-session-secret-before-restore"
 
 
 def test_restore_requires_explicit_confirmation(tmp_path, monkeypatch) -> None:
