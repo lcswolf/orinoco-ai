@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
+from zipfile import BadZipFile, ZipFile
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_EXTRACTED_CHARS = 200_000
+MAX_OFFICE_ARCHIVE_BYTES = 25 * 1024 * 1024
+MAX_OFFICE_ARCHIVE_ENTRIES = 2_000
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".xlsx", ".pptx"}
 
 
@@ -17,6 +20,9 @@ def extract_text(filename: str, data: bytes) -> str:
         raise ValueError("Supported file types are TXT, Markdown, PDF, DOCX, XLSX and PPTX.")
     if not data or len(data) > MAX_UPLOAD_BYTES:
         raise ValueError("File is empty or exceeds the 10 MiB upload limit.")
+
+    if extension in {".docx", ".xlsx", ".pptx"}:
+        _validate_office_archive(data)
 
     if extension in {".txt", ".md"}:
         try:
@@ -36,6 +42,41 @@ def extract_text(filename: str, data: bytes) -> str:
     if not cleaned:
         raise ValueError("No readable text was found in this file.")
     return cleaned[:MAX_EXTRACTED_CHARS]
+
+
+
+def _validate_office_archive(data: bytes) -> None:
+    """Reject malformed, encrypted or oversized Office ZIP archives before parsing.
+
+    Office formats are ZIP containers. A small upload can expand to a very
+    large amount of XML or embedded media, so enforce both declared and actual
+    uncompressed-size limits before handing the file to a document library.
+    """
+    try:
+        with ZipFile(BytesIO(data)) as archive:
+            entries = archive.infolist()
+            if not entries or len(entries) > MAX_OFFICE_ARCHIVE_ENTRIES:
+                raise ValueError("Office documents contain too many archive entries.")
+            declared_size = sum(entry.file_size for entry in entries)
+            if declared_size > MAX_OFFICE_ARCHIVE_BYTES:
+                raise ValueError("Office document expands beyond the 25 MiB safety limit.")
+            if any(entry.flag_bits & 0x1 for entry in entries):
+                raise ValueError("Encrypted Office documents are not supported.")
+
+            actual_size = 0
+            for entry in entries:
+                with archive.open(entry) as member:
+                    while True:
+                        chunk = member.read(64 * 1024)
+                        if not chunk:
+                            break
+                        actual_size += len(chunk)
+                        if actual_size > MAX_OFFICE_ARCHIVE_BYTES:
+                            raise ValueError("Office document expands beyond the 25 MiB safety limit.")
+    except ValueError:
+        raise
+    except (BadZipFile, OSError, RuntimeError) as exc:
+        raise ValueError("This Office document is not a valid readable ZIP archive.") from exc
 
 
 def _extract_pdf(data: bytes) -> str:
