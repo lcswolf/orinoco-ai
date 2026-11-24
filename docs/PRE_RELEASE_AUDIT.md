@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed CI run: 118 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest audit-hardened container image, including session-revocation and document-storage hardening, has built and passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI).
+Latest completed Python CI run: 134 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest container build has succeeded; the expanded smoke test is being extended to confirm the daily backup scheduler process starts under Supervisor.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -48,6 +48,10 @@ Private and shared document deletion now removes the original file before deleti
 
 DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand into a much larger payload, so the extraction path now checks archive entry counts, encrypted entries and both declared and actual uncompressed size before parsing. A regression test uses a highly-compressible oversized archive to verify the limit.
 
+### Persistent session-secret storage — hardened
+
+The persistent session-signing file now rejects symbolic links and is restricted to owner-only permissions when read. Regression tests cover both symlink rejection and repairing permissive file mode bits.
+
 ### Restore rollback — strengthened
 
 The restore path now creates its pre-restore database snapshot through SQLite's online backup API, preserving committed WAL data. It also preserves the existing file-based session secret as a persistent pre-restore recovery copy and restores it if a later restore step fails. Failure-injection and successful-restore regression tests cover these paths.
@@ -90,11 +94,19 @@ The runtime now installs the operating-system timezone database so the configure
 
 ### Runtime and CI version pins — checked
 
-The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows have been moved from the older checkout/setup-python major versions to the current Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest automated suite passes 115 tests and the latest hardened container image passed its expanded smoke test. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat both on the same commit after the remaining audit work.
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 134 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
+
+### Daily encrypted backup scheduling — implemented
+
+A dedicated Supervisor-managed process runs one backup per local calendar day (03:00 by default in the configured timezone). It creates an encrypted local backup, optionally uploads and byte-verifies it to the configured S3-compatible bucket, and prunes expired local backups only after the complete backup cycle succeeds. The default local retention is 14 days and is configurable from 1 to 365. Failures are written to the Pterodactyl console and a private status JSON file. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding.
+
+### Chat recovery after memory-store failure — hardened
+
+A failure during automatic memory extraction or persistence is now logged but does not discard an otherwise successful assistant response. A regression test verifies that the conversation is still saved and returned.
 
 ### Documentation accuracy — corrected
 
-The README and development guide now distinguish implemented encrypted backup operations from the outstanding scheduler/retention work. The Egg's web-search descriptions now reflect the implemented SearXNG integration rather than describing it as future work.
+The README, architecture, Egg and development guide now distinguish implemented daily local scheduling/retention from the outstanding remote bucket lifecycle and remote-restore convenience. The Egg's web-search descriptions reflect the implemented SearXNG integration.
 
 ## Remaining review work
 
@@ -110,15 +122,15 @@ The README and development guide now distinguish implemented encrypted backup op
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
 - [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
-- [ ] Implement and test automatic daily backups, retention and clear failure reporting.
+- [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.\n- [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Finalise the Leaseweb VPS deployment plan: Caddy HTTPS, Tailscale Serve for private access (no Funnel), firewall exposure limited to required ports, and reverse-proxy request/rate limits.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
 - [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
-- [ ] Review CI workflow permissions, dependency versions, build reproducibility and vulnerability scanning.
-- [ ] Run the complete test suite after all audit corrections; build and smoke-test the final image.
+- [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.\n- [ ] Confirm the new pip-audit CI job is clean; review dependency versions and build reproducibility.
+- [ ] Run the final complete test suite and dependency audit; build and smoke-test the same release commit, including the backup scheduler process.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
 ## Release gate
