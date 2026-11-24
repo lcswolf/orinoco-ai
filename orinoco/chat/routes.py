@@ -59,7 +59,7 @@ _UK_POSTCODE_PATTERN = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.I
 
 
 def extract_memory_candidates(raw: str) -> list[str]:
-    """Parse and conservatively filter model-suggested personal memories."""
+    """Parse proposed memory facts from model output; reject malformed or unsafe candidates."""
     match = re.search(r"\[[\s\S]*\]", raw)
     if match is None:
         return []
@@ -104,6 +104,7 @@ async def _save_automatic_memories(
     history: list[dict[str, str]],
     latest: str,
 ) -> list[str]:
+    """Save eligible memory candidates against the current user's account only."""
     if os.environ.get("AUTO_SAVE_MEMORIES", "true").strip().lower() in {
         "0", "false", "no", "off"
     }:
@@ -203,6 +204,7 @@ async def new_conversation(
     payload: NewConversationRequest,
     request: Request,
 ) -> dict[str, object]:
+    """Create a conversation owned by the signed-in account."""
     _require_csrf(request)
     user = _current_user(request)
     conversation_id = create_conversation(
@@ -219,6 +221,7 @@ async def conversation_detail(
     conversation_id: int,
     request: Request,
 ) -> dict[str, object]:
+    """Return a conversation only when it belongs to the signed-in account."""
     user = _current_user(request)
     conversation = get_conversation(
         user.id,
