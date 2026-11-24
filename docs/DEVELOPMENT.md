@@ -148,9 +148,10 @@ S3 endpoint is configured, and only then prunes expired local backups. If an
 off-site upload fails, it keeps the new local backup and does not prune older
 ones. Failures are written to the Pterodactyl console and recorded in
 `/home/container/data/backups/.scheduler-status.json`; this file contains
-operational status only, not credentials. The scheduler runs once per local
-calendar day and catches up once after a restart if that day's scheduled time
-has already passed. Configure an object-storage lifecycle policy separately
+operational status only, not credentials. The scheduler completes at most one successful backup cycle per local
+calendar day and catches up after a restart if that day's scheduled time has
+already passed. Failed or interrupted attempts are retried after a 15-minute
+backoff until a cycle succeeds. Configure an object-storage lifecycle policy separately
 if remote retention is required. Keep the encryption key and object-storage
 credentials separate from the backup bucket.
 
