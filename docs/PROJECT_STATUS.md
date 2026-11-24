@@ -23,9 +23,11 @@ This page separates confirmed project decisions from implementation work. A plan
 - Liveness endpoint /healthz and local-model readiness endpoint /readyz.
 - Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
+- Encrypted local backup creation, verification and confirmed restore CLI using AES-256-GCM.
+- S3-compatible encrypted backup upload over HTTPS, with remote size and SHA-256 metadata verification.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed 81 tests. The custom container image built and passed its runtime smoke test in GitHub Actions. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed 88 tests before the S3 upload tests were added. The backup-enabled custom container image built and passed its runtime smoke test. The image has not yet been published to GHCR or tested on a live Pterodactyl node. S3 upload tests are being added and must pass before the next status update.
 
 ## Confirmed direction
 
@@ -44,22 +46,21 @@ The latest completed GitHub Actions Python test run passed 81 tests. The custom 
 
 ## Not implemented yet
 
-- Off-site backup transfer, automatic backup scheduling and safe application update/rollback.
+- Automatic daily backup scheduling, retention and remote restore convenience; safe application update/rollback.
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
-- Encrypted local backup creation, verification and confirmed restore CLI; off-site transfer, scheduling, update and rollback remain outstanding.
+- Automatic backup scheduling, retention, safe application update/rollback and production deployment remain outstanding.
 - Production security review, MFA, account recovery and server-side session revocation across all devices.
 
 ## Next implementation sequence
 
-1. Finish the container image build and runtime smoke test.
-2. Add safe URL opening and summarisation, with strict SSRF protections.
-3. Add optional search-result context to chat.
-4. Complete off-site backup transfer and scheduling, then add safe update/rollback tooling.
-5. Add Discord text integration; consider voice only after the core is stable.
-6. Publish the stable image and import/test the finished Egg on the user's Panel.
+1. Complete and verify S3-compatible encrypted backup upload tests.
+2. Add automatic daily backup scheduling and retention, including failure visibility.
+3. Add safe application update, database migration and rollback tooling.
+4. Add Discord text integration; consider voice only after the core is stable.
+5. Publish the stable image and import/test the finished Egg on the user's Panel.
 
 ## Resource assumptions
 
