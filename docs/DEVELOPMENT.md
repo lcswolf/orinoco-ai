@@ -54,6 +54,12 @@ AUTO_SAVE_MEMORIES=false
 
 The extractor is deliberately conservative and filters common secret/contact/address patterns and selected sensitive categories. It is not infallible; users should review saved memories.
 
+## Document libraries
+
+Signed-in users can upload private TXT, Markdown, PDF, DOCX, XLSX and PPTX files (maximum 10 MiB per file). Administrators can upload documents to the shared library, which standard users can read but cannot modify. Text is extracted locally and indexed in SQLite FTS5; relevant excerpts from only the current user's private files and the shared library may be added to that user's chat prompt as untrusted reference material.
+
+Scanned PDFs without extractable text are not OCR-processed. Uploaded files and extracted text are stored in the private data directory/database and must be included in encrypted off-server backups. They are not used to train a model.
+
 ## Run tests
 
 ```bash
@@ -81,7 +87,7 @@ supervisord -n -c /opt/orinoco/docker/supervisord.conf
 ## Current limitations
 
 - No conversation deletion/editing, pagination or streaming responses.
-- No document ingestion, retrieval or shared/private libraries.
+- No OCR for scanned PDFs, advanced semantic/vector search or document pagination.
 - No web search or URL summarisation.
 - No Discord or voice integration.
 - The Pterodactyl Egg and container image are preview/development artefacts and have not been deployed to the user's Panel.
