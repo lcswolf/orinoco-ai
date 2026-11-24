@@ -200,3 +200,13 @@ def test_trusted_proxy_allowlist_is_hidden_and_admin_only() -> None:
     assert variable["user_viewable"] is False
     assert variable["user_editable"] is False
 
+
+def test_model_choices_match_confirmed_stable_auto_download_configuration() -> None:
+    """Keep the curated multi-model selector and automatic download default aligned."""
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variables = {item["env_variable"]: item for item in egg["variables"]}
+
+    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:stable"]
+    assert variables["AI_MODEL"]["default_value"] == "qwen2.5:1.5b"
+    assert variables["AI_MODEL"]["rules"] == "required|string|in:qwen2.5:0.5b,qwen2.5:1.5b,qwen2.5:3b"
+    assert variables["AUTO_DOWNLOAD_MODEL"]["default_value"] == "true"
