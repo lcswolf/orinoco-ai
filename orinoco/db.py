@@ -24,6 +24,7 @@ def get_database_path() -> Path:
 
 
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
+CURRENT_SCHEMA_VERSION = 4
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,14 @@ def _database(database_path: Path) -> Iterator[sqlite3.Connection]:
 def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
     """Create the initial schema without overwriting existing user data."""
     with _database(database_path) as connection:
+        schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+        if schema_version > CURRENT_SCHEMA_VERSION:
+            raise RuntimeError(
+                f"Database schema version {schema_version} is newer than this Orinoco build "
+                f"(supports up to {CURRENT_SCHEMA_VERSION}). Refusing to modify it."
+            )
+        # All schema changes through version 4 are additive table/index creation.
+        # CREATE IF NOT EXISTS safely completes an older v1-v3 installation.
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -151,7 +160,8 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
             "CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts "
             "USING fts5(original_name, extracted_text, tokenize='unicode61')"
         )
-        connection.execute("PRAGMA user_version = 4")
+        if schema_version < CURRENT_SCHEMA_VERSION:
+            connection.execute(f"PRAGMA user_version = {CURRENT_SCHEMA_VERSION}")
     try:
         database_path.chmod(0o600)
     except OSError:
