@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in Orinoco. The project is at an early planning stage, so discussion and careful design feedback are especially useful.
+Thanks for your interest in Orinoco. The project is at an early implementation stage, so discussion, tests and careful design feedback are especially useful.
 
 ## Before making a change
 
