@@ -46,6 +46,10 @@ DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand
 
 The restore path now creates its pre-restore database snapshot through SQLite's online backup API, preserving committed WAL data. It also preserves the existing file-based session secret and restores it if a later restore step fails. A failure-injection regression test is being added to exercise this rollback path.
 
+### Browser security headers — added
+
+The application now sends a restrictive Content Security Policy, clickjacking protection, MIME sniffing protection, a conservative referrer policy, same-origin resource/opener policies and a Permissions Policy disabling unused camera/microphone/geolocation access. The current frontend uses DOM node creation and textContent for dynamic content rather than HTML string injection. Regression tests check the headers on application, API and static responses.
+
 ### Documentation accuracy — corrected
 
 The README and development guide now distinguish implemented encrypted backup operations from the outstanding scheduler/retention work. The Egg's web-search descriptions now reflect the implemented SearXNG integration rather than describing it as future work.
@@ -61,7 +65,7 @@ The README and development guide now distinguish implemented encrypted backup op
 - [ ] Implement and test automatic daily backups, retention and clear failure reporting.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
-- [ ] Review frontend XSS exposure, accessibility, keyboard navigation, mobile layout and API error states.
+- [x] Add restrictive browser security headers and verify they apply to application/API/static responses.\n- [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
 - [ ] Review CI workflow permissions, dependency versions, build reproducibility and vulnerability scanning.
 - [ ] Run the complete test suite after all audit corrections; build and smoke-test the final image.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
