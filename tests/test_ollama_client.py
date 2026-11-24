@@ -35,7 +35,7 @@ def test_chat_sends_non_streaming_request_and_returns_content() -> None:
     assert isinstance(payload, dict)
     assert payload["model"] == "qwen2.5:1.5b"
     assert payload["stream"] is False
-    assert payload["options"] == {"num_ctx": 2048}
+    assert payload["options"] == {"num_ctx": 2048, "num_predict": 512}
 
 
 def test_chat_rejects_unsupported_roles_before_network_call() -> None:
