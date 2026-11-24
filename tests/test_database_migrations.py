@@ -100,8 +100,8 @@ def test_database_parent_directory_permissions_are_restricted(tmp_path) -> None:
         assert database_dir.stat().st_mode & 0o777 == 0o700
 
 
-def test_v5_database_upgrades_to_v6_without_losing_accounts(tmp_path) -> None:
-    """The preferences/persona migration preserves existing account data from schema v5."""
+def test_v5_database_upgrades_to_current_schema_without_losing_accounts(tmp_path) -> None:
+    """The preference/persona migrations preserve account data from schema v5."""
     from orinoco.db import CURRENT_SCHEMA_VERSION, get_assistant_persona, get_user_preferences
 
     database = tmp_path / "v5-upgrade.sqlite3"
