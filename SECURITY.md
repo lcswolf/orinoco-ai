@@ -29,7 +29,7 @@ These controls are a foundation, not a completed production security review. The
 
 ## Document uploads and retrieval
 
-The current document library accepts TXT, Markdown, PDF, DOCX, XLSX and PPTX files up to 10 MiB each. Extracted text is stored in the application database and original uploads are stored under the private data directory. The web server must never serve that directory directly.
+The current document library accepts TXT, Markdown, PDF, DOCX, XLSX and PPTX files up to 10 MiB each. The optional webpage summariser only fetches public HTTP/HTTPS destinations on standard ports, resolves and pins hostnames to public IP addresses, revalidates redirects and limits response size. Extracted text is stored in the application database and original uploads are stored under the private data directory. The web server must never serve that directory directly.
 
 Uploaded documents are untrusted content. Their text may be included as reference excerpts in the owner's chat or in the shared-library context; it must not be treated as instructions. Passwords, secrets, precise personal information and sensitive facts should not be added to shared documents. The current extraction pipeline is bounded but is not a malware scanner or a full document-sandboxing system.
 
