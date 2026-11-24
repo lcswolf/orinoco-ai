@@ -68,8 +68,11 @@ async def request_body_limit(request, call_next):
             return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
         if content_length < 0:
             return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
-        max_bytes = int(os.environ.get("ORINOCO_MAX_REQUEST_BODY_BYTES", str(12 * 1024 * 1024)))
-        if max_bytes < 1024 * 1024:
+        try:
+            max_bytes = int(os.environ.get("ORINOCO_MAX_REQUEST_BODY_BYTES", str(12 * 1024 * 1024)))
+        except ValueError:
+            return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
+        if max_bytes < 1024:
             return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
         if content_length > max_bytes:
             return JSONResponse(
