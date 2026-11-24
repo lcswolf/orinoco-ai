@@ -392,12 +392,15 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
         try:
             answer = await client.chat(messages)
             try:
-                saved_memories = await _save_automatic_memories(
-                    client,
-                    user.id,
-                    history,
-                    payload.message,
-                )
+                if preferences["auto_save_memories"]:
+                    saved_memories = await _save_automatic_memories(
+                        client,
+                        user.id,
+                        history,
+                        payload.message,
+                    )
+                else:
+                    saved_memories = []
             except Exception:
                 # A memory-extraction or persistence problem must never discard
                 # an otherwise successful assistant reply. Keep details in logs.
