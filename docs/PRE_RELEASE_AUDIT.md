@@ -214,7 +214,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [x] Validate external links and render untrusted search/document/chat text without HTML parsing.
-- [ ] Finish keyboard navigation, mobile layout and API error-state review.
+- [ ] Browser-test the accessible mobile navigation drawer, focus trapping, narrow topbar and API error states on iOS, Android and desktop. Static regression checks now cover ARIA state, inert background content, Escape/Tab handling and focus-visible styling.
 - [x] Integrate the original Womble-inspired Orinoco mascot, accessible SVG artwork and UK woodland visual treatment.
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
