@@ -71,7 +71,7 @@ async def get_ollama_readiness() -> dict[str, str]:
 
 
 @app.get("/readyz", include_in_schema=False)
-async def readyz() -> dict[str, str] | JSONResponse:
+async def readyz():
     """Readiness check: confirms the local model service and selected model exist."""
     try:
         result = await get_ollama_readiness()
