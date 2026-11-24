@@ -515,7 +515,7 @@ function renderDocumentList(element, documents, shared = false) {
       remove.className = "document-delete";
       remove.textContent = "Delete";
       remove.addEventListener("click", async () => {
-        if (!window.confirm("Delete " + documentInfo.original_name + "?")) return;
+        if (!window.confirm("Delete " + documentInfo.original_name + " and its extracted content? Encrypted backups may retain previous copies until their retention expires.")) return;
         remove.disabled = true;
         try {
           const csrf = await getCsrfToken();
@@ -812,7 +812,7 @@ async function loadMemories() {
       remove.textContent = "Delete";
       remove.className = "suspend";
       remove.addEventListener("click", async () => {
-        if (!window.confirm("Delete this memory?")) return;
+        if (!window.confirm("Delete this memory? Encrypted backups may retain previous copies until their retention expires.")) return;
         try {
           const csrf = await getCsrfToken();
           const deletion = await fetch("/api/memories/" + memory.id, {
