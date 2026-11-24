@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import hmac
-import secrets
 
 from fastapi import APIRouter, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import (
     User,
@@ -40,6 +39,13 @@ class NewConversationRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     conversation_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("message")
+    @classmethod
+    def message_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("message must not be blank")
+        return value
 
 
 def _require_csrf(request: Request) -> None:
