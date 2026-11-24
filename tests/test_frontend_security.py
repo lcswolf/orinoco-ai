@@ -91,3 +91,20 @@ def test_mobile_topbar_fits_narrow_screens_and_keeps_status_accessible() -> None
     assert "@media (max-width: 480px)" in css
     assert ".delete-chat-action::before" in css
     assert ".connection > span:last-child" in css
+
+
+def test_static_html_has_unique_ids_and_resolved_accessibility_references() -> None:
+    """Labels and ARIA relationships must point to existing, unique elements."""
+    import re
+
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    ids = re.findall(r'\\bid="([^"]+)"', html)
+    id_set = set(ids)
+    assert len(ids) == len(id_set)
+
+    references = []
+    for attribute in ("for", "aria-controls", "aria-labelledby", "aria-describedby"):
+        for value in re.findall(rf'\\b{attribute}="([^"]+)"', html):
+            references.extend(value.split())
+
+    assert set(references) <= id_set
