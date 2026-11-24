@@ -101,7 +101,7 @@
     },
     {
       "name": "Enable Web Search",
-      "description": "Web research is planned and is not active yet.",
+      "description": "Enable the implemented authenticated SearXNG research workspace and per-message opt-in web search. Requires SEARXNG_URL.",
       "env_variable": "ENABLE_WEB_SEARCH",
       "default_value": "true",
       "user_viewable": true,
@@ -110,7 +110,7 @@
     },
     {
       "name": "SearXNG URL",
-      "description": "Optional future SearXNG endpoint. Leave blank until search integration is available.",
+      "description": "Administrator-configured SearXNG service endpoint used by the implemented web research feature. Leave blank to keep web search unavailable.",
       "env_variable": "SEARXNG_URL",
       "default_value": "",
       "user_viewable": true,
