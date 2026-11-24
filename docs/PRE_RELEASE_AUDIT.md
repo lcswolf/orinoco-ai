@@ -157,6 +157,10 @@ still enforce request-body limits for chunked requests and apply an
 approximately 11 MiB upload-route limit. The current quota lock is process-local;
 a multi-worker deployment needs atomic database quota reservations.
 
+### Personal memory storage — bounded
+
+Each account now has a configurable personal-memory count cap (100 by default, 1–1000 in the Egg). The count check and insert are one SQL statement to avoid concurrent requests exceeding the allowance. Manual creation returns HTTP 409 when full; automatic extraction skips new entries without failing a successful chat. Regression tests cover per-user isolation and the full-quota chat path.
+
 ### Chat generation queue — bounded
 
 The chat API now reserves one of a bounded number of in-flight slots before loading account context. The default is one model-generation slot plus eight additional admitted requests; excess requests receive HTTP 503 and `Retry-After: 5`. The additional capacity is configurable from 0–32 in the Egg. A regression test verifies overload rejection and slot release. This limiter is process-local; a multi-worker deployment needs shared queue coordination.
