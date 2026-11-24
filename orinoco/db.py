@@ -166,6 +166,81 @@ def create_user(
     )
 
 
+
+def list_users(*, database_path: Path = DEFAULT_DATABASE_PATH) -> list[User]:
+    with _database(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT id, username, role, active, created_at
+            FROM users
+            ORDER BY role DESC, username COLLATE NOCASE ASC
+            """
+        ).fetchall()
+    return [
+        User(
+            id=int(row["id"]),
+            username=str(row["username"]),
+            role=str(row["role"]),
+            active=bool(row["active"]),
+            created_at=str(row["created_at"]),
+        )
+        for row in rows
+    ]
+
+
+def set_user_active(
+    user_id: int,
+    active: bool,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    with _database(database_path) as connection:
+        user = connection.execute(
+            "SELECT role, active FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+        if user is None:
+            return False
+        if not active and str(user["role"]) == "admin" and bool(user["active"]):
+            active_admins = connection.execute(
+                "SELECT COUNT(*) FROM users WHERE role = 'admin' AND active = 1"
+            ).fetchone()[0]
+            if int(active_admins) <= 1:
+                raise AccountError("the last active administrator cannot be suspended")
+        connection.execute(
+            "UPDATE users SET active = ? WHERE id = ?",
+            (1 if active else 0, user_id),
+        )
+        return True
+
+
+def change_user_password(
+    user_id: int,
+    current_password: str,
+    new_password: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    try:
+        new_hash = hash_password(new_password)
+    except ValueError as exc:
+        raise AccountError(str(exc)) from exc
+    with _database(database_path) as connection:
+        row = connection.execute(
+            "SELECT password_hash, active FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+        if row is None or not bool(row["active"]):
+            return False
+        if not verify_password(current_password, str(row["password_hash"])):
+            return False
+        connection.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (new_hash, user_id),
+        )
+        return True
+
+
 def get_user_by_username(
     username: str, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
