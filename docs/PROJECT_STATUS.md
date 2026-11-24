@@ -27,7 +27,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - S3-compatible encrypted backup upload over HTTPS, with remote size and SHA-256 metadata verification.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed 91 tests, including mocked S3 upload and remote-checksum verification. The backup-enabled custom container image built and passed its runtime smoke test. The image has not yet been published to GHCR or tested on a live Pterodactyl node. S3 upload tests are being added and must pass before the next status update.
+The latest completed GitHub Actions Python test run passed 96 tests, including first-admin bootstrap, Office archive expansion limits, encrypted backup upload and verification of downloaded remote bytes. The earlier S3-enabled image passed its container smoke test; the current audit-hardened image build is being re-run. No image has been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -51,12 +51,11 @@ The latest completed GitHub Actions Python test run passed 91 tests, including m
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
-- Automatic backup scheduling, retention, safe application update/rollback and production deployment remain outstanding.
 - Production security review, MFA, account recovery and server-side session revocation across all devices.
 
 ## Next implementation sequence
 
-1. Complete and verify S3-compatible encrypted backup upload tests.
+1. Complete the repository-wide pre-release audit and re-run the final image build/smoke test.
 2. Add automatic daily backup scheduling and retention, including failure visibility.
 3. Add safe application update, database migration and rollback tooling.
 4. Add Discord text integration; consider voice only after the core is stable.
