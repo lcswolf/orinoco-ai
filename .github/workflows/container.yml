@@ -20,9 +20,13 @@ on:
 
 permissions:
   contents: read
+ nconcurrency:
+  group: orinoco-container-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    timeout-minutes: 40
     name: Build and smoke-test Orinoco container image
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +47,8 @@ jobs:
           push: false
           load: true
           tags: orinoco-ai:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Start container and verify services
         shell: bash
