@@ -180,3 +180,12 @@ def test_reverse_proxy_templates_keep_private_backends_and_edge_limits() -> None
     assert "client_max_body_size 11m;" in nginx
     assert "limit_req_zone $binary_remote_addr zone=orinoco_login" in nginx
     assert "limit_req_zone $binary_remote_addr zone=orinoco_chat" in nginx
+
+def test_searxng_endpoint_is_admin_only_and_hidden() -> None:
+    """The outbound search service endpoint must not be user-editable."""
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    endpoint = next(v for v in egg["variables"] if v["env_variable"] == "SEARXNG_URL")
+
+    assert endpoint["user_viewable"] is False
+    assert endpoint["user_editable"] is False
+
