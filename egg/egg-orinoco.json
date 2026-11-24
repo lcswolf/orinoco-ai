@@ -262,6 +262,15 @@
       "rules": "required|integer|min:1024"
     },
     {
+      "name": "Trusted Proxy IPs",
+      "description": "Comma-separated exact IP addresses or CIDR ranges for the host reverse proxy. Leave blank until the proxy peer address has been measured from inside the container. Forwarded client IPs are ignored unless the connecting peer matches this allowlist.",
+      "env_variable": "ORINOCO_TRUSTED_PROXY_IPS",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:512"
+    },
+    {
       "name": "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
       "description": "Maximum chat submissions allowed per user in a rolling minute. Defaults to 10; valid range is 1–120. This protects the single local inference queue.",
       "env_variable": "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
