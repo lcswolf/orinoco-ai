@@ -861,4 +861,5 @@ def authenticate_user(
         role=str(row["role"]),
         active=True,
         created_at=str(row["created_at"]),
+        session_version=int(row["session_version"]),
     )
