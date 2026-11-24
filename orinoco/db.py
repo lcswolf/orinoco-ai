@@ -44,8 +44,33 @@ class AccountError(ValueError):
 
 def _connect(database_path: Path) -> sqlite3.Connection:
     """Open a SQLite connection with foreign-key enforcement and a bounded lock wait."""
-    database_path.parent.mkdir(parents=True, exist_ok=True)
+    database_path = Path(database_path)
+    database_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if database_path.is_symlink():
+        raise RuntimeError("The Orinoco database path must not be a symbolic link.")
+
+    # Create/check the file with restrictive permissions before SQLite opens it.
+    # O_NOFOLLOW rejects a link swapped in between the explicit check and open.
+    flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    try:
+        descriptor = os.open(database_path, flags, 0o600)
+    except OSError as exc:
+        if database_path.is_symlink():
+            raise RuntimeError("The Orinoco database path must not be a symbolic link.") from exc
+        raise
+    try:
+        try:
+            os.fchmod(descriptor, 0o600)
+        except (AttributeError, OSError):
+            pass
+    finally:
+        os.close(descriptor)
+
     connection = sqlite3.connect(database_path, timeout=10)
+    try:
+        database_path.chmod(0o600)
+    except OSError:
+        pass
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 10000")
