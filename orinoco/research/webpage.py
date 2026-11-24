@@ -40,6 +40,12 @@ def validate_url_syntax(url: str) -> tuple[str, str, int]:
     if host == "localhost" or host.endswith(_BLOCKED_SUFFIXES):
         raise SafeFetchError("Private and local network addresses cannot be opened.")
     try:
+        literal_ip = ipaddress.ip_address(host)
+    except ValueError:
+        literal_ip = None
+    if literal_ip is not None and not literal_ip.is_global:
+        raise SafeFetchError("Private and local network addresses cannot be opened.")
+    try:
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
     except ValueError as exc:
         raise SafeFetchError("The website URL contains an invalid port.") from exc
@@ -57,8 +63,9 @@ class PublicResolver(AbstractResolver):
         port: int = 0,
         family: int = socket.AF_INET,
     ) -> list[dict[str, object]]:
+        host_for_url = f"[{host}]" if ":" in host and not host.startswith("[") else host
         _, hostname, checked_port = validate_url_syntax(
-            f"https://{host}:{port or 443}/"
+            f"https://{host_for_url}:{port or 443}/"
         )
         loop = asyncio.get_running_loop()
         try:
@@ -103,7 +110,10 @@ class PublicResolver(AbstractResolver):
 
 def _extract_readable_text(content: bytes, content_type: str, charset: str | None) -> tuple[str, str]:
     encoding = charset or "utf-8"
-    raw = content.decode(encoding, errors="replace")
+    try:
+        raw = content.decode(encoding, errors="replace")
+    except LookupError:
+        raw = content.decode("utf-8", errors="replace")
     if content_type in {"text/plain"}:
         return "", raw[:MAX_PAGE_TEXT]
 
@@ -166,7 +176,7 @@ async def fetch_public_page(url: str) -> FetchedPage:
                     return FetchedPage(url=str(response.url), title=title, text=text)
     except SafeFetchError:
         raise
-    except (aiohttp.ClientError, asyncio.TimeoutError, OSError, UnicodeError) as exc:
+    except (aiohttp.ClientError, asyncio.TimeoutError, OSError, UnicodeError, LookupError) as exc:
         raise SafeFetchError("The webpage could not be fetched safely.") from exc
 
     raise SafeFetchError("The webpage could not be fetched safely.")
