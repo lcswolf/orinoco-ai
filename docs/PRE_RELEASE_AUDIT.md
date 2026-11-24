@@ -194,7 +194,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 
 - [x] Add bounded per-client-address login throttling alongside per-username limits.
 - [x] Add owner-only SQLite file permissions and symbolic-link rejection.
-- [ ] Finish authentication/session review, including trusted-proxy configuration and session-secret rotation. Application-level declared-body limits and configurable per-user/shared document quotas are implemented; reverse-proxy limits (including chunked requests), multi-worker quota reservations and chat retention remain outstanding.
+- [ ] Finish authentication/session review, including live trusted-proxy configuration and session-secret rotation rehearsal. The offline TTY-only password-reset CLI is implemented; application MFA remains an open decision for public multi-user access. Application-level declared-body limits and configurable per-user/shared document quotas are implemented; reverse-proxy limits (including chunked requests), multi-host shared-storage quota semantics and chat retention remain outstanding.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.
 - [x] Review SQLite file creation permissions and reject symbolic-link database paths.
 - [ ] Continue reviewing database functions and schema evolution for safe upgrades from an existing installation.
@@ -210,6 +210,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Apply and live-test the Caddy/Nginx/Tailscale design in [Network Deployment](NETWORK_DEPLOYMENT.md): public HTTPS subdomain, HTTPS IP:8443, private Tailscale Serve :8444 (no Funnel), Docker/Wings firewall restrictions, edge body/rate/connection limits and certificate renewal.
+- [ ] Decide whether host-level full-disk or dedicated-volume encryption is required for the live SQLite database and uploaded documents; document the unlock and recovery process before storing sensitive material.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [x] Validate external links and render untrusted search/document/chat text without HTML parsing.
