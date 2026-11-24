@@ -125,7 +125,7 @@ function appendMessage(role, content, state = "") {
   message.className = "chat-message " + role + (state ? " " + state : "");
   const label = document.createElement("span");
   label.className = "chat-message-role";
-  label.textContent = role === "user" ? "You" : "Orinoco";
+  label.textContent = state === "notice" ? "MEMORY" : (role === "user" ? "You" : "Orinoco");
   const body = document.createElement("div");
   body.className = "chat-message-body";
   body.textContent = content;
@@ -317,6 +317,9 @@ chatForm.addEventListener("submit", async (event) => {
 
     currentConversationId = result.conversation_id;
     appendMessage("assistant", result.assistant_message);
+    if (Array.isArray(result.saved_memories) && result.saved_memories.length) {
+      appendMessage("assistant", "I saved a useful note to your personal memories. You can review or delete it in My memories.", "notice");
+    }
     await refreshConversations();
   } catch (error) {
     pending.remove();
