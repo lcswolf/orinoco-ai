@@ -11,7 +11,8 @@ This page separates confirmed project decisions from implementation work. A plan
 - Orinoco's requested greeting and an initial local-model status display.
 - /healthz liveness endpoint and /readyz readiness endpoint.
 - Readiness check for the local Ollama API and selected model.
-- Automated tests for the API, custom interface, Egg definition and runtime layout.
+- SQLite account storage, Argon2 password hashing, username validation and a local-only first-admin bootstrap command.
+- Automated tests for the API, custom interface, account primitives, Egg definition and runtime layout.
 - Python dependency manifests for runtime and development.
 - Pterodactyl-compatible Docker image foundation using a non-root container user and /home/container working directory.
 - Pterodactyl startup entrypoint that expands simple uppercase {{VARIABLE}} placeholders without evaluating shell commands.
@@ -21,7 +22,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0 and an install script that prepares persistent data folders.
 - GitHub Actions workflows for Python tests and Docker image build validation.
 
-The latest GitHub Actions Python test run passed all 15 tests, including checks for the custom interface and static assets. The expanded image build and container runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest GitHub Actions Python test run passed all 19 tests, including checks for the custom interface, account storage and password handling. The expanded image build and container runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -42,7 +43,7 @@ The latest GitHub Actions Python test run passed all 15 tests, including checks 
 ## Not implemented yet
 
 - Authenticated chat endpoint and working chat composer.
-- User authentication, roles and account management.
+- HTTP login, secure sessions, user-management routes and account screens.
 - Database, conversation storage and per-user memory controls.
 - Settings and administrator screens.
 - Document ingestion, retrieval and shared/private libraries.
