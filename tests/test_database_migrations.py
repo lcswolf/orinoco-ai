@@ -86,3 +86,15 @@ def test_database_refuses_symbolic_link_path(tmp_path) -> None:
         assert connection.execute(
             "SELECT name FROM sqlite_master WHERE type='table'"
         ).fetchone()[0] == "external_data"
+
+
+def test_database_parent_directory_permissions_are_restricted(tmp_path) -> None:
+    """The directory holding the database and private user data is owner-only on POSIX."""
+    import os
+
+    database_dir = tmp_path / "private-data"
+    database = database_dir / "orinoco.sqlite3"
+    initialise_database(database)
+
+    if os.name == "posix":
+        assert database_dir.stat().st_mode & 0o777 == 0o700
