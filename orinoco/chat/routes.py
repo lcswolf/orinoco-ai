@@ -7,6 +7,8 @@ import json
 import logging
 import os
 import re
+import time
+from collections import OrderedDict, deque
 
 from fastapi import APIRouter, HTTPException, Request, status
 
@@ -36,6 +38,38 @@ from orinoco.research.searxng import SearchUnavailable, SearXNGClient
 
 router = APIRouter(prefix="/api", tags=["chat"])
 logger = logging.getLogger(__name__)
+
+# Local inference is deliberately serial on the initial VPS. Bound how quickly
+# one account can add work to that queue; the reverse proxy adds an edge limit.
+MAX_CHAT_REQUESTS_PER_MINUTE = 10
+CHAT_RATE_WINDOW_SECONDS = 60
+MAX_TRACKED_CHAT_USERS = 10_000
+_chat_request_failures: OrderedDict[int, deque[float]] = OrderedDict()
+
+
+def _check_chat_rate(user_id: int) -> None:
+    """Limit one account to ten chat submissions per rolling minute."""
+    now = time.monotonic()
+    failures = _chat_request_failures.get(user_id)
+    if failures is None:
+        if len(_chat_request_failures) >= MAX_TRACKED_CHAT_USERS:
+            _chat_request_failures.popitem(last=False)
+        failures = deque()
+        _chat_request_failures[user_id] = failures
+    else:
+        _chat_request_failures.move_to_end(user_id)
+
+    while failures and now - failures[0] >= CHAT_RATE_WINDOW_SECONDS:
+        failures.popleft()
+    if len(failures) >= MAX_CHAT_REQUESTS_PER_MINUTE:
+        retry_after = max(1, int(CHAT_RATE_WINDOW_SECONDS - (now - failures[0])))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Orinoco is receiving messages too quickly. Please wait before sending another.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    failures.append(now)
+
 SYSTEM_PROMPT = """You are Orinoco, a friendly and helpful personal AI assistant.
 Be clear, practical, accurate and honest about uncertainty. Use British English
 spelling and UK-friendly examples when relevant. Adapt your speaking style and
@@ -280,6 +314,7 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
     """Build account-scoped context, call local inference, and persist the exchange."""
     _require_csrf(request)
     user = _current_user(request)
+    _check_chat_rate(user.id)
     database_path = get_database_path()
     history: list[dict[str, str]] = []
 
