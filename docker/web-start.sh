@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+# The web process listens on the port assigned by Pterodactyl; the proxy handles TLS.
+
 PORT="${SERVER_PORT:-8000}"
 export TZ="${TIMEZONE:-Europe/London}"
 case "$PORT" in
