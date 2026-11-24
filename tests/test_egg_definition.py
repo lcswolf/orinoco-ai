@@ -30,6 +30,7 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "ENABLE_WEB_SEARCH",
         "SEARXNG_URL",
         "TIMEZONE",
+        "ORINOCO_BACKUP_KEY",
     }
 
 
@@ -72,3 +73,13 @@ def test_dockerignore_keeps_application_feature_packages() -> None:
     assert "memories" not in ignored
     assert "conversations" not in ignored
     assert "/data" in ignored
+
+
+
+def test_backup_key_is_private_and_blank_by_default() -> None:
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    key = next(v for v in egg["variables"] if v["env_variable"] == "ORINOCO_BACKUP_KEY")
+
+    assert key["default_value"] == ""
+    assert key["user_viewable"] is False
+    assert key["user_editable"] is False
