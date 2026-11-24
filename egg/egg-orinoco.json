@@ -78,7 +78,7 @@
       "env_variable": "ENABLE_DISCORD",
       "default_value": "false",
       "user_viewable": true,
-      "user_editable": true,
+      "user_editable": false,
       "rules": "required|string|in:true,false"
     },
     {
@@ -96,7 +96,7 @@
       "env_variable": "ENABLE_VOICE",
       "default_value": "false",
       "user_viewable": true,
-      "user_editable": true,
+      "user_editable": false,
       "rules": "required|string|in:true,false"
     },
     {
