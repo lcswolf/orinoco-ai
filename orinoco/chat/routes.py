@@ -47,10 +47,22 @@ Prefer stable preferences, interests, goals and non-sensitive background that ma
 improve future assistance. Each item must be under 240 characters."""
 
 _SENSITIVE_MEMORY_TERMS = (
+    # Credentials, contact/financial details and sensitive personal categories.
     "password", "passcode", "api key", "access token", "secret key",
-    "credit card", "bank account", "medical", "diagnosis", "medication",
-    "health condition", "religion", "political party", "sexual orientation",
-    "criminal record", "ethnicity", "race",
+    "credit card", "bank account", "sort code", "account number",
+    "salary", "income", "mortgage", "loan", "debt", "pension",
+    "medical", "diagnosis", "medication", "health condition", "mental health",
+    "chronic illness", "illness", "disease", "diabetes", "cancer", "asthma",
+    "depression", "anxiety", "bipolar", "schizophrenia", "autism", "adhd",
+    "epilepsy", "hiv", "aids", "pregnancy", "pregnant", "disability",
+    "disabled", "blood pressure", "cholesterol", "therapy", "therapist",
+    "treatment", "symptom", "prescription", "surgery",
+    "religion", "christian", "muslim", "jewish", "hindu", "buddhist",
+    "sikh", "atheist", "agnostic", "political party", "politics",
+    "labour party", "conservative party", "liberal democrat", "green party",
+    "reform uk", "plaid cymru", "sexual orientation", "gay", "lesbian",
+    "bisexual", "transgender", "criminal record", "conviction", "arrested",
+    "felony", "offence", "offense", "ethnicity", "ethnic background", "race",
 )
 _EMAIL_PATTERN = re.compile(r"\b[^\s@]+@[^\s@]+\.[^\s@]+\b")
 _PHONE_PATTERN = re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)")
@@ -79,7 +91,7 @@ def extract_memory_candidates(raw: str) -> list[str]:
         lowered = candidate.lower()
         if not candidate or len(candidate) > 240:
             continue
-        if any(term in lowered for term in _SENSITIVE_MEMORY_TERMS):
+        if any(re.search(rf"\\b{re.escape(term)}\\b", lowered) for term in _SENSITIVE_MEMORY_TERMS):
             continue
         if (
             _EMAIL_PATTERN.search(candidate)
