@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import os
 from urllib.parse import urlparse
 
@@ -65,6 +66,22 @@ class SearXNGClient:
             if parsed.scheme not in {"http", "https"} or not parsed.hostname:
                 continue
             if parsed.username or parsed.password:
+                continue
+            hostname = parsed.hostname.rstrip(".").lower()
+            if hostname == "localhost" or hostname.endswith((
+                ".localhost", ".local", ".internal", ".lan", ".home.arpa",
+                ".test", ".example", ".invalid",
+            )):
+                continue
+            try:
+                port = parsed.port
+            except ValueError:
+                continue
+            try:
+                address = ipaddress.ip_address(hostname)
+            except ValueError:
+                address = None
+            if address is not None and not address.is_global:
                 continue
             title = " ".join(str(item.get("title") or "Untitled result").split())[:240]
             content = " ".join(str(item.get("content") or "").split())[:700]
