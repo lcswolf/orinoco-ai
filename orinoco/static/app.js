@@ -23,7 +23,6 @@ const settingsDialog = document.getElementById("settings-dialog");
 const adminTools = document.getElementById("admin-tools");
 const memoriesLink = document.getElementById("memories-link");
 const documentsLink = document.getElementById("documents-link");
-const documentsLink = document.getElementById("documents-link");
 const chatLink = document.getElementById("chat-link");
 const chatView = document.querySelector(".welcome");
 const documentsView = document.getElementById("documents-view");
@@ -111,7 +110,7 @@ function showAccount(user) {
     clearThread();
     conversationList.replaceChildren();
     mobileConversations.replaceChildren(new Option("Recent chats", ""));
-    document.getElementById("document-list").replaceChildren();
+    document.getElementById("private-document-list").replaceChildren();
     document.getElementById("shared-document-list").replaceChildren();
   }
 }
@@ -603,7 +602,6 @@ settingsButton.addEventListener("click", async () => {
   await loadDocuments();
   if (currentUser.role === "admin") {
     await loadAdminUsers();
-    await loadSharedDocuments();
   }
 });
 
@@ -782,194 +780,3 @@ document.getElementById("memory-form").addEventListener("submit", async (event) 
   }
 });
 
-
-function formatFileSize(bytes) {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-}
-
-function addDocumentRow(list, fileRecord, canDelete) {
-  const item = document.createElement("div");
-  item.className = "admin-user document-item";
-  const copy = document.createElement("div");
-  copy.className = "admin-user-copy";
-  const name = document.createElement("strong");
-  name.textContent = fileRecord.original_name;
-  const detail = document.createElement("span");
-  detail.textContent = fileRecord.scope + " · " + fileRecord.file_type.toUpperCase() +
-    " · " + formatFileSize(fileRecord.size_bytes);
-  copy.append(name, detail);
-
-  const download = document.createElement("a");
-  download.href = "/api/documents/" + fileRecord.id + "/download";
-  download.textContent = "Download";
-  download.setAttribute("aria-label", "Download " + fileRecord.original_name);
-  item.append(copy, download);
-
-  if (canDelete) {
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.textContent = "Delete";
-    remove.className = "suspend";
-    remove.addEventListener("click", async () => {
-      if (!window.confirm("Delete " + fileRecord.original_name + "?")) return;
-      try {
-        const csrf = await getCsrfToken();
-        const response = await fetch("/api/documents/" + fileRecord.id, {
-          method: "DELETE",
-          headers: { "X-CSRF-Token": csrf },
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.detail || "Could not delete document.");
-        await loadDocuments();
-      } catch (error) {
-        window.alert(error.message || "Could not delete document.");
-      }
-    });
-    item.append(remove);
-  }
-  list.append(item);
-}
-
-async function loadDocuments() {
-  const list = document.getElementById("document-list");
-  list.replaceChildren();
-  try {
-    const response = await fetch("/api/documents", { headers: { Accept: "application/json" } });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.detail || "Could not load documents.");
-    if (!result.documents.length) {
-      const empty = document.createElement("p");
-      empty.className = "conversation-empty";
-      empty.textContent = "No documents uploaded yet.";
-      list.append(empty);
-      return;
-    }
-    for (const item of result.documents) addDocumentRow(list, item, item.scope === "private");
-  } catch (error) {
-    const message = document.createElement("p");
-    message.className = "settings-feedback error";
-    message.textContent = error.message || "Could not load documents.";
-    list.append(message);
-  }
-}
-
-async function loadSharedDocuments() {
-  const list = document.getElementById("shared-document-list");
-  list.replaceChildren();
-  try {
-    const response = await fetch("/api/admin/shared-documents", {
-      headers: { Accept: "application/json" },
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.detail || "Could not load shared documents.");
-    if (!result.documents.length) {
-      const empty = document.createElement("p");
-      empty.className = "conversation-empty";
-      empty.textContent = "The shared library is empty.";
-      list.append(empty);
-      return;
-    }
-    for (const item of result.documents) {
-      const row = document.createElement("div");
-      row.className = "admin-user document-item";
-      const copy = document.createElement("div");
-      copy.className = "admin-user-copy";
-      const name = document.createElement("strong");
-      name.textContent = item.original_name;
-      const detail = document.createElement("span");
-      detail.textContent = item.file_type.toUpperCase() + " · " + formatFileSize(item.size_bytes);
-      copy.append(name, detail);
-      const download = document.createElement("a");
-      download.href = "/api/documents/" + item.id + "/download";
-      download.textContent = "Download";
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "suspend";
-      remove.textContent = "Delete";
-      remove.addEventListener("click", async () => {
-        if (!window.confirm("Remove this file from the shared library?")) return;
-        try {
-          const csrf = await getCsrfToken();
-          const deletion = await fetch("/api/admin/shared-documents/" + item.id, {
-            method: "DELETE",
-            headers: { "X-CSRF-Token": csrf },
-          });
-          const payload = await deletion.json();
-          if (!deletion.ok) throw new Error(payload.detail || "Could not delete shared document.");
-          await loadSharedDocuments();
-          await loadDocuments();
-        } catch (error) {
-          window.alert(error.message || "Could not delete shared document.");
-        }
-      });
-      row.append(copy, download, remove);
-      list.append(row);
-    }
-  } catch (error) {
-    const message = document.createElement("p");
-    message.className = "settings-feedback error";
-    message.textContent = error.message || "Could not load shared documents.";
-    list.append(message);
-  }
-}
-
-async function uploadDocument(form, inputId, endpoint, feedbackId, buttonId, reload) {
-  const file = document.getElementById(inputId).files[0];
-  if (!file) return;
-  const button = document.getElementById(buttonId);
-  const feedback = document.getElementById(feedbackId);
-  button.disabled = true;
-  try {
-    const csrf = await getCsrfToken();
-    const body = new FormData();
-    body.append("file", file);
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "X-CSRF-Token": csrf },
-      body,
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.detail || "Could not upload document.");
-    form.reset();
-    showFeedback(feedback, "Document uploaded and indexed for your authorised chats.");
-    await reload();
-  } catch (error) {
-    showFeedback(feedback, error.message || "Could not upload document.", true);
-  } finally {
-    button.disabled = false;
-  }
-}
-
-documentsLink.addEventListener("click", async (event) => {
-  event.preventDefault();
-  if (!currentUser) return;
-  settingsDialog.showModal();
-  document.getElementById("personal-documents").scrollIntoView({ block: "start" });
-  await loadDocuments();
-});
-
-document.getElementById("document-upload-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await uploadDocument(
-    event.currentTarget,
-    "document-file",
-    "/api/documents",
-    "document-feedback",
-    "document-upload-submit",
-    loadDocuments,
-  );
-});
-
-document.getElementById("shared-document-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await uploadDocument(
-    event.currentTarget,
-    "shared-document-file",
-    "/api/admin/shared-documents",
-    "shared-document-feedback",
-    "shared-document-submit",
-    loadSharedDocuments,
-  );
-});
