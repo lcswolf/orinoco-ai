@@ -84,3 +84,29 @@ Application, Egg/image and model updates are separate operations. Updates should
 - Retrieval/indexing technology.
 - Model update and migration workflow.
 - Backup destination and encryption/key-management approach.
+
+## Source-code map
+
+The repository is organised by responsibility so that features can grow without putting every concern into one module:
+
+| Path | Responsibility |
+| --- | --- |
+| `orinoco/main.py` | FastAPI application assembly, static interface and health/readiness endpoints |
+| `orinoco/auth/` | Password hashing, signed sessions and authentication routes |
+| `orinoco/admin/` and `orinoco/admin.py` | Administrator API and first-admin bootstrap command |
+| `orinoco/chat/` | Conversation API, prompt construction and local model orchestration |
+| `orinoco/memories/` | Authenticated personal-memory API |
+| `orinoco/memory/store.py` | Compatibility helpers backed by the shared database layer |
+| `orinoco/documents/` | Upload validation, text extraction, private/shared routes and file storage |
+| `orinoco/llm/` | Local Ollama HTTP client |
+| `orinoco/db.py` | SQLite schema and account-scoped persistence operations |
+| `orinoco/static/` | Browser interface (HTML, CSS and JavaScript) |
+| `docker/` | Image definition, Pterodactyl entrypoint and supervised service startup |
+| `egg/` | Pterodactyl Egg definition and installation script |
+| `tests/` | Automated behaviour, isolation and runtime checks |
+
+Keep module boundaries intact: API routes should authenticate and validate requests, while database functions enforce ownership in their queries as a second line of defence. Document extraction should not decide who may access a file; route and persistence layers enforce that policy.
+
+## Maintaining the code
+
+Python modules use module docstrings and functions/classes use docstrings where their purpose, ownership rules, side effects or failure behaviour are not obvious from their names. Frontend and shell files use concise section comments for operationally important flows. Comments should explain why a constraint exists rather than repeat the statement below it. See [Development](DEVELOPMENT.md) for the full documentation conventions.
