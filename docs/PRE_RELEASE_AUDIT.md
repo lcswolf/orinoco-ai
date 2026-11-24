@@ -38,6 +38,10 @@ Several database function docstrings had been placed inside conditionals or tran
 
 The first S3-compatible upload implementation checked object size and client-supplied SHA-256 metadata. Metadata alone does not prove the bytes stored by the remote service match the source. Upload verification now downloads the stored object and hashes the returned bytes as well. Symbolic-link backup sources are rejected before resolving the path. Regression tests cover altered remote bytes and symbolic-link inputs.
 
+### Document deletion and storage path handling — strengthened
+
+Private and shared document deletion now removes the original file before deleting its database record. If file cleanup fails, the record remains visible and the user/administrator receives an error so cleanup can be retried; failures during upload rollback are logged. Stored paths now reject traversal and final-component symbolic links.
+
 ### Office document decompression limits — strengthened
 
 DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand into a much larger payload, so the extraction path now checks archive entry counts, encrypted entries and both declared and actual uncompressed size before parsing. A regression test uses a highly-compressible oversized archive to verify the limit.
@@ -74,7 +78,7 @@ The README and development guide now distinguish implemented encrypted backup op
 
 - [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.\n- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
-- [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [ ] Finish review of private/shared document ownership, file permissions, parser edge cases and cleanup failure paths.
+- [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.\n- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.\n- [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
