@@ -50,6 +50,26 @@ app.include_router(shared_documents_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    """Apply conservative browser security headers to app and static responses."""
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; base-uri 'self'; form-action 'self'; "
+        "frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; "
+        "font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'",
+    )
+    return response
+
+
 @app.get("/", include_in_schema=False)
 async def index() -> FileResponse:
     """Serve the custom Orinoco web interface."""
