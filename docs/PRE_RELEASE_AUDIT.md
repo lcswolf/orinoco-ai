@@ -157,6 +157,10 @@ still enforce request-body limits for chunked requests and apply an
 approximately 11 MiB upload-route limit. The current quota lock is process-local;
 a multi-worker deployment needs atomic database quota reservations.
 
+### Chat generation queue — bounded
+
+The chat API now reserves one of a bounded number of in-flight slots before loading account context. The default is one model-generation slot plus eight additional admitted requests; excess requests receive HTTP 503 and `Retry-After: 5`. The additional capacity is configurable from 0–32 in the Egg. A regression test verifies overload rejection and slot release. This limiter is process-local; a multi-worker deployment needs shared queue coordination.
+
 ### Reverse-proxy design — documented, not yet deployed
 
 The network plan now documents Caddy public TLS, Nginx loopback-only request/body/rate/connection limits, the public HTTPS subdomain, short-lived IP certificate access on port 8443, and tailnet-only Tailscale Serve on port 8444 without Funnel. Uvicorn is explicitly started with forwarded-header processing disabled until the real proxy peer address can be measured and allow-listed. The live Leaseweb/Pterodactyl host, Docker published-port firewall path, certificate issuance/renewal, actual client IP handling and all three access paths still require verification. See `docs/NETWORK_DEPLOYMENT.md`.
