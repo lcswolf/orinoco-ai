@@ -108,3 +108,34 @@ def test_static_html_has_unique_ids_and_resolved_accessibility_references() -> N
             references.extend(value.split())
 
     assert set(references) <= id_set
+
+
+def test_every_form_control_has_an_accessible_name() -> None:
+    """Inputs, selects and textareas need a label or an explicit ARIA name."""
+    from html.parser import HTMLParser
+
+    class FormControlParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.labels = set()
+            self.controls = []
+
+        def handle_starttag(self, tag, attrs):
+            attributes = dict(attrs)
+            if tag == "label" and attributes.get("for"):
+                self.labels.add(attributes["for"])
+            if tag in {"input", "select", "textarea"} and attributes.get("type") != "hidden":
+                self.controls.append(attributes)
+
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    parser = FormControlParser()
+    parser.feed(html)
+    missing = [
+        control
+        for control in parser.controls
+        if not control.get("aria-label")
+        and not control.get("aria-labelledby")
+        and control.get("id") not in parser.labels
+    ]
+
+    assert not missing, f"Form controls without accessible names: {missing}"
