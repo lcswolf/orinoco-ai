@@ -328,7 +328,10 @@ def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
     required = {"database.sqlite3", "manifest.json"}
     if not required.issubset(seen):
         raise BackupError("Backup is missing required database or manifest files.")
-    manifest = json.loads((extraction_root / "manifest.json").read_text(encoding="utf-8"))
+    try:
+        manifest = json.loads((extraction_root / "manifest.json").read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise BackupError("Backup manifest is not valid UTF-8 JSON.") from exc
     if not isinstance(manifest, dict) or manifest.get("format") != "orinoco-backup-v1":
         raise BackupError("Backup manifest version is not supported.")
     return manifest
@@ -490,7 +493,10 @@ def upload_backup(backup_path: Path) -> dict[str, object]:
     SHA-256 checksum as object metadata, checks the remote size and metadata,
     then downloads and hashes the stored bytes before reporting success.
     """
-    import boto3
+    try:
+        import boto3
+    except ImportError as exc:
+        raise BackupError("S3-compatible uploads require the boto3 dependency.") from exc
 
     settings = _s3_settings()
     backup_path = backup_path.expanduser()
@@ -515,42 +521,49 @@ def upload_backup(backup_path: Path) -> dict[str, object]:
     )
 
     # Credentials are supplied only to the SDK client; never log or return them.
-    client = boto3.client(
-        "s3",
-        endpoint_url=settings["endpoint"],
-        aws_access_key_id=settings["access_key"],
-        aws_secret_access_key=settings["secret_key"],
-        region_name=settings["region"],
-    )
-    with backup_path.open("rb") as backup_file:
-        client.put_object(
-            Bucket=settings["bucket"],
-            Key=object_key,
-            Body=backup_file,
-            ContentLength=backup_path.stat().st_size,
-            ContentType="application/octet-stream",
-            Metadata={"sha256": checksum},
-        )
-
-    remote = client.head_object(Bucket=settings["bucket"], Key=object_key)
-    remote_checksum = (remote.get("Metadata") or {}).get("sha256", "")
-    if remote.get("ContentLength") != backup_path.stat().st_size or remote_checksum != checksum:
-        raise BackupError("Remote backup verification failed: size or SHA-256 metadata did not match.")
-
-    # Verify the bytes returned by object storage, not just metadata supplied by
-    # this client during upload. This detects truncated or altered remote data.
-    downloaded = client.get_object(Bucket=settings["bucket"], Key=object_key)
-    remote_body = downloaded.get("Body")
-    if remote_body is None:
-        raise BackupError("Remote backup verification failed: the object body was missing.")
-    remote_digest = hashlib.sha256()
     try:
-        for chunk in iter(lambda: remote_body.read(CHUNK_SIZE), b""):
-            remote_digest.update(chunk)
-    finally:
-        remote_body.close()
-    if remote_digest.hexdigest() != checksum:
-        raise BackupError("Remote backup verification failed: downloaded object SHA-256 did not match.")
+        client = boto3.client(
+            "s3",
+            endpoint_url=settings["endpoint"],
+            aws_access_key_id=settings["access_key"],
+            aws_secret_access_key=settings["secret_key"],
+            region_name=settings["region"],
+        )
+        with backup_path.open("rb") as backup_file:
+            client.put_object(
+                Bucket=settings["bucket"],
+                Key=object_key,
+                Body=backup_file,
+                ContentLength=backup_path.stat().st_size,
+                ContentType="application/octet-stream",
+                Metadata={"sha256": checksum},
+            )
+
+        remote = client.head_object(Bucket=settings["bucket"], Key=object_key)
+        remote_checksum = (remote.get("Metadata") or {}).get("sha256", "")
+        if remote.get("ContentLength") != backup_path.stat().st_size or remote_checksum != checksum:
+            raise BackupError("Remote backup verification failed: size or SHA-256 metadata did not match.")
+
+        # Verify the bytes returned by object storage, not just metadata supplied by
+        # this client during upload. This detects truncated or altered remote data.
+        downloaded = client.get_object(Bucket=settings["bucket"], Key=object_key)
+        remote_body = downloaded.get("Body")
+        if remote_body is None:
+            raise BackupError("Remote backup verification failed: the object body was missing.")
+        remote_digest = hashlib.sha256()
+        try:
+            for chunk in iter(lambda: remote_body.read(CHUNK_SIZE), b""):
+                remote_digest.update(chunk)
+        finally:
+            remote_body.close()
+        if remote_digest.hexdigest() != checksum:
+            raise BackupError("Remote backup verification failed: downloaded object SHA-256 did not match.")
+    except BackupError:
+        raise
+    except Exception as exc:
+        # SDK/network failures must become a concise operational error; never
+        # print request objects or credential-bearing configuration.
+        raise BackupError("S3-compatible backup upload or remote verification failed.") from exc
 
     return {
         "bucket": settings["bucket"],
