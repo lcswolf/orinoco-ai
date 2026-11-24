@@ -78,3 +78,8 @@ def test_environment_cannot_redirect_inference_to_remote_provider(monkeypatch) -
         assert str(client._client.base_url) == "http://127.0.0.1:11434"
     finally:
         asyncio.run(client.aclose())
+
+
+def test_production_client_rejects_explicit_remote_inference_url() -> None:
+    with pytest.raises(ValueError, match="must be loopback"):
+        OllamaClient(base_url="https://remote-inference.example/api")
