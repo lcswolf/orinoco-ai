@@ -1,5 +1,5 @@
 {
-  "_comment": "Orinoco AI Assistant Egg for Pterodactyl Panel 1.x. Import this file into a dedicated Nest. Preview only: do not deploy until the matching Orinoco image has been built and published.",
+  "_comment": "Orinoco AI Assistant Egg for Pterodactyl Panel 1.x. Import into a dedicated Nest. Preview only: do not deploy until the matching Orinoco image is published and live-tested.",
   "meta": {
     "version": "PTDL_v1",
     "update_url": null
@@ -7,7 +7,7 @@
   "exported_at": "2026-11-24T00:00:00+00:00",
   "name": "Orinoco AI Assistant",
   "author": "Orinoco AI Project",
-  "description": "Preview Egg for the self-hosted Orinoco assistant. Requires the Orinoco custom Docker image. Current application scaffold exposes a health endpoint only; assistant features are still under development.",
+  "description": "Preview Egg for Orinoco, a self-hosted personal AI assistant with a custom interface, local Ollama chat, account security and private conversation storage.",
   "features": null,
   "images": [
     "ghcr.io/lcswolf/orinoco-ai:stable"
@@ -15,7 +15,7 @@
   "startup": "supervisord -n -c /opt/orinoco/docker/supervisord.conf",
   "config": {
     "files": "{}",
-    "startup": "{\n  \"done\": \"Application startup complete.\"\n}",
+    "startup": "{\n  \"done\": \"Starting Orinoco web application\"\n}",
     "logs": "{\n  \"custom\": false,\n  \"location\": \"\"\n}",
     "stop": "^C"
   },
@@ -29,7 +29,7 @@
   "variables": [
     {
       "name": "AI Model",
-      "description": "Preferred local model. Model selection is planned; the current scaffold does not yet load models.",
+      "description": "Select the local Ollama model. Qwen 2.5 1.5B is the recommended starting point; 3B is experimental on the planned VPS.",
       "env_variable": "AI_MODEL",
       "default_value": "qwen2.5:1.5b",
       "user_viewable": true,
@@ -38,7 +38,7 @@
     },
     {
       "name": "Automatically Download Model",
-      "description": "Download the selected model when model management is implemented. This currently has no effect.",
+      "description": "Download the selected Ollama model into persistent server storage on first start.",
       "env_variable": "AUTO_DOWNLOAD_MODEL",
       "default_value": "true",
       "user_viewable": true,
@@ -47,7 +47,7 @@
     },
     {
       "name": "Model Context",
-      "description": "Target context length in tokens. Planned setting; not yet applied by the scaffold.",
+      "description": "Context length in tokens used by local model requests.",
       "env_variable": "MODEL_CONTEXT",
       "default_value": "2048",
       "user_viewable": true,
@@ -55,8 +55,17 @@
       "rules": "required|integer|min:1024|max:8192"
     },
     {
+      "name": "Automatically Save Memories",
+      "description": "Allow Orinoco to extract a small number of durable, non-sensitive personal memories after a chat. Users can review, edit and delete their own memories.",
+      "env_variable": "AUTO_SAVE_MEMORIES",
+      "default_value": "true",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:true,false"
+    },
+    {
       "name": "AI Concurrency",
-      "description": "Maximum simultaneous model requests. Initial intended value is one; not yet enforced.",
+      "description": "Maximum simultaneous model generations. The initial runtime supports one.",
       "env_variable": "AI_CONCURRENCY",
       "default_value": "1",
       "user_viewable": true,
@@ -65,7 +74,7 @@
     },
     {
       "name": "Enable Discord",
-      "description": "Discord integration is planned and currently unavailable.",
+      "description": "Discord integration is planned and is not active yet.",
       "env_variable": "ENABLE_DISCORD",
       "default_value": "false",
       "user_viewable": true,
@@ -74,7 +83,7 @@
     },
     {
       "name": "Discord Bot Token",
-      "description": "Reserved for the future Discord integration. Do not enter a real token until the integration and secret-handling guidance are implemented.",
+      "description": "Reserved for future Discord integration. Keep blank; do not add a real token until secret handling is finalised.",
       "env_variable": "DISCORD_TOKEN",
       "default_value": "",
       "user_viewable": false,
@@ -83,7 +92,7 @@
     },
     {
       "name": "Enable Voice",
-      "description": "Voice features are planned and currently unavailable.",
+      "description": "Voice features are planned and are not active yet. Listening will require explicit activation.",
       "env_variable": "ENABLE_VOICE",
       "default_value": "false",
       "user_viewable": true,
@@ -92,7 +101,7 @@
     },
     {
       "name": "Enable Web Search",
-      "description": "Web research is planned and currently unavailable in the scaffold.",
+      "description": "Web research is planned and is not active yet.",
       "env_variable": "ENABLE_WEB_SEARCH",
       "default_value": "true",
       "user_viewable": true,
@@ -101,7 +110,7 @@
     },
     {
       "name": "SearXNG URL",
-      "description": "Optional future SearXNG endpoint. Leave blank until search integration is implemented.",
+      "description": "Optional future SearXNG endpoint. Leave blank until search integration is available.",
       "env_variable": "SEARXNG_URL",
       "default_value": "",
       "user_viewable": true,
@@ -110,12 +119,21 @@
     },
     {
       "name": "Timezone",
-      "description": "Timezone used by Orinoco services when implemented.",
+      "description": "Timezone used by Orinoco services.",
       "env_variable": "TIMEZONE",
       "default_value": "Europe/London",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string|max:64"
+    },
+    {
+      "name": "Database Path",
+      "description": "Persistent SQLite database location. Leave the default unless you know why it needs changing.",
+      "env_variable": "ORINOCO_DATABASE_PATH",
+      "default_value": "/home/container/data/orinoco.sqlite3",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|string|max:512"
     }
   ]
 }
