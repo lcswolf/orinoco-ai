@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed Python CI baseline (#715) on commit `cf90f2b9`: 183 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reported no known vulnerabilities. Container build/smoke run #333 passed on runtime commit `e37af30e`. Subsequent changes include backup database validation code, encrypted-archive/WAL regression tests and Egg configuration hardening; the new changes still need a fresh Python test run and container smoke test. The image has not been published to GHCR or deployed. A live Pterodactyl import, deployment and recovery drill remain outstanding.
+Latest completed Python CI baseline (#715) on commit `cf90f2b9`: 183 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reported no known vulnerabilities. Container build/smoke run #333 passed on runtime commit `e37af30e`. Subsequent changes include backup database validation code, encrypted-archive/WAL regression tests, PDF decompression/extraction limits and the higher pypdf minimum, plus Egg configuration hardening; the new changes still need a fresh Python test run and container smoke test. The image has not been published to GHCR or deployed. A live Pterodactyl import, deployment and recovery drill remain outstanding.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
