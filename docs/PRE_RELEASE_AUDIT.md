@@ -86,7 +86,7 @@ The application now sends a restrictive Content Security Policy, clickjacking pr
 
 ### SQLite schema version safety — strengthened
 
-The database initializer now completes the known additive v1–v4 table/index upgrades and the v5 session-version column migration, and refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover an early users-only database, the session-version column and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
+The database initializer now completes the known additive v1–v5 table/index and session-version upgrades plus v6 per-user response-preference and administrator-persona tables. It refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover a v5-to-v6 upgrade without losing accounts, defaults and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
 
 ### Local inference boundary — hardened
 
@@ -138,7 +138,7 @@ The README, architecture, Egg and development guide now distinguish implemented 
 
 ## Remaining review work
 
-- [ ] Add the agreed editable personality controls: administrator-managed core persona and per-user voice, tone and answer-detail preferences. The current default prompt now reflects the bright voice and 65% humour choice, but the settings UI/persistence is not yet implemented.
+- [x] Add administrator-managed core persona and humour controls plus private per-user response voice, tone and answer-detail preferences, including persistence, API authorisation and prompt integration.
 
 - [x] Add bounded per-client-address login throttling alongside per-username limits.
 - [x] Add owner-only SQLite file permissions and symbolic-link rejection.
