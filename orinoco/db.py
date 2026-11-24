@@ -756,6 +756,7 @@ def search_documents(
     limit: int = 3,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> list[dict[str, str]]:
+    """Search private and shared document text while enforcing account-level visibility."""
     import re
 
     stop_words = {
@@ -767,12 +768,12 @@ def search_documents(
         term for term in re.findall(r"[A-Za-z0-9_]{2,}", query.lower())
         if term not in stop_words
     ][:8]
-    """Search private and shared document text while enforcing account-level visibility."""
     if not terms:
         return []
 
     with _database(database_path) as connection:
         def run_search(match_query: str):
+            """Run one parameterised FTS query against the caller-visible documents."""
             return connection.execute(
                 """
                 SELECT d.id, d.original_name,
@@ -797,6 +798,7 @@ def search_documents(
         }
         for row in rows
     ]
+
 
 def get_user_by_id(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
