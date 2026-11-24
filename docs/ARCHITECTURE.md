@@ -8,15 +8,22 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 ## High-level components
 
-- **Web application:** Python/FastAPI. The current app provides liveness and readiness endpoints; chat orchestration, authentication and the user interface remain to be implemented.
-- **Local inference:** Ollama, running in the same Pterodactyl container under Supervisor. Its API binds only to `127.0.0.1:11434`; it is not exposed as a public allocation.
-- **Model storage:** persistent `/home/container/data/models` directory. The first-run initialiser downloads the configured curated model when automatic download is enabled.
+- **Custom web interface:** lightweight HTML, CSS and JavaScript served by FastAPI. The first responsive interface shell is committed; chat, accounts, settings and admin screens will be added as their secure backend features are implemented.
+- **Web application:** Python/FastAPI. It serves the interface, liveness/readiness endpoints and future authenticated application APIs.
+- **Local inference:** Ollama, running in the same Pterodactyl container under Supervisor. Its API binds only to 127.0.0.1:11434; it is not exposed as a public allocation.
+- **Model storage:** persistent /home/container/data/models directory. The first-run initialiser downloads the configured curated model when automatic download is enabled.
 - **Application database:** planned for accounts, settings, conversations, memory metadata and document records.
 - **Retrieval layer:** planned to index authorised documents and retrieve relevant passages for a user's request.
 - **Web research adapter:** optional search and URL retrieval. External webpages are untrusted input.
 - **Discord adapter:** optional text integration, with per-channel participation settings.
 - **Voice components:** future, opt-in speech recognition and speech output. Listening must start only after an explicit user action.
 - **Operations layer:** process supervision, health checks, logs, backups, restore and controlled updates.
+
+## Custom interface direction
+
+The interface is being built specifically for Orinoco rather than embedding Open WebUI. The first page uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. It includes a responsive workspace layout, Orinoco greeting, service status and clear placeholders for future chat and account features.
+
+The initial chat composer is intentionally not active yet. Authentication, per-user conversation storage and server-side authorisation must be implemented before an unrestricted chat endpoint is exposed. The design should grow in stages: authenticated chat first, then chat history, user preferences, memory/document areas and administrator settings.
 
 ## Deployment proposal
 
@@ -69,6 +76,5 @@ Application, Egg/image and model updates are separate operations. Updates should
 
 - Database and persistence framework.
 - Retrieval/indexing technology.
-- Whether the web interface is fully custom or uses an existing UI component.
 - Model update and migration workflow.
 - Backup destination and encryption/key-management approach.
