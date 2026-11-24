@@ -35,9 +35,9 @@ The exact implementation and resource requirements will be validated before depl
 
 ## Repository status
 
-At this stage, this repository contains project planning and documentation scaffolding. The application, Docker image, Pterodactyl Egg and installation scripts have not yet been implemented.
+The repository now includes an initial FastAPI application scaffold, a health endpoint, basic tests and a Pterodactyl-oriented Docker image foundation. It is **not yet a usable AI assistant**: authentication, chat, database, Ollama integration, Discord, search and the production Pterodactyl Egg are still to come.
 
-See [Project Status](docs/PROJECT_STATUS.md) and [Architecture](docs/ARCHITECTURE.md) as those documents are added.
+See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md) and [Development](docs/DEVELOPMENT.md).
 
 ## Security
 
@@ -49,4 +49,4 @@ Contributions and suggestions are welcome. Please read [CONTRIBUTING.md](CONTRIB
 
 ## Licence
 
-This project is intended to be released under the MIT Licence. See [LICENSE](LICENSE) once the licence file has been added.
+This project is intended to be released under the MIT Licence. See [LICENSE](LICENSE).
