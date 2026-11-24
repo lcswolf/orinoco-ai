@@ -77,7 +77,7 @@ The README and development guide now distinguish implemented encrypted backup op
 - [ ] Implement and test automatic daily backups, retention and clear failure reporting.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
-- [x] Add restrictive browser security headers and verify they apply to application/API/static responses.\n- [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
+- [x] Add restrictive browser security headers and verify they apply to application/API/static responses.\n- [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.\n- [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
 - [ ] Review CI workflow permissions, dependency versions, build reproducibility and vulnerability scanning.
 - [ ] Run the complete test suite after all audit corrections; build and smoke-test the final image.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
