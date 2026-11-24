@@ -8,8 +8,8 @@ import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 from collections.abc import Iterator
+from pathlib import Path
 
 from orinoco.auth.passwords import hash_password, verify_password
 
@@ -39,7 +39,6 @@ def _connect(database_path: Path) -> sqlite3.Connection:
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 10000")
     return connection
-
 
 
 @contextmanager
@@ -104,7 +103,7 @@ def create_user(
 
     created_at = datetime.now(UTC).isoformat()
     try:
-        with _connect(database_path) as connection:
+        with _database(database_path) as connection:
             cursor = connection.execute(
                 """
                 INSERT INTO users (username, password_hash, role, active, created_at)
@@ -134,7 +133,7 @@ def get_user_by_username(
     username: str, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
     normalized = username.strip().lower()
-    with _connect(database_path) as connection:
+    with _database(database_path) as connection:
         row = connection.execute(
             """
             SELECT id, username, role, active, created_at
@@ -160,7 +159,7 @@ def authenticate_user(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> User | None:
     normalized = username.strip().lower()
-    with _connect(database_path) as connection:
+    with _database(database_path) as connection:
         row = connection.execute(
             """
             SELECT id, username, password_hash, role, active, created_at
