@@ -44,6 +44,10 @@ There were two implementations of the same `/api/memories` routes. The applicati
 
 Several database function docstrings had been placed inside conditionals or transaction blocks, where Python did not recognise them as function docstrings. They have been moved to the correct function positions to improve maintainability and generated help/documentation.
 
+### Pterodactyl Egg variable validation — tightened
+
+The Egg allowed `ORINOCO_MAX_REQUEST_BODY_BYTES` values below 1 KiB even though the application deliberately treats those values as a server misconfiguration. Its minimum is now 1024 bytes, matching runtime validation, with a regression assertion. The backup encryption key is now required at server creation so the always-on scheduler cannot silently run without the key needed to create encrypted backups. The SearXNG endpoint is hidden and administrator-only because it controls an outbound network destination. These changes are covered by Egg-definition tests; live Panel 1.13.0 import validation remains outstanding.
+
 ### Backup database verification — strengthened
 
 SQLite can return `ok` from `PRAGMA integrity_check` for an empty database. Backup verification and restore now also require the essential Orinoco tables, reject a database schema newer than the running build, and run `PRAGMA foreign_key_check`. This prevents an empty or structurally inconsistent SQLite file from being accepted as a usable backup. Regression tests cover empty databases, future schema versions and orphaned foreign-key rows.
