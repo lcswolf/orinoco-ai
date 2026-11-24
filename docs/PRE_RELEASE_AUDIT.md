@@ -199,7 +199,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm 179 passing tests, a clean pip-audit scan and a scheduler-enabled container build/smoke test (latest Python test run #667; container smoke run #324).
+- [x] Confirm 183 passing tests and a clean pip-audit scan (latest Python test run #699). The updated container smoke test for the bounded generation/memory changes is still running as build #333.
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
