@@ -88,11 +88,23 @@ def store_document(data: bytes, *, user_id: int | None, scope: str, extension: s
     relative = folder / f"{uuid4().hex}{extension.lower()}"
     target = root / relative
     temporary = target.with_suffix(target.suffix + ".tmp")
-    with temporary.open("xb") as file_handle:
-        file_handle.write(data)
-        file_handle.flush()
-        os.fsync(file_handle.fileno())
-    os.replace(temporary, target)
+    temporary_created = False
+    try:
+        with temporary.open("xb") as file_handle:
+            temporary_created = True
+            file_handle.write(data)
+            file_handle.flush()
+            os.fsync(file_handle.fileno())
+        os.replace(temporary, target)
+    except Exception:
+        # Do not leave an unregistered partial upload behind if writing or the
+        # final atomic rename fails. Only remove a temp file this call created.
+        if temporary_created:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+        raise
     try:
         target.chmod(0o600)
     except OSError:
