@@ -269,3 +269,27 @@ def test_restore_rejects_dangling_recovery_symlink(tmp_path, monkeypatch) -> Non
     assert recovery_path.is_symlink()
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT username FROM users").fetchone()[0] == "backup-user"
+
+
+def test_s3_sdk_failure_is_reported_as_backup_error(tmp_path, monkeypatch) -> None:
+    """Network/provider exceptions should produce a safe CLI error, not a traceback with SDK details."""
+    import sys
+    from types import SimpleNamespace
+
+    configure_backup_paths(monkeypatch, tmp_path)
+    backup = backups.create_backup()
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_ENDPOINT", "https://objects.example.test")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_BUCKET", "private-orinoco")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_ACCESS_KEY_ID", "test-access")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY", "test-secret")
+
+    class BrokenS3:
+        """Simulate a provider/network error without contacting a real service."""
+
+        def put_object(self, **kwargs):
+            raise RuntimeError("provider request failed with sensitive transport details")
+
+    fake_s3 = BrokenS3()
+    monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=lambda *args, **kwargs: fake_s3))
+    with pytest.raises(backups.BackupError, match="upload or remote verification failed"):
+        backups.upload_backup(backup)
