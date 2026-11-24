@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed CI run: 115 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The previous audit-hardened container image passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI). A rebuild containing the latest authentication and document-storage hardening is in progress.
+Latest completed CI run: 115 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The previous audit-hardened container image passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI). A rebuild containing the latest session-revocation and document-storage hardening is in progress.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
