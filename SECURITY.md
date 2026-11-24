@@ -29,7 +29,7 @@ These controls are a foundation, not a completed production security review. In 
 
 ## Account recovery and MFA
 
-The first administrator can be created through the local-only `python -m orinoco.admin create-admin` command. Orinoco does not yet provide self-service password recovery or application-level MFA. A supported offline administrator password-reset procedure and an MFA design remain pre-release security work; do not expose a multi-user instance publicly until recovery is documented and the deployment has an appropriate MFA/access-control plan.
+The first administrator can be created through the local-only `python -m orinoco.admin create-admin` command. Orinoco does not yet provide self-service password recovery or application-level MFA. An operator can reset an account with `python -m orinoco.admin reset-password USERNAME`; the command requires an interactive TTY, confirms the exact account name, prompts twice without echoing the password and revokes all existing sessions. Do not run it through a non-interactive Pterodactyl console or pass passwords as command-line arguments. There is still no self-service password recovery or application-level MFA. MFA and the operational SSH/container recovery runbook remain pre-release security work; do not expose a multi-user instance publicly until the deployment has an appropriate MFA/access-control plan.
 
 ## Document uploads and retrieval
 
