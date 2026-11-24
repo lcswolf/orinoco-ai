@@ -25,12 +25,14 @@ class SafeFetchError(RuntimeError):
 
 @dataclass(frozen=True)
 class FetchedPage:
+    """Bounded readable text and metadata extracted from a fetched public page."""
     url: str
     title: str
     text: str
 
 
 def validate_url_syntax(url: str) -> tuple[str, str, int]:
+    """Validate a public HTTP(S) URL and return its scheme, host and port."""
     parsed = urlsplit(url.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         raise SafeFetchError("Only public HTTP and HTTPS website URLs are supported.")
@@ -105,10 +107,12 @@ class PublicResolver(AbstractResolver):
         ]
 
     async def close(self) -> None:
+        """Satisfy aiohttp's resolver lifecycle interface; no resources are retained."""
         return None
 
 
 def _extract_readable_text(content: bytes, content_type: str, charset: str | None) -> tuple[str, str]:
+    """Decode supported text content and remove non-readable HTML elements."""
     encoding = charset or "utf-8"
     try:
         raw = content.decode(encoding, errors="replace")
@@ -126,6 +130,7 @@ def _extract_readable_text(content: bytes, content_type: str, charset: str | Non
 
 
 async def fetch_public_page(url: str) -> FetchedPage:
+    """Fetch one public webpage with DNS pinning, redirect checks and strict size/time limits."""
     current = url.strip()
     connector = aiohttp.TCPConnector(
         resolver=PublicResolver(),
