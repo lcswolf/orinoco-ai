@@ -8,7 +8,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 ## High-level components
 
-- **Web application:** user interface, authentication, chat orchestration and administration.
+- **Web application:** a Python/FastAPI foundation has been selected for the initial API. The user interface, authentication, chat orchestration and administration remain to be implemented.
 - **Application database:** accounts, settings, conversations, memory metadata and document records.
 - **Ollama:** local model runtime. It should be reachable only on an internal container network.
 - **Retrieval layer:** indexes authorised documents and retrieves relevant passages for a user's request.
@@ -65,7 +65,7 @@ Application, Egg/image and model updates are separate operations. Updates should
 
 ## Open design decisions
 
-- Application framework and database.
+- Database and persistence framework.
 - Retrieval/indexing technology.
 - Exact process supervision strategy.
 - Whether the web interface is fully custom or uses an existing UI component.
