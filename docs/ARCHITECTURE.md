@@ -21,7 +21,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 ## Custom interface direction
 
-The interface is being built specifically for Orinoco rather than embedding Open WebUI. The first page uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. It includes a responsive workspace layout, Orinoco greeting, service status and clear placeholders for future chat and account features.
+The interface is being built specifically for Orinoco rather than embedding Open WebUI. The interface uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. It includes a responsive workspace layout, Orinoco greeting, service status, authenticated chat, saved conversations, account settings, personal memories, document libraries and the research workspace.
 
 The current interface supports authenticated chat, saved conversations, user preferences/password changes, personal memory controls and document uploads. More advanced settings, pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
 
@@ -74,16 +74,15 @@ Retrieved webpages and documents must be treated as untrusted content. They must
 
 ## Backups and updates
 
-Encrypted backup tooling creates a SQLite online snapshot, uploaded document tree and file-based session secret, with AES-256-GCM authentication and a verification/restore CLI. Large Ollama model weights are excluded and can be downloaded again. The encryption key and any environment-supplied secrets must be stored separately. Off-site transfer and scheduling remain operational work before deployment. Restore must be run with the app stopped and must be tested regularly.
+Encrypted backup tooling creates a SQLite online snapshot, uploaded document tree and file-based session secret, with AES-256-GCM authentication and a verification/restore CLI. Encrypted backups can be uploaded to a private S3-compatible destination over HTTPS; the remote object is downloaded and hashed to verify its bytes. Large Ollama model weights are excluded and can be downloaded again. The encryption key and any environment-supplied secrets must be stored separately. Automatic scheduling, retention and convenient remote restore remain operational work before deployment. Restore must be run with the app stopped and must be tested regularly.
 
 Application, Egg/image and model updates are separate operations. Updates should verify the release, create a backup, apply migrations, run health checks and provide a documented rollback route.
 
 ## Open design decisions
 
-- Database and persistence framework.
-- Retrieval/indexing technology.
-- Model update and migration workflow.
-- Backup destination and encryption/key-management approach.
+- Automatic backup schedule, retention and remote restore workflow.
+- Application update, database migration and rollback workflow.
+- Final off-site object-storage provider and operational key-management procedure.
 
 ## Source-code map
 
@@ -97,8 +96,8 @@ The repository is organised by responsibility so that features can grow without 
 | `orinoco/chat/` | Conversation API, prompt construction and local model orchestration |
 | `orinoco/memories/` | Authenticated personal-memory API |
 | `orinoco/memory/store.py` | Compatibility helpers backed by the shared database layer |
-| `orinoco/documents/` | Upload validation, text extraction, private/shared routes and file storage |
-| `orinoco/llm/` | Local Ollama HTTP client |
+| `orinoco/documents/` | Upload validation, bounded Office archive checks, text extraction, private/shared routes and file storage |
+| `orinoco/llm/` | Local Ollama HTTP client |\n| `orinoco/research/` | SearXNG search client and SSRF-resistant public webpage fetching |\n| `orinoco/backups.py` | Encrypted backup, restore and S3-compatible upload CLI |
 | `orinoco/db.py` | SQLite schema and account-scoped persistence operations |
 | `orinoco/static/` | Browser interface (HTML, CSS and JavaScript) |
 | `docker/` | Image definition, Pterodactyl entrypoint and supervised service startup |
