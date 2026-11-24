@@ -50,7 +50,7 @@ ENABLE_WEB_SEARCH=true
 SEARXNG_URL=https://your-searxng.example
 ```
 
-Search queries are sent to that SearXNG instance and any upstream search providers it uses. Do not include private information in a web search. Direct opening and summarisation of user-provided URLs is not implemented yet.
+Search queries are sent to that SearXNG instance and any upstream search providers it uses. Do not include private information in a web search. Users can also paste a public URL into the Research page for local summarisation. The fetcher pins DNS resolutions to public IP addresses, blocks private/local networks and non-standard ports, validates redirects, and limits downloaded content. Only public HTTP/HTTPS pages are supported.
 
 ## Run tests
 
@@ -70,7 +70,6 @@ The image uses a non-root `container` account and the `/home/container` working 
 
 ## Current limitations
 
-- Safe direct URL fetching and webpage summarisation.
 - Search results automatically included in chat answers.
 - Conversation editing/deletion, pagination and streaming.
 - OCR and advanced semantic document search.
