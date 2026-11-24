@@ -69,6 +69,7 @@ def test_mobile_navigation_is_keyboard_accessible_and_not_inert() -> None:
     assert 'aria-controls="sidebar"' in html
     assert 'aria-expanded="false"' in html
     assert 'id="sidebar-backdrop"' in html
+    assert 'id="mobile-nav-close"' in html
     assert "mobileBrand.addEventListener(\"click\"" in script
     assert "sidebar.inert = mobile && !open" in script
     assert 'event.key === "Escape"' in script
