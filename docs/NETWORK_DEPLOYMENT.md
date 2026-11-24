@@ -231,4 +231,12 @@ Do not change Uvicorn to trust `*` or all forwarded headers. If a later deployme
 - [ ] Verify Funnel has no active listener.
 - [ ] Reboot the VPS and confirm Caddy, Nginx, Tailscale and the Pterodactyl server return in the correct order.
 
+## Official references
+
+- [Caddy automatic HTTPS](https://caddyserver.com/docs/automatic-https)
+- [Caddy reverse-proxy forwarded-header behaviour](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)
+- [Let's Encrypt IP-address and 6-day certificates](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability/)
+- [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve)
+- [Tailscale Serve CLI reference](https://tailscale.com/docs/reference/tailscale-cli/serve)
+
 No public deployment should proceed until these checks are completed on the actual Leaseweb/Pterodactyl host.
