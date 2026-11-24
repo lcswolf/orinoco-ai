@@ -43,6 +43,7 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES",
         "ORINOCO_MAX_REQUEST_BODY_BYTES",
         "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
+        "ORINOCO_MAX_PENDING_GENERATIONS",
     }
 
 
@@ -148,6 +149,7 @@ def test_resource_limit_egg_defaults_are_conservative_and_admin_only() -> None:
         "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES": "50",
         "ORINOCO_MAX_REQUEST_BODY_BYTES": "12582912",
         "ORINOCO_CHAT_REQUESTS_PER_MINUTE": "10",
+        "ORINOCO_MAX_PENDING_GENERATIONS": "8",
     }
     for name, default in expected.items():
         assert variables[name]["default_value"] == default
