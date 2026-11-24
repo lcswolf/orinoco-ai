@@ -7,7 +7,7 @@ This page separates confirmed project decisions from implementation work. A plan
 ## Implemented in the repository
 
 - Public project repository and project documentation.
-- Custom responsive Orinoco interface, served directly by FastAPI.
+- Custom responsive Orinoco interface, served directly by FastAPI, with an original Womble-inspired woodland helper mascot, woodland-green/brass accents and UK-friendly copy.
 - Sign-in, secure signed sessions, CSRF-protected authentication and password changes.
 - Administrator account management: create standard users, list users, suspend and reactivate accounts.
 - Authenticated chat with local Ollama, saved per-user conversations and conversation switching.
@@ -53,7 +53,6 @@ The latest completed GitHub Actions Python test run passed 136 tests, with one n
 - Remote bucket lifecycle retention and restore-from-remote convenience; automated application update/migration/rollback tooling (a manual operator runbook is documented).
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
-- Original Womble-inspired mascot artwork and final UK-oriented interface treatment.
 - Administrator-editable core personality and per-user voice, tone and answer-detail preferences.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
