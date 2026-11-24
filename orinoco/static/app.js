@@ -21,6 +21,7 @@ const chatHint = document.getElementById("chat-hint");
 const settingsButton = document.getElementById("settings-button");
 const settingsDialog = document.getElementById("settings-dialog");
 const adminTools = document.getElementById("admin-tools");
+const memoriesLink = document.getElementById("memories-link");
 let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
@@ -66,6 +67,8 @@ function showAccount(user) {
   if (user) {
     settingsButton.disabled = false;
     adminTools.hidden = user.role !== "admin";
+    memoriesLink.classList.remove("unavailable");
+    memoriesLink.setAttribute("aria-disabled", "false");
     userName.textContent = user.username;
     userRole.textContent = user.role === "admin" ? "Administrator" : "Standard account";
     userAvatar.textContent = user.username.charAt(0).toUpperCase();
@@ -79,6 +82,8 @@ function showAccount(user) {
   } else {
     settingsButton.disabled = true;
     adminTools.hidden = true;
+    memoriesLink.classList.add("unavailable");
+    memoriesLink.setAttribute("aria-disabled", "true");
     userName.textContent = "Not signed in";
     userRole.textContent = "Your private workspace";
     userAvatar.textContent = "?";
@@ -406,6 +411,7 @@ settingsButton.addEventListener("click", async () => {
   document.getElementById("password-form").reset();
   document.getElementById("create-user-form").reset();
   settingsDialog.showModal();
+  await loadMemories();
   if (currentUser.role === "admin") await loadAdminUsers();
 });
 
@@ -464,6 +470,121 @@ document.getElementById("create-user-form").addEventListener("submit", async (ev
     await loadAdminUsers();
   } catch (error) {
     showFeedback(feedback, error.message || "Could not create account.", true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+
+async function loadMemories() {
+  const list = document.getElementById("memory-list");
+  list.replaceChildren();
+  try {
+    const response = await fetch("/api/memories", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not load memories.");
+
+    if (!result.memories.length) {
+      const empty = document.createElement("p");
+      empty.className = "conversation-empty";
+      empty.textContent = "No memories saved yet.";
+      list.append(empty);
+      return;
+    }
+
+    for (const memory of result.memories) {
+      const item = document.createElement("div");
+      item.className = "admin-user memory-item";
+      const copy = document.createElement("div");
+      copy.className = "admin-user-copy";
+      const body = document.createElement("span");
+      body.textContent = memory.content;
+      const source = document.createElement("span");
+      source.className = "memory-source";
+      source.textContent = memory.source === "automatic" ? "Saved by Orinoco" : "Added by you";
+      copy.append(body, source);
+
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", async () => {
+        const revised = window.prompt("Edit this memory", memory.content);
+        if (revised === null || !revised.trim() || revised.trim() === memory.content) return;
+        try {
+          const csrf = await getCsrfToken();
+          const update = await fetch("/api/memories/" + memory.id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+            body: JSON.stringify({ content: revised }),
+          });
+          const payload = await update.json();
+          if (!update.ok) throw new Error(payload.detail || "Could not update memory.");
+          await loadMemories();
+        } catch (error) {
+          window.alert(error.message || "Could not update memory.");
+        }
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Delete";
+      remove.className = "suspend";
+      remove.addEventListener("click", async () => {
+        if (!window.confirm("Delete this memory?")) return;
+        try {
+          const csrf = await getCsrfToken();
+          const deletion = await fetch("/api/memories/" + memory.id, {
+            method: "DELETE",
+            headers: { "X-CSRF-Token": csrf },
+          });
+          const payload = await deletion.json();
+          if (!deletion.ok) throw new Error(payload.detail || "Could not delete memory.");
+          await loadMemories();
+        } catch (error) {
+          window.alert(error.message || "Could not delete memory.");
+        }
+      });
+
+      item.append(copy, edit, remove);
+      list.append(item);
+    }
+  } catch (error) {
+    const message = document.createElement("p");
+    message.className = "settings-feedback error";
+    message.textContent = error.message || "Could not load memories.";
+    list.append(message);
+  }
+}
+
+memoriesLink.addEventListener("click", async (event) => {
+  event.preventDefault();
+  if (!currentUser) return;
+  document.getElementById("password-feedback").hidden = true;
+  document.getElementById("user-feedback").hidden = true;
+  settingsDialog.showModal();
+  document.getElementById("personal-memories").scrollIntoView({ block: "start" });
+  await loadMemories();
+});
+
+document.getElementById("memory-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const feedback = document.getElementById("memory-feedback");
+  const button = document.getElementById("memory-submit");
+  button.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/memories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({ content: document.getElementById("memory-content").value }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not save memory.");
+    document.getElementById("memory-form").reset();
+    showFeedback(feedback, "Memory saved to your private account.");
+    await loadMemories();
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not save memory.", true);
   } finally {
     button.disabled = false;
   }
