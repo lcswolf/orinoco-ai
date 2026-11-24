@@ -240,3 +240,11 @@ h1 em { color: #8bd9bd; font-style: normal; }
 .research-result p { margin: 0 0 8px; color: #91a6a6; font-size: 11px; line-height: 1.65; }
 .research-result .result-url { overflow-wrap: anywhere; color: #6d9b8c; font-size: 9px; }
 @media (max-width: 720px) { .research-view { padding: 26px 20px 55px; } .research-form { gap: 6px; } .research-form button { min-width: 72px; padding: 0 9px; } }
+
+.summary-divider { height: 1px; margin: 34px 0 24px; background: var(--line); }
+.research-subheading { margin: 0 0 7px; color: #d6e8df; font-size: 16px; font-weight: 600; }
+.summary-result { margin-top: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: rgba(20,35,46,.64); }
+.summary-result-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+.summary-result-heading h2 { margin: 0; color: #d6e8df; font-size: 14px; line-height: 1.5; }
+.summary-result-heading a { flex: 0 0 auto; color: #85cdb5; font-size: 10px; text-decoration: none; }
+#summary-text { color: #c1d2cd; font-size: 12px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
