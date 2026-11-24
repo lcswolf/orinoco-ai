@@ -16,7 +16,7 @@ This is the working checklist for a repository-wide review before the first prod
 - Document upload, extraction, storage paths, download and deletion.
 - Encrypted backup creation, remote transfer, verification and restore.
 - Docker image, non-root runtime, process supervision, model download and persistent paths.
-- Pterodactyl Panel 1.x Egg schema, startup command, variables, allocations and resource assumptions.
+- PTDL_v1 Egg schema and Panel 2.x import compatibility, startup command, variables, allocations and resource assumptions.
 - Frontend behaviour, accessibility, responsive layout and safe rendering of untrusted text.
 - CI coverage, dependency health, comments/docstrings and user-facing documentation.
 
@@ -189,7 +189,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.
 - [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
-- [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
+- [ ] Validate the Egg against the target Panel 2.x format and confirm every environment variable matches the runtime.
 - [ ] Apply and live-test the Caddy/Nginx/Tailscale design in [Network Deployment](NETWORK_DEPLOYMENT.md): public HTTPS subdomain, HTTPS IP:8443, private Tailscale Serve :8444 (no Funnel), Docker/Wings firewall restrictions, edge body/rate/connection limits and certificate renewal.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
