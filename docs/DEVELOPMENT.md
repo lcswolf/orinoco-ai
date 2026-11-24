@@ -30,7 +30,7 @@ uvicorn orinoco.main:app --host 127.0.0.1 --port 8000 --reload
 
 Open `http://127.0.0.1:8000/` to view the custom Orinoco interface. The interface checks `/readyz` and displays whether the configured local Ollama model is available. `/healthz` checks only that the web process is responding.
 
-The current web composer is intentionally inactive. Do not expose an unauthenticated chat endpoint; authentication and per-user storage must be completed first.
+The chat composer is available after sign-in. Chats and message pairs are stored in SQLite and scoped to the signed-in account. The local chat endpoint uses Ollama on loopback; no external AI inference API is called.
 
 ## Account foundation
 
@@ -80,7 +80,7 @@ Then visit `http://127.0.0.1:8000/`.
 ## Current limitations
 
 - No user-management, account recovery or MFA screens.
-- No authenticated chat endpoint or conversation history.
+- No conversation editing/deletion, streaming responses or chat pagination.
 - No memory, document ingestion, web search or URL summarisation.
 - No Discord or voice integration.
 - The Pterodactyl Egg and container image are still preview/development artefacts and have not been deployed to the user's Panel.
