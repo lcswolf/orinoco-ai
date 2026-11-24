@@ -62,20 +62,21 @@ class SearXNGClient:
             url = item.get("url")
             if not isinstance(url, str):
                 continue
-            parsed = urlparse(url)
-            if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            try:
+                parsed = urlparse(url)
+                hostname_value = parsed.hostname
+                _ = parsed.port
+            except ValueError:
+                continue
+            if parsed.scheme not in {"http", "https"} or not hostname_value:
                 continue
             if parsed.username or parsed.password:
                 continue
-            hostname = parsed.hostname.rstrip(".").lower()
+            hostname = hostname_value.rstrip(".").lower()
             if hostname == "localhost" or hostname.endswith((
                 ".localhost", ".local", ".internal", ".lan", ".home.arpa",
                 ".test", ".example", ".invalid",
             )):
-                continue
-            try:
-                _ = parsed.port
-            except ValueError:
                 continue
             try:
                 address = ipaddress.ip_address(hostname)
