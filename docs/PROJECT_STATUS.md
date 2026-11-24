@@ -1,33 +1,36 @@
 # Project Status
 
-**Overall status: early implementation — supervised Ollama runtime, readiness checks and Pterodactyl Egg preview committed.**
+**Overall status: early implementation — custom interface shell and supervised local model runtime committed.**
 
 This page separates confirmed project decisions from implementation work. A planned feature is not considered implemented until code, tests and documentation exist.
 
 ## Implemented in the repository
 
 - Public project repository and project documentation.
-- Minimal FastAPI application with root and `/healthz` liveness endpoints.
-- `/readyz` readiness endpoint that checks the local Ollama API and selected model.
-- Automated tests for the API, Egg definition and runtime layout.
+- Custom responsive Orinoco interface shell, served directly by FastAPI.
+- Orinoco's requested greeting and an initial local-model status display.
+- /healthz liveness endpoint and /readyz readiness endpoint.
+- Readiness check for the local Ollama API and selected model.
+- Automated tests for the API, custom interface, Egg definition and runtime layout.
 - Python dependency manifests for runtime and development.
-- Pterodactyl-compatible Docker image foundation using a non-root `container` user and `/home/container` working directory.
-- Pterodactyl startup entrypoint that expands simple uppercase `{{VARIABLE}}` placeholders without evaluating shell commands.
-- Supervisor configuration for the web app, Ollama and first-run model initialisation in one container.
+- Pterodactyl-compatible Docker image foundation using a non-root container user and /home/container working directory.
+- Pterodactyl startup entrypoint that expands simple uppercase {{VARIABLE}} placeholders without evaluating shell commands.
+- Supervisor configuration for the web app, Ollama and first-run model initialisation.
 - Pinned Ollama CPU runtime installation, loopback-only API binding and model concurrency limits.
 - First-run model download into persistent Pterodactyl server storage.
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0 and an install script that prepares persistent data folders.
 - GitHub Actions workflows for Python tests and Docker image build validation.
 
-The initial application and Egg tests passed in GitHub Actions. The original lightweight Docker image build passed. The expanded image including Ollama is being validated now; it has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest Python test run passed 13 tests before the custom interface tests were added. New interface tests are now committed and their CI run is pending. The expanded image has been built in CI; a container runtime smoke test is being added. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
 - Self-hosted assistant named Orinoco.
+- Fully custom Orinoco web interface; Open WebUI will not be used as the main frontend.
 - Local model inference; no external AI inference API is intended.
 - Ollama is the inference runtime, currently pinned to stable version 0.40.18 in the image.
 - Initial target is a modest Ubuntu 24.04 LTS VPS.
-- Pterodactyl Panel 1.13.0 is the target deployment manager, using a custom Orinoco Egg and image.
+- Pterodactyl Panel 1.13.0 is the target deployment manager, using a custom Egg and image.
 - Stable releases are preferred for updates.
 - Curated model list: Qwen 2.5 0.5B, 1.5B and 3B; 1.5B is the default.
 - Initial context target is 2048 tokens and one model request at a time.
@@ -38,9 +41,10 @@ The initial application and Egg tests passed in GitHub Actions. The original lig
 
 ## Not implemented yet
 
-- Chat interface and chat orchestration connected to Ollama.
+- Authenticated chat endpoint and working chat composer.
 - User authentication, roles and account management.
 - Database, conversation storage and per-user memory controls.
+- Settings and administrator screens.
 - Document ingestion, retrieval and shared/private libraries.
 - Web search and safe URL fetching.
 - Discord integration and voice features.
@@ -51,12 +55,12 @@ The initial application and Egg tests passed in GitHub Actions. The original lig
 
 ## Suggested implementation sequence
 
-1. Finish the expanded Docker build and runtime checks.
-2. Add a minimal local chat endpoint with strict input validation and request limits.
-3. Add the database, authentication, roles and isolated chat storage before exposing chat to users.
-4. Add per-user memory review and document retrieval.
-5. Add optional web search and safe URL summarisation.
-6. Add backup, restore, health checks and update/rollback procedures.
+1. Finish frontend and container smoke tests.
+2. Add database-backed authentication, roles and secure session handling.
+3. Add authenticated chat orchestration and per-user conversation storage.
+4. Add user preferences and per-user memory review controls.
+5. Add document retrieval, optional web research and safe URL summaries.
+6. Add administrator settings, backups, restore and update/rollback procedures.
 7. Add Discord text integration; consider voice only after the core is stable.
 8. Publish the stable image and import/test the finished Egg on the user's Panel before production deployment.
 
