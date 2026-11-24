@@ -95,7 +95,7 @@ def reset_account_password(username: str, database_path: Path | None = None) -> 
 
 
 def main() -> int:
-    """Parse the command-line options for the one-time initial administrator setup."""
+    """Parse local administrator bootstrap and password-recovery commands."""
     parser = argparse.ArgumentParser(prog="python -m orinoco.admin")
     parser.add_argument("command", choices=("create-admin", "reset-password"))
     parser.add_argument("username", nargs="?", help="account username for reset-password")
