@@ -52,7 +52,13 @@ def store_document(data: bytes, *, user_id: int | None, scope: str, extension: s
 def resolve_document_path(relative_path: str) -> Path:
     """Resolve a stored relative path and reject traversal outside the document root."""
     root = get_document_root().resolve()
-    candidate = (root / relative_path).resolve()
+    relative = Path(relative_path)
+    if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+        raise ValueError("invalid document storage path")
+    candidate = root / relative
+    if candidate.is_symlink():
+        raise ValueError("symbolic links are not valid document storage paths")
+    candidate = candidate.resolve()
     try:
         candidate.relative_to(root)
     except ValueError as exc:
@@ -61,10 +67,11 @@ def resolve_document_path(relative_path: str) -> Path:
 
 
 def remove_document_file(relative_path: str) -> None:
-    """Remove a stored file without exposing internal paths when storage cleanup fails."""
+    """Remove a stored file, surfacing cleanup failures so the DB row can be retained."""
+    path = resolve_document_path(relative_path)
     try:
-        resolve_document_path(relative_path).unlink(missing_ok=True)
-    except (OSError, ValueError):
-        # The database record is authoritative; missing files are handled as
-        # a storage-health issue rather than leaking internal paths.
-        pass
+        path.unlink(missing_ok=True)
+    except OSError as exc:
+        # Callers must keep the document record when the original file cannot
+        # be removed, allowing the owner or administrator to retry cleanup.
+        raise OSError("Could not securely remove the stored document file.") from exc
