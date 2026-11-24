@@ -2,7 +2,7 @@
 
 A self-hosted personal AI assistant with local inference, persistent memory, Discord integration and web research.
 
-> **Project status: early implementation.** The runtime foundation is taking shape, but Orinoco is not yet a usable assistant.
+> **Project status: early implementation.** The custom interface and local runtime foundations are being built; Orinoco is not yet a usable assistant.
 
 ## Project goals
 
@@ -10,6 +10,7 @@ Orinoco aims to provide a friendly, private assistant that can be hosted on a mo
 
 Planned capabilities include:
 
+- A custom Orinoco web interface, built for this project rather than based on Open WebUI.
 - Local model inference through Ollama, without relying on external AI inference APIs.
 - A private web interface with administrator and standard-user accounts.
 - Per-user chat history and personal memories, with controls to review, correct and delete memories.
@@ -29,11 +30,11 @@ Planned capabilities include:
 
 ## Planned deployment
 
-The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 1.13.0 managing Orinoco through a custom Egg and Docker image. The container foundation now includes a pinned Ollama CPU runtime, a supervisor, first-run model download and separate liveness/readiness checks. The selected model files are intended to persist in the Pterodactyl server directory.
+The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 1.13.0 managing Orinoco through a custom Egg and Docker image. The container foundation includes a pinned Ollama CPU runtime, a supervisor, first-run model download and separate liveness/readiness checks.
 
 ## Repository status
 
-The repository includes a FastAPI foundation, liveness/readiness endpoints, tests, a supervised Ollama runtime and a **preview Pterodactyl 1.x Egg**. The app can check that Ollama and the selected model are available, but it does not yet provide chat, authentication, a database, user memories, Discord or search. The expanded Docker image is being validated and has not yet been published to GHCR or deployed.
+The repository includes a custom responsive interface shell, FastAPI liveness/readiness endpoints, tests, a supervised Ollama runtime and a **preview Pterodactyl 1.x Egg**. The interface can report whether the selected local model is available, but authenticated chat, user accounts, a database, memories, Discord and search are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
 See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
