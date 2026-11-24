@@ -9,7 +9,8 @@ import mimetypes
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+
+from orinoco.auth.sessions import get_session_userfrom fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
 from orinoco.db import (
@@ -43,17 +44,8 @@ def _require_csrf(request: Request) -> None:
 
 
 def _current_user(request: Request) -> User:
-    """Resolve the active account from the signed request session."""
-    user_id = request.session.get("user_id")
-    if not isinstance(user_id, int):
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    database_path = get_database_path()
-    initialise_database(database_path)
-    user = get_user_by_id(user_id, database_path=database_path)
-    if user is None or not user.active:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    return user
+    """Resolve the active account from a session that has not been revoked."""
+    return get_session_user(request)
 
 
 def _safe_filename(filename: str | None) -> str:
