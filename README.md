@@ -8,7 +8,7 @@ A self-hosted personal AI assistant with local inference, persistent memory, pri
 
 Orinoco aims to provide a friendly, private assistant that can be hosted on a modest VPS and use locally-run language models.
 
-- Custom Orinoco web interface rather than Open WebUI.
+- Custom Orinoco web interface rather than Open WebUI, with an original Womble-inspired woodland helper mascot and UK-friendly woodland palette.
 - Local model inference through Ollama, without external AI inference APIs.
 - Private administrator and standard-user accounts.
 - Per-user chat history and personal memories, with review, correction and deletion controls.
