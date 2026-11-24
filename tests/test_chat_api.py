@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from orinoco.chat import routes as chat_routes
 from orinoco.db import create_user, initialise_database
-from orinoco.llm.ollama import OllamaError
+from orinoco.llm.ollama import OllamaContextError, OllamaError
 from orinoco.main import app
 
 
@@ -575,3 +575,35 @@ def test_full_memory_quota_does_not_fail_successful_chat(tmp_path, monkeypatch) 
     assert response.json()["assistant_message"] == "Hello from Orinoco."
     assert response.json()["saved_memories"] == []
     assert len(memories) == 1
+
+
+def test_chat_context_overflow_returns_clear_validation_error(tmp_path, monkeypatch) -> None:
+    """An oversized prompt returns 422 rather than a misleading model outage."""
+    database = tmp_path / "context-overflow.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("AUTO_SAVE_MEMORIES", "false")
+    initialise_database(database)
+    create_user("contextuser", "a-long-test-password-123", database_path=database)
+
+    class ContextOverflowOllamaClient:
+        async def chat(self, messages: list[dict[str, str]]) -> str:
+            raise OllamaContextError(
+                "Your current message is too long for the configured model context. "
+                "Shorten it or increase MODEL_CONTEXT."
+            )
+
+        async def aclose(self) -> None:
+            return None
+
+    monkeypatch.setattr(chat_routes, "OllamaClient", ContextOverflowOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "contextuser", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "A question that cannot fit in the configured model context."},
+        )
+
+    assert response.status_code == 422
+    assert "increase MODEL_CONTEXT" in response.json()["detail"]
