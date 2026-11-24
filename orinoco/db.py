@@ -113,6 +113,8 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
     """Create the initial schema without overwriting existing user data."""
     with _database(database_path) as connection:
         schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+        if schema_version < 0:
+            raise RuntimeError("Database schema version cannot be negative; refusing to modify it.")
         if schema_version > CURRENT_SCHEMA_VERSION:
             raise RuntimeError(
                 f"Database schema version {schema_version} is newer than this Orinoco build "
