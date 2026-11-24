@@ -27,16 +27,27 @@ def get_session_secret() -> str:
     )
     try:
         secret_path.parent.mkdir(parents=True, exist_ok=True)
+        if secret_path.is_symlink():
+            raise RuntimeError("The persisted Orinoco session secret must not be a symbolic link")
+        no_follow = getattr(os, "O_NOFOLLOW", 0)
         try:
             descriptor = os.open(
                 secret_path,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | no_follow,
                 0o600,
             )
         except FileExistsError:
-            secret = secret_path.read_text(encoding="utf-8").strip()
+            # Open the existing file without following a link introduced after
+            # the initial check; session-signing material must stay in data storage.
+            read_descriptor = os.open(secret_path, os.O_RDONLY | no_follow)
+            with os.fdopen(read_descriptor, "r", encoding="utf-8") as secret_file:
+                secret = secret_file.read().strip()
             if len(secret) < 32:
                 raise RuntimeError("The persisted Orinoco session secret is invalid")
+            try:
+                secret_path.chmod(0o600)
+            except OSError:
+                pass
             return secret
 
         secret = secrets.token_urlsafe(48)
