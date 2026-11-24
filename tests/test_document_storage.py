@@ -56,3 +56,21 @@ def test_document_storage_root_cannot_be_a_symlink(tmp_path, monkeypatch) -> Non
     with pytest.raises(ValueError, match="document root must not be a symbolic link"):
         storage.resolve_document_path("private/example.txt")
     assert list(target.iterdir()) == []
+
+
+def test_failed_document_atomic_rename_removes_temporary_file(tmp_path, monkeypatch) -> None:
+    """A failed final rename must not leave an unregistered partial upload."""
+    import pytest
+
+    root = tmp_path / "documents"
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(root))
+
+    def fail_replace(_source, _destination) -> None:
+        raise OSError("simulated atomic rename failure")
+
+    monkeypatch.setattr(storage.os, "replace", fail_replace)
+
+    with pytest.raises(OSError, match="simulated atomic rename failure"):
+        storage.store_document(b"temporary content", user_id=42, scope="private", extension=".txt")
+
+    assert list((root / "private" / "42").iterdir()) == []
