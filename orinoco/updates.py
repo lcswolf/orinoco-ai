@@ -62,11 +62,14 @@ def migrate_database(*, backup_path: Path | None = None) -> dict[str, object]:
     try:
         integrity = connection.execute("PRAGMA integrity_check").fetchone()
         schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+        foreign_key_issue = connection.execute("PRAGMA foreign_key_check").fetchone()
     finally:
         connection.close()
 
     if not integrity or integrity[0] != "ok":
         raise UpdateError("The database failed its post-migration integrity check.")
+    if foreign_key_issue:
+        raise UpdateError("The database contains foreign-key consistency errors after migration.")
     if schema_version != CURRENT_SCHEMA_VERSION:
         raise UpdateError(
             f"Expected schema version {CURRENT_SCHEMA_VERSION}, found {schema_version}."
