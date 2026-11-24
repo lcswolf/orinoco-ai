@@ -8,13 +8,16 @@ import sys
 
 from pathlib import Path
 
-from orinoco.db import AccountError, create_user, get_database_path, initialise_database
+from orinoco.db import AccountError, create_user, get_database_path, initialise_database, list_users
 
 
 def create_initial_admin(database_path: Path | None = None) -> int:
     """Create the first administrator only when no account exists; never reset an existing installation."""
     database_path = database_path or get_database_path()
     initialise_database(database_path)
+    if list_users(database_path=database_path):
+        print("Orinoco already has an account; refusing to create another bootstrap administrator.", file=sys.stderr)
+        return 2
     print("Create the first Orinoco administrator account.")
     print("Usernames: 3–32 characters; letters, numbers, dots, underscores or hyphens.")
     username = input("Administrator username: ").strip()
