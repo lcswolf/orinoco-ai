@@ -35,6 +35,8 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "ORINOCO_BACKUP_S3_BUCKET",
         "ORINOCO_BACKUP_S3_ACCESS_KEY_ID",
         "ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY",
+        "ORINOCO_BACKUP_TIME",
+        "ORINOCO_BACKUP_RETENTION_DAYS",
     }
 
 
@@ -113,3 +115,14 @@ def test_s3_backup_credentials_are_hidden_and_not_user_editable() -> None:
         assert variables[name]["default_value"] == ""
         assert variables[name]["user_viewable"] is False
         assert variables[name]["user_editable"] is False
+
+
+def test_daily_backup_schedule_defaults_and_visibility() -> None:
+    """The Egg must expose safe defaults for local schedule and retention."""
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variables = {item["env_variable"]: item for item in egg["variables"]}
+
+    assert variables["ORINOCO_BACKUP_TIME"]["default_value"] == "03:00"
+    assert variables["ORINOCO_BACKUP_TIME"]["user_editable"] is True
+    assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["default_value"] == "14"
+    assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["rules"] == "required|integer|min:1|max:365"
