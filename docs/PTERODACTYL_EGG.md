@@ -38,9 +38,10 @@ The current application foundation includes:
 - Authenticated chat through the local Ollama service.
 - Per-user saved conversation history with server-side ownership checks.
 - Per-user memories, automatic extraction, and review/edit/delete controls.
+- Private and shared document libraries for TXT, Markdown, PDF, DOCX, XLSX and PPTX, with bounded local text extraction and SQLite FTS5 retrieval.
 - Liveness endpoint `/healthz` and model readiness endpoint `/readyz`.
 
-Document handling, web search, Discord and voice are still under development.
+Web search, Discord and voice are still under development. Document uploads and basic keyword retrieval are implemented; scanned-PDF OCR and advanced semantic search are not.
 
 - Do not add a real Discord token yet.
 - Automatic memory extraction uses an additional local model request after a chat reply. It can be disabled with `AUTO_SAVE_MEMORIES=false`.
