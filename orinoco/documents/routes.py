@@ -172,21 +172,22 @@ async def remove_private_document(document_id: int, request: Request) -> dict[st
     if document is None or document["scope"] != "private":
         raise HTTPException(status_code=404, detail="Document not found.")
     stored_path = str(document["stored_path"])
-    try:
-        # Remove the original first. If storage cleanup fails, keep the DB row
-        # visible so the owner can retry instead of silently orphaning private data.
-        remove_document_file(stored_path)
-    except (OSError, ValueError) as exc:
-        raise HTTPException(
-            status_code=500,
-            detail="The document could not be removed from storage; it remains listed so you can retry.",
-        ) from exc
-    deleted_path = delete_document(
-        user.id,
-        document_id,
-        allow_shared=False,
-        database_path=get_database_path(),
-    )
-    if deleted_path is None:
-        raise HTTPException(status_code=404, detail="Document not found.")
+    with document_storage_lock():
+        try:
+            # Remove the original first. If cleanup fails, keep the DB row visible
+            # so the owner can retry instead of silently orphaning private data.
+            remove_document_file(stored_path)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="The document could not be removed from storage; it remains listed so you can retry.",
+            ) from exc
+        deleted_path = delete_document(
+            user.id,
+            document_id,
+            allow_shared=False,
+            database_path=get_database_path(),
+        )
+        if deleted_path is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
     return {"deleted": True}
