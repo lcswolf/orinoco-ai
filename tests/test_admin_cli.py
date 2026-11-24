@@ -61,6 +61,7 @@ def test_admin_password_reset_uses_configured_database_and_revokes_sessions(
 
     database = tmp_path / "custom" / "orinoco.sqlite3"
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
     user = create_user("recoveradmin", "an-old-long-password-123", role="admin", database_path=database)
     old_version = user.session_version
     monkeypatch.setattr("builtins.input", lambda prompt: "recoveradmin")
