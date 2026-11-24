@@ -50,6 +50,7 @@ ENV USER=container \
     HOME=/home/container \
     PYTHONPATH=/opt/orinoco \
     TZ=Europe/London \
+    ORINOCO_ENV=production \
     OLLAMA_HOST=127.0.0.1:11434 \
     OLLAMA_MODELS=/home/container/data/models \
     OLLAMA_NO_CLOUD=1 \
