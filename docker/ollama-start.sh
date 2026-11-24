@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+# Validate resource-sensitive settings before starting the local inference service.
+
 MODEL_CONTEXT="${MODEL_CONTEXT:-2048}"
 AI_CONCURRENCY="${AI_CONCURRENCY:-1}"
 
@@ -17,6 +19,7 @@ case "$AI_CONCURRENCY" in
     *) echo "ERROR: AI_CONCURRENCY is currently fixed at 1." >&2; exit 2 ;;
 esac
 
+ # Ollama is loopback-only: Pterodactyl must never publish this API as a public port.
 export OLLAMA_HOST="127.0.0.1:11434"
 export OLLAMA_MODELS="${OLLAMA_MODELS:-/home/container/data/models}"
 export OLLAMA_CONTEXT_LENGTH="$MODEL_CONTEXT"
