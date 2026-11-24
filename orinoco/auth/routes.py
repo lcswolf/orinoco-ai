@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from orinoco.db import (
     User,
     authenticate_user,
+    change_user_password,
     get_database_path,
     get_user_by_id,
     initialise_database,
@@ -27,6 +28,11 @@ _login_failures: dict[str, deque[float]] = defaultdict(deque)
 class LoginRequest(BaseModel):
     username: str = Field(min_length=3, max_length=32)
     password: str = Field(min_length=1, max_length=1024)
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=1024)
+    new_password: str = Field(min_length=12, max_length=1024)
 
 
 def _require_csrf(request: Request) -> None:
@@ -119,3 +125,37 @@ async def logout(request: Request) -> dict[str, bool]:
     _require_csrf(request)
     request.session.clear()
     return {"authenticated": False}
+
+
+
+@router.post("/password")
+async def change_password(
+    payload: PasswordChangeRequest,
+    request: Request,
+) -> dict[str, bool]:
+    _require_csrf(request)
+    user_id = request.session.get("user_id")
+    if not isinstance(user_id, int):
+        raise HTTPException(status_code=401, detail="Please sign in to continue.")
+
+    initialise_database(get_database_path())
+    try:
+        changed = change_user_password(
+            user_id,
+            payload.current_password,
+            payload.new_password,
+            database_path=get_database_path(),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    if not changed:
+        raise HTTPException(
+            status_code=400,
+            detail="The current password was not accepted.",
+        )
+
+    request.session.clear()
+    request.session["user_id"] = user_id
+    request.session["csrf_token"] = secrets.token_urlsafe(32)
+    return {"changed": True}
