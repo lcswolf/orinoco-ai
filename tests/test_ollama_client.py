@@ -76,6 +76,7 @@ def test_environment_cannot_redirect_inference_to_remote_provider(monkeypatch) -
     client = OllamaClient()
     try:
         assert str(client._client.base_url) == "http://127.0.0.1:11434"
+        assert client._client._trust_env is False
     finally:
         asyncio.run(client.aclose())
 
