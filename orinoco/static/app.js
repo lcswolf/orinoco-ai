@@ -51,6 +51,7 @@ function syncMobileNavigation() {
   else sidebar.removeAttribute("aria-hidden");
   sidebarBackdrop.hidden = !open;
   mobileBrand.setAttribute("aria-expanded", String(open));
+  mobileBrand.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
 }
 
 function closeMobileNavigation(restoreFocus = true) {
