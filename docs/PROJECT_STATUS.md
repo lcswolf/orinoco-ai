@@ -36,6 +36,8 @@ This page separates confirmed project decisions from implementation work. A plan
 - CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions.
 - Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing; backup-verified update preparation and explicit SQLite migration CLI.
 - Automated Python tests, frontend JavaScript syntax validation and dependency vulnerability audit.
+- Configurable per-user/shared document count and byte quotas, application declared-body limits, and per-user chat submission throttling; reverse-proxy enforcement is documented but not deployed.
+- Network deployment design for Caddy public TLS, Nginx loopback edge limits, HTTPS public-IP access and private Tailscale Serve; Uvicorn forwarded-header trust is disabled by default.
 
 The previous completed GitHub Actions Python test run passed 170 tests, with one non-failing Starlette/httpx TestClient deprecation warning. The subsequent per-user automatic-memory preference change is undergoing CI validation; do not treat the earlier count as validation of the current commit. Coverage includes first-admin bootstrap, login throttling, account-wide session revocation, sensitive-memory filtering, loopback-only inference, Office archive expansion limits, SSRF redirect/response-size protections, encrypted backup upload/restore, document cleanup and storage-path protection, browser security headers, timezone configuration, SQLite schema upgrades, daily backup scheduling/retention, Egg wiring, chat recovery when memory persistence fails, owner-scoped conversation deletion, login IP throttling, database file protections, external-link safety, v5-to-v6 migration, per-user preference isolation, admin persona permissions and prompt integration, and mascot/accessibility checks. The latest image with the scheduler, mascot, conversation deletion, schema v6 and persona settings has built and passed its runtime smoke test. The final CLI error-handling adjustment is being rebuilt. No image has been published to GHCR or tested on a live Pterodactyl node.
 
@@ -61,15 +63,17 @@ The previous completed GitHub Actions Python test run passed 170 tests, with one
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
-- Production security review, MFA/account recovery, reverse-proxy-level rate limits, trusted-proxy configuration and resource quotas.
+- Host-level Caddy/Nginx configuration, firewall rules, certificate issuance/renewal and Tailscale Serve are documented but not applied or tested on the Leaseweb VPS.
+- Production security review, MFA/account recovery, live trusted-proxy configuration, chat retention and multi-worker quota coordination.
 
 ## Next implementation sequence
 
-1. Finish the repository-wide pre-release audit and final scheduler/mascot/conversation-deletion container smoke test.
-2. Finish accessibility/mobile polish and review the new persona settings on a live test instance.
-3. Validate the update/rollback runbook on a disposable Pterodactyl server and perform a real backup/restore drill.
-4. Validate the Egg on a disposable server in the user's Panel.
-5. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
+1. Finish the repository-wide pre-release audit and repeat the Python tests and container smoke test on the latest commit.
+2. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
+3. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
+4. Perform a real encrypted backup/restore and update/rollback drill on the disposable Pterodactyl server.
+5. Finish accessibility/mobile polish and review account settings on the live test instance.
+6. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
 
 ## Resource assumptions
 
