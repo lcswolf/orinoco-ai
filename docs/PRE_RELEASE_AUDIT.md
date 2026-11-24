@@ -42,6 +42,10 @@ The first S3-compatible upload implementation checked object size and client-sup
 
 DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand into a much larger payload, so the extraction path now checks archive entry counts, encrypted entries and both declared and actual uncompressed size before parsing. A regression test uses a highly-compressible oversized archive to verify the limit.
 
+### Restore rollback — strengthened
+
+The restore path now creates its pre-restore database snapshot through SQLite's online backup API, preserving committed WAL data. It also preserves the existing file-based session secret and restores it if a later restore step fails. A failure-injection regression test is being added to exercise this rollback path.
+
 ### Documentation accuracy — corrected
 
 The README and development guide now distinguish implemented encrypted backup operations from the outstanding scheduler/retention work. The Egg's web-search descriptions now reflect the implemented SearXNG integration rather than describing it as future work.
@@ -53,7 +57,7 @@ The README and development guide now distinguish implemented encrypted backup op
 - [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [ ] Finish review of private/shared document ownership, file permissions, parser edge cases and cleanup failure paths.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
-- [ ] Review encrypted backup archive validation, restore atomicity, rollback copies, key handling and remote transfer failure behaviour.
+- [x] Strengthen restore rollback for the database, WAL state and file-based session secret.\n- [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
 - [ ] Implement and test automatic daily backups, retention and clear failure reporting.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
