@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hmac
 import json
 import logging
@@ -9,8 +10,9 @@ import os
 import re
 import time
 from collections import OrderedDict, deque
+from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from orinoco.auth.sessions import get_session_user
 from pydantic import BaseModel, Field, field_validator
@@ -33,7 +35,7 @@ from orinoco.db import (
     search_documents,
 )
 from orinoco.llm.ollama import OllamaClient, OllamaError
-from orinoco.llm.runtime import generation_lock
+from orinoco.llm.runtime import generation_capacity, generation_lock
 from orinoco.research.searxng import SearchUnavailable, SearXNGClient
 
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -231,6 +233,22 @@ class ChatRequest(BaseModel):
         return value
 
 
+async def _reserve_generation_slot() -> AsyncIterator[None]:
+    """Reserve one active-or-waiting chat slot, rejecting overload promptly."""
+    try:
+        await asyncio.wait_for(generation_capacity.acquire(), timeout=0.05)
+    except TimeoutError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Orinoco is busy with other requests. Please wait a moment and try again.",
+            headers={"Retry-After": "5"},
+        ) from exc
+    try:
+        yield
+    finally:
+        generation_capacity.release()
+
+
 def _require_csrf(request: Request) -> None:
     """Require a valid CSRF token before accepting a chat mutation."""
     expected = request.session.get("csrf_token")
@@ -312,7 +330,7 @@ async def remove_conversation(conversation_id: int, request: Request) -> dict[st
     return {"deleted": True}
 
 
-@router.post("/chat")
+@router.post("/chat", dependencies=[Depends(_reserve_generation_slot)])
 async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
     """Build account-scoped context, call local inference, and persist the exchange."""
     _require_csrf(request)
