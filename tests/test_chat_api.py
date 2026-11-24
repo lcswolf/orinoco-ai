@@ -384,3 +384,54 @@ def test_conversation_delete_requires_csrf_and_removes_owned_history(tmp_path, m
     assert deleted.status_code == 200
     assert deleted.json() == {"deleted": True}
     assert detail.status_code == 404
+
+
+def test_chat_prompt_uses_admin_persona_and_private_response_preferences(tmp_path, monkeypatch) -> None:
+    """The local model receives the current core persona and only this user's style preferences."""
+    from orinoco.db import update_assistant_persona, update_user_preferences
+
+    database = tmp_path / "persona-prompt.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("AUTO_SAVE_MEMORIES", "false")
+    initialise_database(database)
+    user = create_user("promptprefs", "a-long-test-password-123", database_path=database)
+    update_user_preferences(
+        user.id,
+        voice="calm",
+        tone="direct",
+        answer_detail="detailed",
+        database_path=database,
+    )
+    update_assistant_persona(
+        core_persona="Be curious and practical.",
+        humour_level=25,
+        database_path=database,
+    )
+    captured = []
+
+    class CapturingOllamaClient:
+        async def chat(self, messages):
+            captured.extend(messages)
+            return "A considered answer."
+
+        async def aclose(self):
+            return None
+
+    monkeypatch.setattr(chat_routes, "OllamaClient", CapturingOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "promptprefs", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "Please explain this clearly."},
+        )
+
+    assert response.status_code == 200
+    system = captured[0]["content"]
+    assert "Be curious and practical." in system
+    assert "Humour setting: 25/100" in system
+    assert "calm and measured" in system
+    assert "direct and straightforward" in system
+    assert "thorough explanations" in system
+    assert "Never claim access to another user's chats" in system
