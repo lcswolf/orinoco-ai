@@ -123,6 +123,12 @@ def test_encrypted_backup_uploads_and_verifies_remote_checksum(tmp_path, monkeyp
                 "Metadata": item["metadata"],
             }
 
+        def get_object(self, **kwargs):
+            from io import BytesIO
+
+            item = self.objects[(kwargs["Bucket"], kwargs["Key"])]
+            return {"Body": BytesIO(item["body"])}
+
     fake_s3 = FakeS3()
     monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=lambda *args, **kwargs: fake_s3))
     result = backups.upload_backup(backup)
@@ -171,3 +177,51 @@ def test_remote_backup_upload_rejects_checksum_mismatch(tmp_path, monkeypatch) -
     monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=lambda *args, **kwargs: fake_s3))
     with pytest.raises(backups.BackupError, match="verification failed"):
         backups.upload_backup(backup)
+
+
+def test_remote_backup_upload_hashes_downloaded_object_bytes(tmp_path, monkeypatch) -> None:
+    """Reject altered remote bytes even when the object metadata claims the expected hash."""
+    import sys
+    from io import BytesIO
+    from types import SimpleNamespace
+
+    configure_backup_paths(monkeypatch, tmp_path)
+    backup = backups.create_backup()
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_ENDPOINT", "https://objects.example.test")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_BUCKET", "private-orinoco")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_ACCESS_KEY_ID", "test-access")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY", "test-secret")
+
+    class AlteredRemoteS3:
+        """Return modified object bytes while retaining the original metadata."""
+
+        def put_object(self, **kwargs):
+            self.body = kwargs["Body"].read()
+            self.metadata = kwargs["Metadata"]
+
+        def head_object(self, **kwargs):
+            return {"ContentLength": len(self.body), "Metadata": self.metadata}
+
+        def get_object(self, **kwargs):
+            altered = bytearray(self.body)
+            altered[-1] ^= 1
+            return {"Body": BytesIO(altered)}
+
+    fake_s3 = AlteredRemoteS3()
+    monkeypatch.setitem(sys.modules, "boto3", SimpleNamespace(client=lambda *args, **kwargs: fake_s3))
+    with pytest.raises(backups.BackupError, match="downloaded object SHA-256"):
+        backups.upload_backup(backup)
+
+
+def test_remote_backup_upload_rejects_symlink_source(tmp_path, monkeypatch) -> None:
+    """Do not follow symbolic links when selecting a backup file for upload."""
+    configure_backup_paths(monkeypatch, tmp_path)
+    backup = backups.create_backup()
+    link = backup.with_name("linked-backup.oribak")
+    link.symlink_to(backup)
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_ENDPOINT", "https://objects.example.test")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_BUCKET", "private-orinoco")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_ACCESS_KEY_ID", "test-access")
+    monkeypatch.setenv("ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY", "test-secret")
+    with pytest.raises(backups.BackupError, match="symbolic link"):
+        backups.upload_backup(link)
