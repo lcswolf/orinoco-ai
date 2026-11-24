@@ -341,32 +341,37 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
             secret_backup.unlink(missing_ok=True)
             raise
 
-        try:
-            if document_root.exists():
-                document_root.rename(old_documents)
-            staged_documents.rename(document_root)
-            os.replace(staged_database, database_path)
-            for suffix in ("-wal", "-shm"):
-                Path(str(database_path) + suffix).unlink(missing_ok=True)
-            if (extracted / "session_secret").exists():
-                secret_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(extracted / "session_secret", secret_path)
-                secret_path.chmod(0o600)
-        except Exception:
-            if document_root.exists():
-                shutil.rmtree(document_root)
-            if old_documents.exists():
-                old_documents.rename(document_root)
-            if database_backup.exists():
-                os.replace(database_backup, database_path)
-            elif not database_existed:
-                database_path.unlink(missing_ok=True)
-            if secret_existed and secret_backup.exists():
-                secret_path.parent.mkdir(parents=True, exist_ok=True)
-                os.replace(secret_backup, secret_path)
-            elif not secret_existed:
-                secret_path.unlink(missing_ok=True)
-            raise
+        from orinoco.documents.storage import document_storage_lock
+
+        # Restore is documented as a stopped-app operation; the same file lock
+        # also prevents any concurrent document operation during replacement.
+        with document_storage_lock():
+            try:
+                if document_root.exists():
+                    document_root.rename(old_documents)
+                staged_documents.rename(document_root)
+                os.replace(staged_database, database_path)
+                for suffix in ("-wal", "-shm"):
+                    Path(str(database_path) + suffix).unlink(missing_ok=True)
+                if (extracted / "session_secret").exists():
+                    secret_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(extracted / "session_secret", secret_path)
+                    secret_path.chmod(0o600)
+            except Exception:
+                if document_root.exists():
+                    shutil.rmtree(document_root)
+                if old_documents.exists():
+                    old_documents.rename(document_root)
+                if database_backup.exists():
+                    os.replace(database_backup, database_path)
+                elif not database_existed:
+                    database_path.unlink(missing_ok=True)
+                if secret_existed and secret_backup.exists():
+                    secret_path.parent.mkdir(parents=True, exist_ok=True)
+                    os.replace(secret_backup, secret_path)
+                elif not secret_existed:
+                    secret_path.unlink(missing_ok=True)
+                raise
 
     return manifest
 
