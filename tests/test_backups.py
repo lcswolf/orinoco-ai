@@ -439,8 +439,11 @@ def test_backup_snapshot_includes_committed_wal_data(tmp_path, monkeypatch) -> N
     finally:
         connection.close()
 
-    with sqlite3.connect(database) as changed:
+    changed = sqlite3.connect(database)
+    try:
         changed.execute("DROP TABLE wal_probe")
+    finally:
+        changed.close()
 
     backups.restore_backup(backup, confirm=True)
 
