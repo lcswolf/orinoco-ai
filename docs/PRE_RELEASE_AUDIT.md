@@ -44,7 +44,7 @@ DOCX, XLSX and PPTX uploads are ZIP archives. A small compressed file can expand
 
 ### Restore rollback — strengthened
 
-The restore path now creates its pre-restore database snapshot through SQLite's online backup API, preserving committed WAL data. It also preserves the existing file-based session secret and restores it if a later restore step fails. A failure-injection regression test is being added to exercise this rollback path.
+The restore path now creates its pre-restore database snapshot through SQLite's online backup API, preserving committed WAL data. It also preserves the existing file-based session secret as a persistent pre-restore recovery copy and restores it if a later restore step fails. Failure-injection and successful-restore regression tests cover these paths.
 
 ### Chat reference-context formatting — corrected
 
