@@ -31,6 +31,10 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "SEARXNG_URL",
         "TIMEZONE",
         "ORINOCO_BACKUP_KEY",
+        "ORINOCO_BACKUP_S3_ENDPOINT",
+        "ORINOCO_BACKUP_S3_BUCKET",
+        "ORINOCO_BACKUP_S3_ACCESS_KEY_ID",
+        "ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY",
     }
 
 
@@ -99,3 +103,13 @@ def test_container_installs_timezone_database_for_london_timezone() -> None:
     dockerfile = (ROOT / "docker" / "Dockerfile").read_text(encoding="utf-8")
     assert "tzdata" in dockerfile
     assert "TZ=Europe/London" in dockerfile
+
+
+def test_s3_backup_credentials_are_hidden_and_not_user_editable() -> None:
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variables = {item["env_variable"]: item for item in egg["variables"]}
+
+    for name in ("ORINOCO_BACKUP_S3_ACCESS_KEY_ID", "ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY"):
+        assert variables[name]["default_value"] == ""
+        assert variables[name]["user_viewable"] is False
+        assert variables[name]["user_editable"] is False
