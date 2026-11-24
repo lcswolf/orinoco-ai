@@ -289,7 +289,7 @@ def test_database_registration_failure_removes_unregistered_upload(tmp_path, mon
 
     monkeypatch.setattr(document_routes, "create_document", fail_registration)
 
-    with TestClient(app, base_url="https://testserver") as client:
+    with TestClient(app, base_url="https://testserver", raise_server_exceptions=False) as client:
         sign_in(client, "cleanupuser", "a-long-test-password-123")
         response = client.post(
             "/api/documents",
