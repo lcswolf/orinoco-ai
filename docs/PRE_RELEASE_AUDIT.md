@@ -1,6 +1,8 @@
 # Orinoco pre-release audit
 
-**Status: in progress — do not deploy to a public VPS yet.**\n\nLatest completed CI run: 106 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The current container build and runtime smoke test are still pending.
+**Status: in progress — do not deploy to a public VPS yet.**
+
+Latest completed CI run: 106 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The current container build and runtime smoke test are still pending.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -83,15 +85,21 @@ The README and development guide now distinguish implemented encrypted backup op
 - [ ] Add the agreed editable personality controls: administrator-managed core persona and per-user voice, tone and answer-detail preferences. The current default prompt now reflects the bright voice and 65% humour choice, but the settings UI/persistence is not yet implemented.
 
 - [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation.
-- [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.\n- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
-- [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.\n- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
+- [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.
+- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
+- [x] Add bounded Office ZIP expansion checks and regression coverage.
+- [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.
+- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
-- [x] Strengthen restore rollback for the database, WAL state and file-based session secret.\n- [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
+- [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
+- [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
 - [ ] Implement and test automatic daily backups, retention and clear failure reporting.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
-- [x] Add restrictive browser security headers and verify they apply to application/API/static responses.\n- [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.\n- [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
+- [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
+- [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
+- [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
 - [ ] Review CI workflow permissions, dependency versions, build reproducibility and vulnerability scanning.
 - [ ] Run the complete test suite after all audit corrections; build and smoke-test the final image.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
