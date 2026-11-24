@@ -76,7 +76,10 @@ sidebar.querySelectorAll(".nav-link").forEach((link) => {
   link.addEventListener("click", () => closeMobileNavigation());
 });
 sidebar.addEventListener("click", (event) => {
-  if (event.target.closest("#new-chat, #conversation-list button")) closeMobileNavigation();
+  if (event.target.closest("#new-chat, #conversation-list button")) {
+    closeMobileNavigation(false);
+    chatInput.focus();
+  }
 });
 document.addEventListener("keydown", (event) => {
   if (!mobileNavQuery.matches || !sidebar.classList.contains("mobile-open")) return;
