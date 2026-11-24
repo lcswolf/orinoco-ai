@@ -110,6 +110,31 @@ def test_login_failure_tracker_has_a_hard_memory_bound(monkeypatch) -> None:
     assert "first-user" not in auth_routes._login_failures
 
 
+def test_username_login_throttle_is_scoped_to_client_address(monkeypatch) -> None:
+    """Bad attempts from one client must not lock the same account for everyone else."""
+    from collections import OrderedDict
+    from fastapi import HTTPException
+    import time
+
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setattr(auth_routes, "_login_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "_login_ip_failures", OrderedDict())
+    identity = auth_routes._login_identity_key("victim", "192.0.2.10")
+    auth_routes._login_failures_for(identity).extend([time.monotonic()] * 5)
+
+    # Another client can still attempt a legitimate sign-in for this account.
+    auth_routes._check_login_rate("victim", "192.0.2.11")
+
+    # The original client remains throttled for this username/client pair.
+    try:
+        auth_routes._check_login_rate("victim", "192.0.2.10")
+    except HTTPException as exc:
+        assert exc.status_code == 429
+    else:
+        raise AssertionError("expected the original client to remain rate limited")
+
+
 def test_login_rate_limit_retry_after_reflects_oldest_failure(monkeypatch) -> None:
     """The response delay should match the remaining lockout window, not always 15 minutes."""
     from collections import OrderedDict, deque
