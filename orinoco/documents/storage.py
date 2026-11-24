@@ -19,6 +19,7 @@ def get_document_root() -> Path:
     return Path(os.environ.get("ORINOCO_DOCUMENTS_PATH", str(DEFAULT_DOCUMENT_ROOT)))
 
 
+@contextmanager
 def document_storage_lock() -> Iterator[None]:
     """Serialize document file/DB changes with backup snapshots across processes.
 
