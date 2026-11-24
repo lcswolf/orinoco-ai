@@ -89,3 +89,33 @@ def test_memories_require_sign_in_and_csrf_for_changes(tmp_path, monkeypatch) ->
         response = client.post("/api/memories", json={"content": "This request has no CSRF token."})
 
     assert response.status_code == 403
+
+
+
+def test_personal_memory_limit_is_per_user(tmp_path, monkeypatch) -> None:
+    """A full memory collection cannot grow without bound or consume another user's quota."""
+    database = tmp_path / "memory-quota.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_MAX_MEMORIES_PER_USER", "1")
+    initialise_database(database)
+    create_user("memoryowner", "a-long-owner-password-123", database_path=database)
+    create_user("memoryother", "a-long-other-password-456", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "memoryowner", "a-long-owner-password-123")
+        headers = {"X-CSRF-Token": csrf(client)}
+        first = client.post("/api/memories", headers=headers, json={"content": "Prefers concise answers."})
+        second = client.post("/api/memories", headers=headers, json={"content": "Enjoys hiking."})
+        assert first.status_code == 201
+        assert second.status_code == 409
+        assert len(client.get("/api/memories").json()["memories"]) == 1
+
+        client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf(client)})
+        sign_in(client, "memoryother", "a-long-other-password-456")
+        other = client.post(
+            "/api/memories",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"content": "Enjoys cooking."},
+        )
+
+    assert other.status_code == 201
