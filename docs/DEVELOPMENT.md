@@ -16,10 +16,10 @@ From the repository root:
 ```bash
 python -m venv .venv
 python -m pip install -r requirements.txt
-uvicorn orinoco.main:app --host 127.0.0.1 --port 8000 --reload
+ORINOCO_COOKIE_SECURE=false uvicorn orinoco.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Open `http://127.0.0.1:8000/`. Sign in to use chat. The interface checks `/readyz` for the configured local Ollama model. `/healthz` checks only that the web process is responding.
+Open `http://127.0.0.1:8000/`. Sign in to use chat. The cookie override is for local HTTP development only; keep the secure-cookie default enabled behind HTTPS in production. The interface checks `/readyz` for the configured local Ollama model. `/healthz` checks only that the web process is responding.
 
 Chats, memories and documents are scoped to the signed-in account. The chat API uses local Ollama on loopback and does not call an external AI inference API.
 
