@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed Python CI run: 170 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reports no known vulnerabilities. The scheduler-enabled container build passed its expanded smoke test; the latest image including conversation deletion and schema v6 persona settings is being revalidated.
+Latest completed Python CI run: 170 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reports no known vulnerabilities. The latest container build including conversation deletion, schema v6 and persona settings passed its expanded smoke test. A final CLI error-handling adjustment is being rebuilt.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
