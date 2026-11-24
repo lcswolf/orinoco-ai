@@ -78,7 +78,7 @@ limit. The initial local inference queue remains serial. This in-process throttl
 must be supplemented with reverse-proxy request and connection limits and a
 shared limiter if multiple web workers or replicas are introduced.
 
-Individual document uploads are limited to 10 MiB. Private libraries default
+Individual document uploads are limited to 10 MiB. PDF extraction is limited to 100 pages, at most four content streams and 32 MiB of decoded content per page, with an 8 MiB per-stream decompression ceiling and a 200,000-character output cap. Private libraries default
 to 20 files and 50 MiB combined per account. The administrator-managed shared
 library defaults to 50 files and 200 MiB combined. The Egg exposes these
 settings as `ORINOCO_USER_DOCUMENT_QUOTA_FILES`,
