@@ -91,7 +91,7 @@ def extract_memory_candidates(raw: str) -> list[str]:
         lowered = candidate.lower()
         if not candidate or len(candidate) > 240:
             continue
-        if any(re.search(rf"\\b{re.escape(term)}\\b", lowered) for term in _SENSITIVE_MEMORY_TERMS):
+        if any(re.search(rf"\b{re.escape(term)}\b", lowered) for term in _SENSITIVE_MEMORY_TERMS):
             continue
         if (
             _EMAIL_PATTERN.search(candidate)
