@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from orinoco import chat
+from orinoco.chat import routes as chat_routes
 from orinoco.db import create_user, initialise_database
 from orinoco.llm.ollama import OllamaError
 from orinoco.main import app
@@ -40,7 +40,7 @@ def test_authenticated_chat_saves_conversation_and_reply(tmp_path, monkeypatch) 
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
     initialise_database(database)
     create_user("nugget", "a-long-test-password-123", database_path=database)
-    monkeypatch.setattr(chat, "OllamaClient", FakeOllamaClient)
+    monkeypatch.setattr(chat_routes, "OllamaClient", FakeOllamaClient)
 
     with TestClient(app, base_url="https://testserver") as client:
         sign_in(client, "nugget", "a-long-test-password-123")
