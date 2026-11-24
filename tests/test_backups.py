@@ -449,3 +449,15 @@ def test_backup_snapshot_includes_committed_wal_data(tmp_path, monkeypatch) -> N
 
     with sqlite3.connect(database) as restored:
         assert restored.execute("SELECT value FROM wal_probe").fetchone()[0] == "committed-in-wal"
+
+
+def test_backup_verification_rejects_negative_database_schema_version(tmp_path, monkeypatch) -> None:
+    """Negative SQLite user_version values are not valid legacy schemas."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA user_version = -1")
+
+    backup = backups.create_backup()
+
+    with pytest.raises(backups.BackupError, match="invalid negative schema version"):
+        backups.verify_backup(backup)
