@@ -52,6 +52,14 @@ Keep the Discord token blank until its integration and secret-handling design ar
 
 The Egg uses `meta.version: PTDL_v1` for Panel 1.x compatibility. Tags are separate Panel objects and are not part of the Egg JSON.
 
+## Reverse proxy and access paths
+
+The Egg/container web process listens on its assigned Pterodactyl allocation. In the planned host topology, Caddy terminates public HTTPS and proxies to a loopback-only Nginx edge listener, which applies request-size and per-client rate/connection limits before proxying to that allocation. Do not expose the allocation directly to the internet. Ollama remains loopback-only inside the container.
+
+The intended public URLs are the configured HTTPS subdomain and `https://PUBLIC_IPV4:8443/`. Private access uses Tailscale Serve on HTTPS port 8444 and is restricted by tailnet access-control policy; do not use Funnel. See [Network Deployment](NETWORK_DEPLOYMENT.md) for the Caddy/Nginx templates, firewall boundaries and live verification checklist.
+
+The container explicitly starts Uvicorn with `--no-proxy-headers`. Do not enable forwarded-header trust or use a wildcard trusted-proxy list. If forwarded headers are ever required, first measure the proxy peer address from inside the container and allow-list only that exact peer/subnet.
+
 ## Resource and network notes
 
 Use one assigned allocation for the web interface. Ollama and the SQLite database must remain internal. The earlier plan to allow around 4 GiB RAM to the container is a planning value, not a validated minimum. Measure memory use after the first real model test. The 3B model is experimental on the proposed 6 GiB VPS.
