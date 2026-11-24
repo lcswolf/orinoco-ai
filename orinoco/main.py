@@ -88,7 +88,7 @@ async def healthz() -> dict[str, str]:
 
 async def get_ollama_readiness() -> dict[str, str]:
     """Check whether Ollama is reachable and the configured model is present."""
-    async with httpx.AsyncClient(timeout=3.0) as client:
+    async with httpx.AsyncClient(timeout=3.0, trust_env=False) as client:
         response = await client.get(f"{OLLAMA_API_BASE}/api/tags")
         response.raise_for_status()
         payload = response.json()
