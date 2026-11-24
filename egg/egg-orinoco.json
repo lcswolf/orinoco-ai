@@ -278,6 +278,15 @@
       "user_viewable": true,
       "user_editable": false,
       "rules": "required|integer|min:0|max:32"
+    },
+    {
+      "name": "Maximum Personal Memories Per User",
+      "description": "Maximum personal memories retained for each account. Defaults to 100. Users can review and delete memories to make room.",
+      "env_variable": "ORINOCO_MAX_MEMORIES_PER_USER",
+      "default_value": "100",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1|max:1000"
     }
   ]
 }
