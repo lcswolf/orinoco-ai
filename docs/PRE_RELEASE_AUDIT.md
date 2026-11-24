@@ -62,6 +62,10 @@ The application now sends a restrictive Content Security Policy, clickjacking pr
 
 The database initializer now completes the known additive v1–v3 table/index upgrades to schema v4, and refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover an early users-only database and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
 
+### Runtime and CI version pins — checked
+
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows have been moved from the older checkout/setup-python major versions to the current Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0)). CI must be re-run after this update. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests.
+
 ### Documentation accuracy — corrected
 
 The README and development guide now distinguish implemented encrypted backup operations from the outstanding scheduler/retention work. The Egg's web-search descriptions now reflect the implemented SearXNG integration rather than describing it as future work.
