@@ -219,9 +219,11 @@ Do not expose the Nginx listener, SQLite database, data directory, Ollama port, 
 
 ## 5. Uvicorn forwarded-header policy
 
-The container startup command explicitly uses `--no-proxy-headers`. This is deliberate: until the actual source address of the trusted host proxy is measured on the live Pterodactyl network, Orinoco must not accept client-supplied forwarded headers as identity or scheme information. Nginx performs the per-client IP limits at the edge. Application-level chat/login limits remain additional safeguards, but their observed client IP may be the container gateway behind this topology.
+The container startup command explicitly uses `--no-proxy-headers`; do not enable Uvicorn's general forwarded-header processing. Login throttling has a separate, administrator-only `ORINOCO_TRUSTED_PROXY_IPS` allowlist. It is blank by default. In production, while it is blank, the application deliberately avoids creating username/IP failure buckets because every visitor may appear to come from the same reverse-proxy address; Nginx's per-client edge limits are the primary protection.
 
-Do not change Uvicorn to trust `*` or all forwarded headers. If a later deployment needs the app to use forwarded client IPs, measure the exact proxy peer address from inside the container, allow-list only that address (or a narrowly scoped proxy subnet), and test spoofed `X-Forwarded-For` requests from an untrusted source before enabling proxy-header processing.
+After deployment, measure the exact Nginx peer address as seen inside the Orinoco container and set only that address (or a narrowly scoped CIDR) in `ORINOCO_TRUSTED_PROXY_IPS`. Orinoco will then accept a single `X-Forwarded-For` client address only when the connecting peer matches that allowlist. It rejects comma-separated chains and non-global forwarded addresses rather than guessing. The Nginx template overwrites `X-Forwarded-For` with the address it resolved from the trusted Caddy connection. Keep Uvicorn's `--no-proxy-headers` setting unchanged.
+
+Do not use `*`, broad private ranges or a client-editable allowlist. Test both a valid proxy request and spoofed `X-Forwarded-For` requests from an untrusted source. Tailscale Serve may present its local loopback peer rather than an individual tailnet address; tailnet ACLs remain the primary access control for that path.
 
 ## 6. Live deployment verification checklist
 
@@ -231,7 +233,8 @@ Do not change Uvicorn to trust `*` or all forwarded headers. If a later deployme
 - [ ] Install Caddy 2.11+ and Nginx on the host; preserve their config and certificate state.
 - [ ] Run `nginx -t` and Caddy's configuration validation before reloading either service.
 - [ ] Verify subdomain HTTPS and public IP HTTPS from outside the VPS, including automatic certificate renewal behaviour.
-- [ ] Verify Nginx sees the real public client IP and that login/chat/API rate limits return 429 when exceeded.
+- [ ] Verify Nginx sees the real public client IP, measure the Nginx peer from inside Orinoco, and set `ORINOCO_TRUSTED_PROXY_IPS` to that exact peer only after measurement.
+- [ ] Verify Orinoco accepts forwarded client IPs only from the allowlisted peer and ignores spoofed headers from untrusted sources; confirm login/chat/API edge limits return 429 when exceeded.
 - [ ] Verify an oversized/chunked upload is rejected by Nginx before FastAPI multipart parsing.
 - [ ] Verify the Pterodactyl allocation, Nginx 8081 and Ollama 11434 are not reachable directly from the public internet.
 - [ ] Verify `orinoco_session` is marked Secure and sign-in persists on all three HTTPS access paths.
