@@ -66,11 +66,15 @@ def _read_state(state_path: Path) -> dict[str, object]:
 
 def _write_state(state_path: Path, state: dict[str, object]) -> None:
     """Atomically persist non-secret scheduler status with owner-only permissions."""
+    if state_path.is_symlink():
+        raise BackupError("The backup scheduler status path must not be a symbolic link.")
     temporary = state_path.with_name(state_path.name + ".tmp")
-    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    if temporary.is_symlink():
+        raise BackupError("The backup scheduler temporary path must not be a symbolic link.")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
         json.dump(state, handle, indent=2)
-        handle.write("\\n")
+        handle.write("\n")
         handle.flush()
         os.fsync(handle.fileno())
     os.replace(temporary, state_path)
@@ -140,7 +144,7 @@ def run_backup_cycle(
                 "verified": upload_result["verified"],
             }
 
-        removed = prune_local_backups(backup_root, retention_days)
+        removed = prune_local_backups(backup_root, retention_days, now=local_now)
         state["last_pruned_count"] = removed
         state["last_success_at"] = datetime.now(UTC).isoformat()
         state["last_error"] = None
