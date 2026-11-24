@@ -71,7 +71,7 @@ def test_admin_password_reset_uses_configured_database_and_revokes_sessions(
     passwords = iter(["a-new-long-password-456", "a-new-long-password-456"])
     monkeypatch.setattr("orinoco.admin.cli.getpass.getpass", lambda prompt: next(passwords))
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
-    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr("sys.stdin", SimpleNamespace(isatty=lambda: True))
 
     assert main() == 0
     assert authenticate_user(
@@ -104,7 +104,7 @@ def test_admin_password_reset_requires_exact_account_confirmation(tmp_path, monk
         lambda prompt: pytest.fail("password prompt must not be reached"),
     )
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
-    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr("sys.stdin", SimpleNamespace(isatty=lambda: True))
 
     assert main() == 2
 
