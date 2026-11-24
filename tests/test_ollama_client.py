@@ -84,3 +84,63 @@ def test_environment_cannot_redirect_inference_to_remote_provider(monkeypatch) -
 def test_production_client_rejects_explicit_remote_inference_url() -> None:
     with pytest.raises(ValueError, match="must be loopback"):
         OllamaClient(base_url="https://remote-inference.example/api")
+
+
+def test_context_budget_keeps_latest_prompt_and_trims_old_history_and_references() -> None:
+    """Older history and reference snippets are trimmed before the current request."""
+    from orinoco.llm.ollama import _fit_messages_to_context
+
+    messages = [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": "O" * 1000},
+        {"role": "assistant", "content": "R" * 600},
+        {
+            "role": "user",
+            "content": "[ORINOCO REFERENCE CONTEXT]\n" + "D" * 1000,
+        },
+        {"role": "user", "content": "latest"},
+    ]
+
+    fitted = _fit_messages_to_context(messages, 1024)
+    total_bytes = sum(len(item["content"].encode("utf-8")) for item in fitted)
+
+    assert fitted[0] == messages[0]
+    assert fitted[-1] == messages[-1]
+    assert fitted[1]["content"].startswith("[Earlier conversation context shortened]")
+    assert fitted[2]["content"] == "R" * 600
+    assert fitted[3]["content"].endswith("[Reference context shortened to fit the model context.]")
+    assert total_bytes <= int((1024 - 512 - 64) * 3.5)
+
+
+def test_context_budget_rejects_system_and_latest_prompt_that_cannot_fit() -> None:
+    """Never silently truncate the current user request or system instructions."""
+    from orinoco.llm.ollama import OllamaContextError, _fit_messages_to_context
+
+    messages = [
+        {"role": "system", "content": "S" * 1000},
+        {"role": "user", "content": "U" * 1000},
+    ]
+
+    with pytest.raises(OllamaContextError, match="Shorten it or increase MODEL_CONTEXT"):
+        _fit_messages_to_context(messages, 1024)
+
+
+def test_client_rejects_oversized_context_before_network_call() -> None:
+    """A context overflow is a local validation error, not a model connectivity error."""
+    async def run() -> None:
+        client = OllamaClient(
+            context_length=1024,
+            transport=httpx.MockTransport(lambda _: pytest.fail("unexpected request")),
+        )
+        try:
+            with pytest.raises(OllamaContextError):
+                await client.chat([
+                    {"role": "system", "content": "S" * 1000},
+                    {"role": "user", "content": "U" * 1000},
+                ])
+        finally:
+            await client.aclose()
+
+    from orinoco.llm.ollama import OllamaContextError
+
+    asyncio.run(run())
