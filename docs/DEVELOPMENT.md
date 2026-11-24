@@ -78,9 +78,26 @@ python -m orinoco.backups create
 python -m orinoco.backups verify /home/container/data/backups/orinoco-YYYYMMDDTHHMMSSZ.oribak
 ```
 
-Copy the encrypted backup to an independent off-server destination. The CLI
-currently creates and verifies local encrypted files; off-site transfer and
-automatic scheduling are separate operational steps and are not yet built in.
+Configure an S3-compatible private bucket using the hidden Egg variables
+`ORINOCO_BACKUP_S3_ENDPOINT`, `ORINOCO_BACKUP_S3_BUCKET`,
+`ORINOCO_BACKUP_S3_ACCESS_KEY_ID`, `ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY`,
+and (optionally) `ORINOCO_BACKUP_S3_REGION` and
+`ORINOCO_BACKUP_S3_PREFIX`. The endpoint must use HTTPS. Use a dedicated
+restricted credential that can write and inspect objects only in this backup
+bucket. Do not enable public bucket access.
+
+After creating and verifying a local backup, upload it:
+
+```bash
+python -m orinoco.backups upload /home/container/data/backups/orinoco-YYYYMMDDTHHMMSSZ.oribak
+```
+
+The command uploads only encrypted `.oribak` files, sends no public ACL,
+records a SHA-256 checksum as object metadata, and checks the remote object
+size and checksum metadata before reporting success. This is an explicit CLI
+operation at present; automatic daily scheduling, retention and restore-from-
+remote convenience are not yet implemented. Keep the encryption key and
+object-storage credentials separate from the backup bucket.
 
 For recovery, stop Orinoco first, preserve the current server data, then run:
 
@@ -118,6 +135,6 @@ The image uses a non-root `container` account and the `/home/container` working 
 - Conversation editing/deletion, pagination and streaming.
 - OCR and advanced semantic document search.
 - Discord and voice integrations.
-- Off-site backup transfer, automatic scheduling and production deployment.
+- Automatic off-site backup scheduling and retention; production deployment.
 
 Do not expose this development scaffold as a public assistant service.
