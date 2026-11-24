@@ -139,7 +139,7 @@ _UNSAFE_MEMORY_PATTERNS = (
         re.IGNORECASE,
     ),
     re.compile(
-        r"\b(?:reveal|expose|print|show|leak)\b.{0,80}\b(?:system prompt|hidden instructions|secrets?|credentials?|api keys?)\b",
+        r"\b(?:reveal|expose|print|show|leak)\b.{0,80}\b(?:(?:system|developer) prompts?|hidden (?:instructions?|prompts?)|secrets?|credentials?|api keys?)\b",
         re.IGNORECASE,
     ),
     re.compile(
