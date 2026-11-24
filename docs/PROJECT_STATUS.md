@@ -47,6 +47,7 @@ The latest GitHub Actions Python test run [#804](https://github.com/lcswolf/orin
 
 - Self-hosted assistant named Orinoco.
 - Fully custom Orinoco web interface; Open WebUI will not be used as the main frontend.
+- Accessible mobile navigation drawer with keyboard focus management, Escape dismissal, inert background and compact narrow-screen topbar; real-device browser checks remain outstanding.
 - Local model inference; no external AI inference API is intended.
 - Ollama is the inference runtime, currently pinned to version 0.40.18 in the image.
 - Initial target is a modest Ubuntu 24.04 LTS VPS.
@@ -74,7 +75,7 @@ The latest GitHub Actions Python test run [#804](https://github.com/lcswolf/orin
 2. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
 3. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
 4. Perform a real encrypted backup/restore and update/rollback drill on the disposable Pterodactyl server.
-5. Finish accessibility/mobile polish and review account settings on the live test instance.
+5. Browser-test the mobile navigation, narrow-screen layout and account settings on iOS, Android and desktop.
 6. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
 
 ## Resource assumptions
