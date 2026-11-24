@@ -57,6 +57,8 @@ def _settings() -> tuple[ZoneInfo, clock_time, int, Path]:
 
 def _read_state(state_path: Path) -> dict[str, object]:
     """Read scheduler progress, treating a missing or malformed file as empty state."""
+    if state_path.is_symlink():
+        raise BackupError("The backup scheduler status path must not be a symbolic link.")
     try:
         payload = json.loads(state_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, OSError, json.JSONDecodeError):
@@ -86,6 +88,8 @@ def _write_state(state_path: Path, state: dict[str, object]) -> None:
 
 def prune_local_backups(backup_root: Path, retention_days: int, *, now: datetime | None = None) -> int:
     """Delete only old regular encrypted backup files, never links or status files."""
+    if not 1 <= retention_days <= 365:
+        raise ValueError("Backup retention must be between 1 and 365 days.")
     if backup_root.is_symlink():
         raise BackupError("The backup directory must not be a symbolic link.")
     if not backup_root.exists():
@@ -117,6 +121,8 @@ def run_backup_cycle(
     """Create, optionally upload and retain backups; persist success or failure status."""
     local_now = (now or datetime.now(UTC)).astimezone(timezone)
     state_path = backup_root / STATE_FILENAME
+    if backup_root.is_symlink():
+        raise BackupError("The backup directory must not be a symbolic link.")
     backup_root.mkdir(parents=True, exist_ok=True)
     try:
         backup_root.chmod(0o700)
