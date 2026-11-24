@@ -157,6 +157,9 @@ def test_resource_limit_egg_defaults_are_conservative_and_admin_only() -> None:
         assert variables[name]["default_value"] == default
         assert variables[name]["user_editable"] is False
 
+    # The request-body middleware rejects limits below 1 KiB as misconfigured.
+    assert variables["ORINOCO_MAX_REQUEST_BODY_BYTES"]["rules"] == "required|integer|min:1024"
+
 
 
 def test_reverse_proxy_templates_keep_private_backends_and_edge_limits() -> None:
