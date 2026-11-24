@@ -39,7 +39,7 @@ class UserStatusRequest(BaseModel):
 class AssistantPersonaRequest(BaseModel):
     """Administrator-managed core persona and humour level."""
     core_persona: str = Field(min_length=1, max_length=2000)
-    humour_level: int = Field(ge=0, le=100)
+    humour_level: int = Field(ge=0, le=100, strict=True)
 
 
 def _require_csrf(request: Request) -> None:
