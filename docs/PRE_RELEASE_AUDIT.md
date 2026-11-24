@@ -68,6 +68,10 @@ The application now sends a restrictive Content Security Policy, clickjacking pr
 
 The database initializer now completes the known additive v1–v3 table/index upgrades to schema v4, and refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover an early users-only database and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
 
+### Local inference boundary — hardened
+
+The production Ollama client and readiness check now use the fixed loopback endpoint. An environment variable can no longer redirect prompts to an external inference service; tests may still inject an explicit mock transport/base URL. This enforces the agreed local-inference-only architecture.
+
 ### Timezone and inactive Egg options — corrected
 
 The runtime now installs the operating-system timezone database so the configured Europe/London timezone is available to Python and scheduled operations. The Discord and voice Egg toggles are now locked off until those integrations actually exist, preventing a server owner from enabling non-functional features.
