@@ -77,7 +77,7 @@ Retrieved webpages and documents must be treated as untrusted content. They must
 
 Encrypted backup tooling creates a SQLite online snapshot, uploaded document tree and file-based session secret, with AES-256-GCM authentication and a verification/restore CLI. Encrypted backups can be uploaded to a private S3-compatible destination over HTTPS; the remote object is downloaded and hashed to verify its bytes. Large Ollama model weights are excluded and can be downloaded again. The encryption key and any environment-supplied secrets must be stored separately. A supervised daily scheduler now creates encrypted local backups, optionally uploads and verifies them off-site, records success/failure status and applies local retention only after a successful backup cycle. Remote bucket lifecycle retention and convenient remote restore remain operational work before deployment. Restore must be run with the app stopped and must be tested regularly.
 
-Application, Egg/image and model updates are separate operations. Updates should verify the release, create a backup, apply migrations, run health checks and provide a documented rollback route.
+Application, Egg/image and model updates are separate operations. A manual Pterodactyl update/rollback runbook is documented in `UPDATING.md`; automated migration/update safeguards and a live rollback drill remain outstanding. Updates must verify the release, create and verify a backup, apply migrations, run health checks and preserve the previous image for rollback.
 
 ## Remaining operational decisions
 
