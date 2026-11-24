@@ -2,7 +2,7 @@
 
 A self-hosted personal AI assistant with local inference, persistent memory, Discord integration and web research.
 
-> **Project status: early implementation.** The custom interface, local model runtime and first authentication milestone are in place; Orinoco is not yet a complete assistant.
+> **Project status: early implementation.** The custom interface, local model runtime, authentication, private chat and personal memory foundations are implemented; Orinoco is not yet a complete assistant.
 
 ## Project goals
 
@@ -34,9 +34,9 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 ## Repository status
 
-The repository includes a custom responsive interface, sign-in dialog, CSRF-protected login/logout API, signed secure sessions, SQLite account storage, Argon2 password hashing, administrator account management, authenticated chat, per-user saved conversations, password changes, FastAPI liveness/readiness endpoints, tests and a supervised Ollama runtime.
+The repository includes a custom responsive interface, sign-in and account settings, CSRF-protected authentication, administrator user management, authenticated chat, per-user saved conversations, SQLite persistence, Argon2 password hashing and automatic personal-memory extraction. Users can review, edit and delete their own memories, and those memories are included only in their own future chats.
 
-User-management screens, per-user memories, documents, Discord and search are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
+Document libraries, web research, Discord and voice are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
 See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
