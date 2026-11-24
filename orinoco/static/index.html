@@ -163,6 +163,32 @@
         <div><div class="welcome-eyebrow">YOUR WORKSPACE</div><h2 id="settings-title">Account settings</h2></div>
         <button class="dialog-close" id="settings-close" type="button" aria-label="Close settings">×</button>
       </div>
+      <section class="settings-section" aria-labelledby="preferences-heading">
+        <h3 id="preferences-heading">Response preferences</h3>
+        <p class="settings-description">Choose how Orinoco speaks to you and how much detail you prefer. These choices are private to your account.</p>
+        <form class="settings-form" id="preferences-form">
+          <label for="preference-voice">Voice</label>
+          <select id="preference-voice">
+            <option value="bright">Bright and upbeat</option>
+            <option value="calm">Calm and measured</option>
+            <option value="professional">Professional and composed</option>
+          </select>
+          <label for="preference-tone">Tone</label>
+          <select id="preference-tone">
+            <option value="friendly">Friendly</option>
+            <option value="direct">Direct and straightforward</option>
+            <option value="playful">Playful and witty</option>
+          </select>
+          <label for="preference-detail">Answer detail</label>
+          <select id="preference-detail">
+            <option value="concise">Concise</option>
+            <option value="balanced">Balanced</option>
+            <option value="detailed">Detailed</option>
+          </select>
+          <button class="login-submit" id="preferences-submit" type="submit">Save preferences</button>
+          <p class="settings-feedback" id="preferences-feedback" role="status" hidden></p>
+        </form>
+      </section>
       <section class="settings-section" aria-labelledby="password-heading">
         <h3 id="password-heading">Change password</h3>
         <form class="settings-form" id="password-form">
@@ -184,6 +210,18 @@
         </form>
         <div class="user-list" id="admin-user-list" aria-live="polite"></div>
       </section>
+  <section class="settings-section" id="admin-persona-tools" hidden aria-labelledby="persona-heading">
+    <h3 id="persona-heading">Core assistant personality</h3>
+    <p class="settings-description">Set the shared personality guidance for Orinoco. This applies to all accounts; each person can still choose their own voice, tone and answer detail.</p>
+    <form class="settings-form" id="persona-form">
+      <label for="core-persona">Core persona guidance</label>
+      <textarea id="core-persona" maxlength="2000" rows="4" required placeholder="Friendly, practical, curious and encouraging."></textarea>
+      <label for="humour-level">Humour level <output id="humour-value" for="humour-level">65%</output></label>
+      <input id="humour-level" type="range" min="0" max="100" step="5" value="65">
+      <button class="login-submit" id="persona-submit" type="submit">Save core personality</button>
+      <p class="settings-feedback" id="persona-feedback" role="status" hidden></p>
+    </form>
+  </section>
       <section class="settings-section" id="personal-memories" aria-labelledby="memories-heading">
         <h3 id="memories-heading">My memories</h3>
         <p class="settings-description">These are private to your account. Orinoco may save useful, non-sensitive details from conversations. You can review, edit or delete anything here.</p>
