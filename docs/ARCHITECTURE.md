@@ -74,7 +74,7 @@ Retrieved webpages and documents must be treated as untrusted content. They must
 
 ## Backups and updates
 
-Backups should cover the database, configuration, user documents, memory and other persistent application data. They should be encrypted and stored off the VPS, with restore tests performed regularly.
+Encrypted backup tooling creates a SQLite online snapshot, uploaded document tree and file-based session secret, with AES-256-GCM authentication and a verification/restore CLI. Large Ollama model weights are excluded and can be downloaded again. The encryption key and any environment-supplied secrets must be stored separately. Off-site transfer and scheduling remain operational work before deployment. Restore must be run with the app stopped and must be tested regularly.
 
 Application, Egg/image and model updates are separate operations. Updates should verify the release, create a backup, apply migrations, run health checks and provide a documented rollback route.
 
