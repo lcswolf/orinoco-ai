@@ -27,3 +27,9 @@ def test_memory_extractor_handles_fenced_json_and_duplicates() -> None:
 def test_memory_extractor_rejects_invalid_or_non_array_output() -> None:
     assert extract_memory_candidates("I think the user likes music.") == []
     assert extract_memory_candidates('{"memory": "likes music"}') == []
+
+
+def test_memory_extractor_rejects_common_sensitive_categories() -> None:
+    raw = '["User has type 2 diabetes.", "User is Christian.", "User supports the Labour Party.", "User enjoys hiking."]'
+
+    assert extract_memory_candidates(raw) == ["User enjoys hiking."]
