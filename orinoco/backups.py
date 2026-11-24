@@ -26,7 +26,7 @@ from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from orinoco import __version__
-from orinoco.db import get_database_path
+from orinoco.db import CURRENT_SCHEMA_VERSION, get_database_path
 from orinoco.documents.storage import get_document_root
 
 MAGIC = b"ORINOCO-BACKUP-1\n"
@@ -337,6 +337,57 @@ def _read_archive(archive: Path, extraction_root: Path) -> dict[str, object]:
     return manifest
 
 
+def _validate_database_snapshot(database_path: Path) -> None:
+    """Require a healthy SQLite file containing the essential Orinoco schema.
+
+    SQLite's integrity_check returns "ok" for an empty database. Checking the
+    application tables, supported schema version and foreign keys prevents a
+    structurally valid but unusable file from being accepted as a backup.
+    """
+    required_tables = {
+        "users",
+        "conversations",
+        "messages",
+        "memories",
+        "documents",
+        "documents_fts",
+    }
+    try:
+        connection = sqlite3.connect(database_path)
+        try:
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()
+            if not integrity or integrity[0] != "ok":
+                raise BackupError("Backup database failed SQLite integrity check.")
+
+            schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+            if schema_version > CURRENT_SCHEMA_VERSION:
+                raise BackupError(
+                    f"Backup database schema version {schema_version} is newer than "
+                    f"this Orinoco build (supports up to {CURRENT_SCHEMA_VERSION})."
+                )
+
+            tables = {
+                str(row[0])
+                for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
+                )
+            }
+            missing_tables = required_tables - tables
+            if missing_tables:
+                missing = ", ".join(sorted(missing_tables))
+                raise BackupError(
+                    f"Backup database is missing required Orinoco tables: {missing}."
+                )
+
+            foreign_key_issue = connection.execute("PRAGMA foreign_key_check").fetchone()
+            if foreign_key_issue:
+                raise BackupError("Backup database contains foreign-key consistency errors.")
+        finally:
+            connection.close()
+    except sqlite3.Error as exc:
+        raise BackupError("Backup database is not a valid SQLite database.") from exc
+
+
 def verify_backup(backup_path: Path) -> dict[str, object]:
     """Decrypt, authenticate, inspect and integrity-check a backup without restoring it."""
     key = _backup_key()
@@ -347,13 +398,7 @@ def verify_backup(backup_path: Path) -> dict[str, object]:
         extracted.mkdir()
         _decrypt_file(backup_path, archive, key)
         manifest = _read_archive(archive, extracted)
-        connection = sqlite3.connect(extracted / "database.sqlite3")
-        try:
-            integrity = connection.execute("PRAGMA integrity_check").fetchone()
-        finally:
-            connection.close()
-        if not integrity or integrity[0] != "ok":
-            raise BackupError("Backup database failed SQLite integrity check.")
+        _validate_database_snapshot(extracted / "database.sqlite3")
         return manifest
 
 
@@ -378,13 +423,7 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
         extracted.mkdir()
         _decrypt_file(backup_path, archive, key)
         manifest = _read_archive(archive, extracted)
-        connection = sqlite3.connect(extracted / "database.sqlite3")
-        try:
-            integrity = connection.execute("PRAGMA integrity_check").fetchone()
-        finally:
-            connection.close()
-        if not integrity or integrity[0] != "ok":
-            raise BackupError("Backup database failed SQLite integrity check.")
+        _validate_database_snapshot(extracted / "database.sqlite3")
 
         # Prepare all replacement data before touching the live data directory.
         database_path.parent.mkdir(parents=True, exist_ok=True)
