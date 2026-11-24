@@ -13,11 +13,13 @@ from orinoco.db import (
     AccountError,
     User,
     create_user,
+    get_assistant_persona,
     get_database_path,
     get_user_by_id,
     initialise_database,
     list_users,
     set_user_active,
+    update_assistant_persona,
 )
 
 router = APIRouter(prefix="/api/admin", tags=["administration"])
@@ -32,6 +34,12 @@ class CreateUserRequest(BaseModel):
 class UserStatusRequest(BaseModel):
     """Validated active/suspended state requested by an administrator."""
     active: bool
+
+
+class AssistantPersonaRequest(BaseModel):
+    """Administrator-managed core persona and humour level."""
+    core_persona: str = Field(min_length=1, max_length=2000)
+    humour_level: int = Field(ge=0, le=100)
 
 
 def _require_csrf(request: Request) -> None:
@@ -116,3 +124,28 @@ async def update_user_status(
     if not updated:
         raise HTTPException(status_code=404, detail="User not found.")
     return {"updated": True, "active": payload.active}
+
+
+@router.get("/persona")
+async def read_assistant_persona(request: Request) -> dict[str, object]:
+    """Return the global assistant persona to administrators only."""
+    _require_admin(request)
+    return get_assistant_persona(database_path=get_database_path())
+
+
+@router.put("/persona")
+async def save_assistant_persona(
+    payload: AssistantPersonaRequest,
+    request: Request,
+) -> dict[str, object]:
+    """Save the global assistant persona after administrator and CSRF checks."""
+    _require_csrf(request)
+    _require_admin(request)
+    try:
+        return update_assistant_persona(
+            core_persona=payload.core_persona,
+            humour_level=payload.humour_level,
+            database_path=get_database_path(),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
