@@ -72,3 +72,20 @@ def test_static_assets_are_served() -> None:
     assert ".app-shell" in css.text
     assert js.status_code == 200
     assert "/readyz" in js.text
+
+
+
+def test_settings_and_memory_controls_exist_in_custom_interface() -> None:
+    response = client.get("/")
+    required_ids = (
+        'id="settings-dialog"',
+        'id="settings-close"',
+        'id="password-form"',
+        'id="admin-tools"',
+        'id="admin-user-list"',
+        'id="personal-memories"',
+        'id="memory-form"',
+        'id="memory-list"',
+    )
+    for element_id in required_ids:
+        assert element_id in response.text
