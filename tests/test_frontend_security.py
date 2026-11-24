@@ -72,6 +72,7 @@ def test_mobile_navigation_is_keyboard_accessible_and_not_inert() -> None:
     assert 'id="mobile-nav-close"' in html
     assert "mobileBrand.addEventListener(\"click\"" in script
     assert "sidebar.inert = mobile && !open" in script
+    assert "mainPanel.inert = open" in script
     assert 'event.key === "Escape"' in script
     assert 'event.key !== "Tab"' in script
     assert "focusable[focusable.length - 1]" in script
