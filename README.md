@@ -35,7 +35,7 @@ The repository includes a custom responsive interface, secure authentication, ad
 
 Encrypted local backups and explicit S3-compatible off-site uploads are implemented; automatic scheduling and retention are still outstanding. Discord, voice and production deployment are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
-See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
+See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md), [Pre-release Audit](docs/PRE_RELEASE_AUDIT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
 ## Security
 
