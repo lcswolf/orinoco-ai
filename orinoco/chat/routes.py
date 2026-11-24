@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import logging
 import os
 import re
 
@@ -31,6 +32,7 @@ from orinoco.llm.runtime import generation_lock
 from orinoco.research.searxng import SearchUnavailable, SearXNGClient
 
 router = APIRouter(prefix="/api", tags=["chat"])
+logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """You are Orinoco, a friendly and helpful personal AI assistant.
 Use a bright, friendly voice and a balanced level of detail. Aim for a 65% humour
 setting: be playful and witty fairly often, but never at the expense of clarity,
@@ -342,8 +344,10 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
                     history,
                     payload.message,
                 )
-            except (OllamaError, ValueError):
-                # A memory-extraction problem must never discard a successful reply.
+            except Exception:
+                # A memory-extraction or persistence problem must never discard
+                # an otherwise successful assistant reply. Keep details in logs.
+                logger.exception("Automatic memory saving failed for user ID %s.", user.id)
                 saved_memories = []
         except OllamaError as exc:
             raise HTTPException(
