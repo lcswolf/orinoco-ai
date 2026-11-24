@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 from typing import Any
 
@@ -16,21 +17,31 @@ class OllamaClient:
     def __init__(
         self,
         *,
-        base_url: str = "http://127.0.0.1:11434",
-        model: str = "qwen2.5:1.5b",
-        context_length: int = 2048,
+        base_url: str | None = None,
+        model: str | None = None,
+        context_length: int | None = None,
         timeout: float = 600.0,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
-        if not 1024 <= context_length <= 8192:
+        resolved_model = model or os.environ.get("AI_MODEL", "qwen2.5:1.5b")
+        resolved_context = (
+            context_length
+            if context_length is not None
+            else int(os.environ.get("MODEL_CONTEXT", "2048"))
+        )
+        resolved_url = base_url or os.environ.get(
+            "ORINOCO_OLLAMA_API", "http://127.0.0.1:11434"
+        )
+
+        if not 1024 <= resolved_context <= 8192:
             raise ValueError("context_length must be between 1024 and 8192")
-        if not model:
+        if not resolved_model:
             raise ValueError("model must not be empty")
 
-        self.model = model
-        self.context_length = context_length
+        self.model = resolved_model
+        self.context_length = resolved_context
         self._client = httpx.AsyncClient(
-            base_url=base_url.rstrip("/"),
+            base_url=resolved_url.rstrip("/"),
             timeout=timeout,
             transport=transport,
         )
@@ -41,6 +52,8 @@ class OllamaClient:
 
         safe_messages: list[dict[str, str]] = []
         for message in messages:
+            if not isinstance(message, dict):
+                raise ValueError("each message must be an object")
             role = message.get("role")
             content = message.get("content")
             if role not in {"system", "user", "assistant"}:
@@ -62,9 +75,12 @@ class OllamaClient:
                 },
             )
             response.raise_for_status()
-            payload: dict[str, Any] = response.json()
+            payload: Any = response.json()
         except (httpx.HTTPError, ValueError) as exc:
             raise OllamaError("The local Ollama service did not return a valid response.") from exc
+
+        if not isinstance(payload, dict):
+            raise OllamaError("The local Ollama service returned an unexpected response.")
 
         message = payload.get("message")
         content = message.get("content") if isinstance(message, dict) else None
