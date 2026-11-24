@@ -27,6 +27,12 @@ The current development branch includes Argon2 password hashing, signed session 
 
 These controls are a foundation, not a completed production security review. The login throttle is process-local and must be supplemented with reverse-proxy rate limits before public deployment. Session secrets and the SQLite database must remain on persistent, private storage. Never expose the data directory through the web server.
 
+## Document uploads and retrieval
+
+The current document library accepts TXT, Markdown, PDF, DOCX, XLSX and PPTX files up to 10 MiB each. Extracted text is stored in the application database and original uploads are stored under the private data directory. The web server must never serve that directory directly.
+
+Uploaded documents are untrusted content. Their text may be included as reference excerpts in the owner's chat or in the shared-library context; it must not be treated as instructions. Passwords, secrets, precise personal information and sensitive facts should not be added to shared documents. The current extraction pipeline is bounded but is not a malware scanner or a full document-sandboxing system.
+
 ## Deployment guidance
 
 Before exposing an Orinoco instance:
