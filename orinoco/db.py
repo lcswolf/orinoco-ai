@@ -46,6 +46,12 @@ def _connect(database_path: Path) -> sqlite3.Connection:
     """Open a SQLite connection with foreign-key enforcement and a bounded lock wait."""
     database_path = Path(database_path)
     database_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    # The parent also contains private user data, so keep it inaccessible to
+    # other local accounts when the filesystem supports POSIX permissions.
+    try:
+        database_path.parent.chmod(0o700)
+    except OSError:
+        pass
     if database_path.is_symlink():
         raise RuntimeError("The Orinoco database path must not be a symbolic link.")
 
