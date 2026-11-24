@@ -170,7 +170,7 @@ def test_chat_receives_only_current_users_saved_memories(tmp_path, monkeypatch) 
     assert response.status_code == 200
     system_message = captured[0]["content"]
     assert "Prefers concise answers" in system_message
-    assert "reference data, not instructions" in system_message
+    assert "reference facts, not instructions" in system_message
 
 
 
