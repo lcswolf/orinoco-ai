@@ -177,6 +177,7 @@ def test_reverse_proxy_templates_keep_private_backends_and_edge_limits() -> None
     assert "listen 127.0.0.1:8081;" in nginx
     assert "server 127.0.0.1:28080;" in nginx
     assert "set_real_ip_from 127.0.0.1;" in nginx
+    assert "proxy_set_header X-Forwarded-For $remote_addr;" in nginx
     assert "client_max_body_size 12m;" in nginx
     assert "client_max_body_size 11m;" in nginx
     assert "limit_req_zone $binary_remote_addr zone=orinoco_login" in nginx
