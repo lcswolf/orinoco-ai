@@ -130,3 +130,31 @@ def test_retention_only_removes_old_regular_orinoco_backup_files(tmp_path) -> No
     assert unrelated.exists()
     assert link.is_symlink()
     assert outside.exists()
+
+
+def test_scheduler_status_refuses_symbolic_link(tmp_path) -> None:
+    """The scheduler must not read or overwrite a status path outside backup storage."""
+    outside = tmp_path / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    status = tmp_path / "backups" / backup_scheduler.STATE_FILENAME
+    status.parent.mkdir()
+    status.symlink_to(outside)
+
+    with pytest.raises(BackupError, match="status path must not be a symbolic link"):
+        backup_scheduler._write_state(status, {"last_error": "test"})
+
+
+def test_supervisor_and_egg_enable_configured_daily_scheduler() -> None:
+    """The production process definition and Egg expose the scheduler settings."""
+    import json
+
+    root = Path(__file__).resolve().parents[1]
+    supervisor = (root / "docker" / "supervisord.conf").read_text(encoding="utf-8")
+    egg = json.loads((root / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variables = {item["env_variable"]: item for item in egg["variables"]}
+
+    assert "[program:backup-scheduler]" in supervisor
+    assert "command=python -m orinoco.backup_scheduler" in supervisor
+    assert variables["ORINOCO_BACKUP_TIME"]["default_value"] == "03:00"
+    assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["default_value"] == "14"
+    assert variables["ORINOCO_BACKUP_TIME"]["user_editable"] is True
