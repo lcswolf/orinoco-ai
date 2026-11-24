@@ -47,7 +47,7 @@ def test_backup_rejects_wrong_encryption_key(tmp_path, monkeypatch) -> None:
     configure_backup_paths(monkeypatch, tmp_path)
     backup = backups.create_backup()
     monkeypatch.setenv("ORINOCO_BACKUP_KEY", backups.generate_key())
-    with pytest.raises(Exception, match="|"):
+    with pytest.raises(backups.BackupError, match="authentication failed"):
         backups.verify_backup(backup)
 
 
@@ -78,7 +78,7 @@ def test_backup_detects_tampered_ciphertext(tmp_path, monkeypatch) -> None:
     data = bytearray(backup.read_bytes())
     data[len(backups.MAGIC) + 12 + 3] ^= 0x01
     backup.write_bytes(data)
-    with pytest.raises(Exception):
+    with pytest.raises(backups.BackupError, match="authentication failed"):
         backups.verify_backup(backup)
 
 
