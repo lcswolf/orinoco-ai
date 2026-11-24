@@ -17,6 +17,7 @@ from orinoco.db import (
     User,
     create_conversation,
     create_memory,
+    delete_conversation,
     get_conversation,
     get_database_path,
     get_recent_messages,
