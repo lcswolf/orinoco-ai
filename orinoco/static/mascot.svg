@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Orinoco woodland helper mascot</title>
+  <desc id="desc">A cheerful russet woodland creature wearing a moss-green scarf and a patchwork waistcoat.</desc>
+  <defs>
+    <linearGradient id="fur" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d98a48"/>
+      <stop offset=".55" stop-color="#b96532"/>
+      <stop offset="1" stop-color="#814126"/>
+    </linearGradient>
+    <linearGradient id="furLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0b36f"/>
+      <stop offset="1" stop-color="#c9793d"/>
+    </linearGradient>
+    <linearGradient id="muzzle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff0d7"/>
+      <stop offset="1" stop-color="#d9b995"/>
+    </linearGradient>
+    <linearGradient id="scarf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8eaa68"/>
+      <stop offset="1" stop-color="#405e42"/>
+    </linearGradient>
+    <linearGradient id="vest" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#76634b"/>
+      <stop offset="1" stop-color="#3d5143"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="7"/>
+      <feOffset dy="8"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".22"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="check" width="18" height="18" patternUnits="userSpaceOnUse">
+      <path d="M0 0H18V18H0Z" fill="#a15d3b"/>
+      <path d="M0 0H9V18H0ZM9 0H18V9H9Z" fill="#d0a36a" opacity=".8"/>
+      <path d="M0 9H18M9 0V18" stroke="#3f5542" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <ellipse cx="258" cy="478" rx="145" ry="18" fill="#17271f" opacity=".18"/>
+
+  <!-- Rounded ears and head silhouette -->
+  <path d="M158 165C91 99 45 124 53 193c5 43 43 78 102 73l31-54Z" fill="url(#fur)" stroke="#794327" stroke-width="8"/>
+  <path d="M354 161c54-71 115-52 109 20-4 45-39 78-99 81l-31-53Z" fill="url(#fur)" stroke="#794327" stroke-width="8"/>
+  <path d="M88 179c-4-29 15-43 38-29 18 11 29 31 39 55-35 4-65-4-77-26Z" fill="#f1c69b"/>
+  <path d="M386 205c16-37 38-58 60-48 18 8 19 30 5 51-13 18-37 25-71 24Z" fill="#f1c69b"/>
+
+  <!-- Body and feet -->
+  <path d="M155 297c-16 50-28 111-14 157 12 36 57 38 83 14l37-1 42 4c30 23 74 13 81-24 8-45-10-112-35-153Z" fill="url(#fur)" stroke="#794327" stroke-width="8" filter="url(#shadow)"/>
+  <path d="M168 437c-28 2-43 23-38 40 4 14 28 18 62 11l44-15-9-32Z" fill="#8b4a2c"/>
+  <path d="M298 442c17-12 47-11 66 4 19 15 15 35-7 43-22 8-55 1-77-12Z" fill="#8b4a2c"/>
+  <path d="M153 464c21 7 49 5 77-5M301 465c20 10 44 12 64 5" fill="none" stroke="#d18a50" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Left welcoming arm and paw -->
+  <path d="M179 309c-39 1-67 21-83 47l-42 35c-13 11-8 29 7 33 14 4 29-7 43-17l47-26 60-6Z" fill="url(#fur)" stroke="#794327" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M56 382c-24-10-43 1-42 20 1 13 13 21 29 18-13 10-13 25 0 31 14 6 30-5 40-17l20-25Z" fill="url(#furLight)" stroke="#794327" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M25 408c11-5 21-4 29 3M31 432c11 1 20-4 27-12" fill="none" stroke="#9b542f" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Right arm resting at the side -->
+  <path d="M337 306c36 9 56 35 57 69l11 37c4 16-8 29-24 25-17-4-28-25-35-44l-33-46Z" fill="url(#fur)" stroke="#794327" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M374 399c-4 17 1 35 15 41 15 7 30-3 31-18 1-15-9-27-25-34Z" fill="url(#furLight)" stroke="#794327" stroke-width="7"/>
+
+  <!-- Head -->
+  <path d="M130 185c0-83 56-135 128-135 77 0 130 57 125 139-3 72-56 126-130 126-73 0-123-52-123-130Z" fill="url(#fur)" stroke="#794327" stroke-width="9" filter="url(#shadow)"/>
+  <path d="M160 112c16-28 39-45 68-53-17 22-24 37-24 55M251 55c16-18 35-26 55-26-13 14-22 29-26 45" fill="none" stroke="#efb16c" stroke-width="14" stroke-linecap="round"/>
+  <path d="M139 155c-9-30 3-56 25-68-5 25 0 43 13 57M359 126c20-22 37-24 54-12-15 5-24 17-29 34" fill="none" stroke="#d98a48" stroke-width="11" stroke-linecap="round"/>
+
+  <!-- Brows and eyes -->
+  <path d="M180 151c13-12 30-14 45-6M281 143c14-11 32-10 45 2" fill="none" stroke="#5c3527" stroke-width="9" stroke-linecap="round"/>
+  <ellipse cx="207" cy="183" rx="22" ry="29" fill="#fff8eb"/>
+  <ellipse cx="302" cy="180" rx="22" ry="29" fill="#fff8eb"/>
+  <ellipse cx="211" cy="187" rx="12" ry="19" fill="#28342d"/>
+  <ellipse cx="306" cy="184" rx="12" ry="19" fill="#28342d"/>
+  <circle cx="215" cy="179" r="5" fill="#fff"/>
+  <circle cx="310" cy="176" r="5" fill="#fff"/>
+
+  <!-- Cream muzzle, nose and smile -->
+  <path d="M166 225c7-31 38-46 78-40 12 2 21 8 28 17 11-13 28-18 47-12 32 9 44 37 30 63-14 26-47 40-91 38-49-2-101-28-92-66Z" fill="url(#muzzle)" stroke="#9a6847" stroke-width="5"/>
+  <ellipse cx="268" cy="224" rx="26" ry="18" fill="#382b27"/>
+  <ellipse cx="260" cy="218" rx="8" ry="4" fill="#7b6250" opacity=".65"/>
+  <path d="M268 241c-4 19-18 25-34 21M268 241c6 20 22 25 37 18" fill="none" stroke="#744633" stroke-width="5" stroke-linecap="round"/>
+  <path d="M246 265c12 14 31 15 43 1-3 19-16 27-28 22-10-4-16-12-15-23Z" fill="#c66b61"/>
+
+  <!-- Patchwork waistcoat -->
+  <path d="M177 296c24-16 52-22 81-18 31 4 57 18 76 41l-5 112c-29 17-104 20-151 0l-11-91Z" fill="url(#vest)" stroke="#4a392f" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M179 310l61-24 24 40-62 30Z" fill="url(#check)" stroke="#d1a26a" stroke-width="3"/>
+  <path d="M269 325l57 1 3 50-59-1Z" fill="#a36c47" stroke="#d4b27d" stroke-width="3"/>
+  <path d="M189 365l69-18 2 54-62 21Z" fill="#6e824d" stroke="#d3b27a" stroke-width="3"/>
+  <path d="M267 382l61-1-2 42-60 5Z" fill="url(#check)" stroke="#d3b27a" stroke-width="3"/>
+  <path d="M260 304c-4 35-4 78 1 118" fill="none" stroke="#d5bd91" stroke-width="5"/>
+  <circle cx="277" cy="353" r="7" fill="#c99451" stroke="#593d2b" stroke-width="3"/>
+  <circle cx="278" cy="390" r="7" fill="#c99451" stroke="#593d2b" stroke-width="3"/>
+
+  <!-- Moss-green scarf -->
+  <path d="M160 282c36 24 85 30 132 14 21-7 39-19 52-35l28 23c-18 32-52 53-89 61-49 10-98-1-133-30Z" fill="url(#scarf)" stroke="#344b37" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M333 302c35 7 56 30 66 61 7 23 3 55-11 87-18-25-36-43-58-56l-14-59Z" fill="url(#scarf)" stroke="#344b37" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M369 432l-8 16 15-8 3 18 10-15 8 15 2-22" fill="none" stroke="#8eaa68" stroke-width="5" stroke-linecap="round"/>
+  <path d="M180 293c40 21 89 26 131 10" fill="none" stroke="#b4c78a" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+
+  <!-- Acorn badge -->
+  <path d="M218 320c0-11 10-19 22-19s22 8 22 19c0 18-10 29-22 29s-22-11-22-29Z" fill="#d6a04f" stroke="#704b2d" stroke-width="4"/>
+  <path d="M214 311c6-12 26-17 40-7l-2 8c-12-5-25-3-36 5Z" fill="#805334" stroke="#704b2d" stroke-width="3"/>
+  <path d="M240 302l1-8" stroke="#704b2d" stroke-width="4" stroke-linecap="round"/>
+</svg>
