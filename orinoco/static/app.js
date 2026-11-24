@@ -40,6 +40,7 @@ let sendingMessage = false;
 // Mobile navigation is a keyboard-accessible drawer; the desktop sidebar stays in normal flow.
 const mobileBrand = document.querySelector(".mobile-brand");
 const sidebar = document.getElementById("sidebar");
+const mainPanel = document.querySelector(".main-panel");
 const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const mobileNavClose = document.getElementById("mobile-nav-close");
 const mobileNavQuery = window.matchMedia("(max-width: 720px)");
@@ -48,8 +49,14 @@ function syncMobileNavigation() {
   const mobile = mobileNavQuery.matches;
   const open = mobile && sidebar.classList.contains("mobile-open");
   sidebar.inert = mobile && !open;
-  if (mobile) sidebar.setAttribute("aria-hidden", String(!open));
-  else sidebar.removeAttribute("aria-hidden");
+  mainPanel.inert = open;
+  if (mobile) {
+    sidebar.setAttribute("aria-hidden", String(!open));
+    mainPanel.setAttribute("aria-hidden", String(open));
+  } else {
+    sidebar.removeAttribute("aria-hidden");
+    mainPanel.removeAttribute("aria-hidden");
+  }
   sidebarBackdrop.hidden = !open;
   mobileBrand.setAttribute("aria-expanded", String(open));
   mobileBrand.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
