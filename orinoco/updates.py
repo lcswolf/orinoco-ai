@@ -95,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
             result = migrate_database(backup_path=args.backup)
         print(json.dumps(result, indent=2))
         return 0
-    except (UpdateError, BackupError, OSError, sqlite3.Error, ValueError) as exc:
+    except (RuntimeError, OSError, sqlite3.Error, ValueError) as exc:
         print(f"Orinoco update error: {exc}", file=sys.stderr)
         return 1
 
