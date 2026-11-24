@@ -91,5 +91,46 @@
       <button class="dialog-cancel" id="login-cancel" type="button">Not now</button>
     </form>
   </dialog>
+
+  <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
+    <div class="settings-content">
+      <div class="settings-heading">
+        <div><div class="welcome-eyebrow">YOUR WORKSPACE</div><h2 id="settings-title">Account settings</h2></div>
+        <button class="dialog-close" id="settings-close" type="button" aria-label="Close settings">×</button>
+      </div>
+      <section class="settings-section" aria-labelledby="password-heading">
+        <h3 id="password-heading">Change password</h3>
+        <form class="settings-form" id="password-form">
+          <label for="current-password">Current password</label><input id="current-password" type="password" autocomplete="current-password" required>
+          <label for="new-password">New password</label><input id="new-password" type="password" autocomplete="new-password" minlength="12" required>
+          <label for="confirm-password">Confirm new password</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="12" required>
+          <button class="login-submit" id="password-submit" type="submit">Update password</button>
+          <p class="settings-feedback" id="password-feedback" role="status" hidden></p>
+        </form>
+      </section>
+      <section class="settings-section" id="admin-tools" hidden aria-labelledby="admin-heading">
+        <h3 id="admin-heading">User management</h3>
+        <p class="settings-description">Create private accounts for people you trust. Share passwords securely.</p>
+        <form class="settings-form" id="create-user-form">
+          <label for="new-username">New username</label><input id="new-username" type="text" minlength="3" maxlength="32" autocomplete="off" required>
+          <label for="new-user-password">Temporary password</label><input id="new-user-password" type="password" minlength="12" autocomplete="new-password" required>
+          <button class="login-submit" id="create-user-submit" type="submit">Create account</button>
+          <p class="settings-feedback" id="user-feedback" role="status" hidden></p>
+        </form>
+        <div class="user-list" id="admin-user-list" aria-live="polite"></div>
+      </section>
+      <section class="settings-section" id="personal-memories" aria-labelledby="memories-heading">
+        <h3 id="memories-heading">My memories</h3>
+        <p class="settings-description">These are private to your account. Orinoco may save useful, non-sensitive details from conversations. You can review, edit or delete anything here.</p>
+        <form class="settings-form" id="memory-form">
+          <label for="memory-content">Add a memory</label><textarea id="memory-content" maxlength="1000" required placeholder="For example: I prefer practical, step-by-step explanations."></textarea>
+          <button class="login-submit" id="memory-submit" type="submit">Save memory</button>
+          <p class="settings-feedback" id="memory-feedback" role="status" hidden></p>
+        </form>
+        <div class="user-list" id="memory-list" aria-live="polite"></div>
+      </section>
+    </div>
+  </dialog>
+
 </body>
 </html>
