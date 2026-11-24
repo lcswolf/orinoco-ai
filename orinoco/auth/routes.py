@@ -139,7 +139,7 @@ def _resolve_client_ip(request: Request) -> str | None:
         if network.prefixlen >= minimum_prefix:
             trusted_networks.append(network)
 
-    if os.environ.get("ORINOCO_ENV", "development").lower() == "production" and not trusted_networks:
+    if os.environ.get("ORINOCO_ENV", "development").strip().lower() == "production" and not trusted_networks:
         return None
 
     if any(peer_address in network for network in trusted_networks):
@@ -158,7 +158,7 @@ def _resolve_client_ip(request: Request) -> str | None:
 
     if peer_address.is_global:
         return peer_address.compressed
-    if os.environ.get("ORINOCO_ENV", "development").lower() != "production":
+    if os.environ.get("ORINOCO_ENV", "development").strip().lower() != "production":
         return peer_address.compressed
     return None
 
