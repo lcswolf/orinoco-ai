@@ -98,3 +98,26 @@ def test_database_parent_directory_permissions_are_restricted(tmp_path) -> None:
 
     if os.name == "posix":
         assert database_dir.stat().st_mode & 0o777 == 0o700
+
+
+def test_v5_database_upgrades_to_v6_without_losing_accounts(tmp_path) -> None:
+    """The preferences/persona migration preserves existing account data from schema v5."""
+    from orinoco.db import CURRENT_SCHEMA_VERSION, get_assistant_persona, get_user_preferences
+
+    database = tmp_path / "v5-upgrade.sqlite3"
+    initialise_database(database)
+    user = create_user("schemafive", "a-long-test-password-123", database_path=database)
+    with sqlite3.connect(database) as connection:
+        connection.execute("DROP TABLE user_preferences")
+        connection.execute("DROP TABLE assistant_persona")
+        connection.execute("PRAGMA user_version = 5")
+
+    initialise_database(database)
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == CURRENT_SCHEMA_VERSION
+    assert authenticate_user(
+        "schemafive", "a-long-test-password-123", database_path=database
+    ) is not None
+    assert get_user_preferences(user.id, database_path=database)["voice"] == "bright"
+    assert get_assistant_persona(database_path=database)["humour_level"] == 65
