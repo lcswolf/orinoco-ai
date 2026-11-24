@@ -17,10 +17,10 @@ The scheduler normally creates backups at 03:00 in the configured timezone and r
 
 ## Creating a one-off backup with Pterodactyl
 
-The Pterodactyl console is attached to Supervisor, not an interactive shell. To run a one-shot CLI command, temporarily change the server's **Startup Command** in the Panel to the command below, start the server, wait for the command to finish and record the output path, then restore the normal startup command:
+The Pterodactyl console is attached to Supervisor, not an interactive shell. To run a one-shot CLI command, temporarily change the server's **Startup Command** in the Panel to the command below, start the server, wait for the command to finish and record the backup path from its JSON output, then restore the normal startup command. The update helper creates the encrypted backup, verifies it and uploads it when S3 is configured:
 
 ```text
-python -m orinoco.backups create
+python -m orinoco.updates prepare
 ```
 
 For verification, repeat with:
@@ -43,10 +43,18 @@ These commands run as the normal unprivileged container user. Do not change the 
 2. Keep a note of the current image tag so it can be restored if needed.
 3. Change the server's Docker image to the exact new version tag supplied with the release. Do not guess a tag; use the tag published in that release's notes.
 4. Keep the existing persistent server directory and Egg settings. Do not reinstall the server or delete its data directory.
-5. Start the server and watch the Pterodactyl console for Supervisor, Ollama, model initialisation, web and backup-scheduler startup messages.
-6. Check `/healthz` and `/readyz`. The first authenticated login performs any required additive SQLite schema initialisation.
-7. Sign in and check a chat reply, conversation history, personal memories, private documents, shared documents and web research (if configured).
-8. Confirm the backup scheduler remains running and the next scheduled backup is recorded.
+5. Before starting Supervisor, temporarily set the **Startup Command** to the migration command below, using the fresh backup path created in the pre-update step. Start the server once and wait for the migration command to exit successfully:
+
+```text
+python -m orinoco.updates migrate --backup /home/container/data/backups/your-pre-update-backup.oribak
+```
+
+6. Restore the normal startup command:
+   `supervisord -n -c /opt/orinoco/docker/supervisord.conf`.
+7. Start the server and watch the Pterodactyl console for Supervisor, Ollama, model initialisation, web and backup-scheduler startup messages.
+8. Check `/healthz` and `/readyz`. The first authenticated login also checks/initialises the SQLite schema as a fallback.
+9. Sign in and check a chat reply, conversation history, personal memories, private documents, shared documents and web research (if configured).
+10. Confirm the backup scheduler remains running and the next scheduled backup is recorded.
 
 Do not change the Ollama model at the same time as an application update. Keeping those changes separate makes faults easier to diagnose.
 
