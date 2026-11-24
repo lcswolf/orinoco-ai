@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b24">
+  <meta name="description" content="Orinoco — your private, self-hosted AI assistant.">
+  <title>Orinoco</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="/" aria-label="Orinoco home">
+        <span class="brand-mark" aria-hidden="true">o</span>
+        <span class="brand-name">orinoco</span>
+      </a>
+      <button class="new-chat" type="button" disabled title="Chat is coming in the next milestone">
+        <span aria-hidden="true">＋</span> New chat
+      </button>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="nav-list">
+        <a class="nav-link active" href="/" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span> Chat</a>
+        <a class="nav-link unavailable" href="#memory" aria-disabled="true"><span class="nav-icon" aria-hidden="true">◇</span> My memories <small>soon</small></a>
+        <a class="nav-link unavailable" href="#documents" aria-disabled="true"><span class="nav-icon" aria-hidden="true">▤</span> My documents <small>soon</small></a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="privacy-note"><span class="privacy-dot"></span><span>Private by design<br><small>Local AI · Your own server</small></span></div>
+      <div class="user-placeholder"><span class="avatar">Y</span><span><strong>Your account</strong><small>Account sign-in coming next</small></span></div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <button class="mobile-brand" type="button" aria-label="Orinoco menu"><span class="brand-mark">o</span><strong>orinoco</strong></button>
+        <div class="topbar-spacer"></div>
+        <div class="connection" id="connection-status"><span class="status-dot"></span><span>Checking local model…</span></div>
+        <button class="icon-button" type="button" aria-label="Settings are coming soon" disabled>⚙</button>
+      </header>
+
+      <section class="welcome" aria-labelledby="welcome-title">
+        <div class="welcome-eyebrow"><span class="eyebrow-line"></span> YOUR PRIVATE AI ASSISTANT</div>
+        <div class="welcome-mark" aria-hidden="true"><span>o</span><i></i></div>
+        <h1 id="welcome-title">Hello! my little nugget<br><em>What can I help you with today?</em></h1>
+        <p class="welcome-copy">A little space of your own. Orinoco runs on your server, with your data kept private.</p>
+
+        <div class="status-card" id="model-card">
+          <div class="status-card-icon" aria-hidden="true">✳</div>
+          <div class="status-card-copy">
+            <strong id="model-title">Getting things ready</strong>
+            <span id="model-description">Checking that your local AI model is available.</span>
+          </div>
+          <span class="status-pill" id="model-pill">Checking</span>
+        </div>
+
+        <div class="coming-soon">
+          <div class="coming-heading"><span>THE CONVERSATION SPACE</span><span class="coming-rule"></span></div>
+          <div class="composer-placeholder">
+            <span class="composer-plus" aria-hidden="true">＋</span>
+            <span>Chat will be ready here soon…</span>
+            <button type="button" disabled aria-label="Send message">↑</button>
+          </div>
+          <p class="setup-note">We're putting the foundations in place first — especially account security and private chat history.</p>
+        </div>
+      </section>
+      <footer class="footer"><span>ORINOCO</span><span>Made to be yours.</span></footer>
+    </main>
+  </div>
+</body>
+</html>
