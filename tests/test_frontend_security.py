@@ -139,3 +139,15 @@ def test_every_form_control_has_an_accessible_name() -> None:
     ]
 
     assert not missing, f"Form controls without accessible names: {missing}"
+
+
+def test_private_memories_navigation_prompts_for_sign_in() -> None:
+    """Unauthenticated users should receive a clear sign-in prompt, not a dead link."""
+    script = (ROOT / "orinoco" / "static" / "app.js").read_text(encoding="utf-8")
+    start = script.index('memoriesLink.addEventListener("click"')
+    end = script.index('document.getElementById("memory-form")', start)
+    handler = script[start:end]
+
+    assert "if (!currentUser)" in handler
+    assert "loginDialog.showModal()" in handler
+    assert 'document.getElementById("login-username").focus()' in handler
