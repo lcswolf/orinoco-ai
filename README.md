@@ -36,7 +36,7 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 The repository includes a custom responsive interface, sign-in and account settings, CSRF-protected authentication, administrator user management, authenticated chat, per-user saved conversations, SQLite persistence, Argon2 password hashing and automatic personal-memory extraction. Users can review, edit and delete their own memories, and those memories are included only in their own future chats.
 
-Document libraries, web research, Discord and voice are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
+Private document uploads, common-format text extraction, shared-library administration and keyword retrieval in chat are now implemented. Web research, Discord and voice are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
 See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
