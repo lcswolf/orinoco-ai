@@ -1,3 +1,4 @@
+// DOM references and shared UI state. Keep element IDs in sync with static/index.html.
 const connection = document.getElementById("connection-status");
 const modelTitle = document.getElementById("model-title");
 const modelDescription = document.getElementById("model-description");
@@ -33,6 +34,7 @@ let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
 
+// Service status is informational; readiness is checked by the server's /readyz endpoint.
 async function refreshStatus() {
   try {
     const response = await fetch("/readyz", { headers: { Accept: "application/json" } });
@@ -69,6 +71,7 @@ async function refreshStatus() {
   }
 }
 
+// Apply the authenticated/anonymous UI state and clear account-specific content on sign-out.
 function showAccount(user) {
   currentUser = user;
   if (user) {
@@ -155,6 +158,7 @@ function appendMessage(role, content, state = "") {
   return message;
 }
 
+// Conversation list and history are always fetched from account-scoped API endpoints.
 async function refreshConversations() {
   if (accountAction.dataset.authenticated !== "true") return;
   try {
@@ -209,6 +213,7 @@ async function loadConversation(id) {
   }
 }
 
+// All browser mutations obtain a session-bound CSRF token before sending a request.
 async function getCsrfToken() {
   const response = await fetch("/api/auth/csrf", { headers: { Accept: "application/json" } });
   if (!response.ok) throw new Error("Could not start a secure session. Refresh and try again.");
@@ -227,6 +232,7 @@ async function refreshAccount() {
   }
 }
 
+// Sign-in and sign-out flows. The server remains authoritative for session validity.
 accountAction.addEventListener("click", async () => {
   if (accountAction.dataset.authenticated === "true") {
     try {
@@ -303,6 +309,7 @@ newChatButton.addEventListener("click", () => {
   chatInput.focus();
 });
 
+// Chat submission is single-flight in this UI; server-side ownership checks remain mandatory.
 chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = chatInput.value.trim();
@@ -366,6 +373,7 @@ refreshAccount();
 
 
 
+// Main workspace navigation and document-library rendering/upload helpers.
 function setActiveNavigation(activeLink) {
   for (const link of [chatLink, documentsLink]) {
     link.classList.toggle("active", link === activeLink);
@@ -471,6 +479,7 @@ function renderDocumentList(element, documents, shared = false) {
   }
 }
 
+// The API returns only this user's private files plus the authorised shared library.
 async function loadDocuments() {
   if (!currentUser) return;
   const privateList = document.getElementById("private-document-list");
@@ -551,6 +560,7 @@ document.getElementById("shared-document-form").addEventListener("submit", event
   uploadDocument("shared-document-form", "shared-document-file", "shared-document-feedback", "/api/admin/shared-documents");
 });
 
+// Account settings, administrator account management and personal-memory controls.
 function showFeedback(element, message, isError = false) {
   element.textContent = message;
   element.className = "settings-feedback" + (isError ? " error" : "");
