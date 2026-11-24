@@ -88,6 +88,13 @@ jobs:
           docker exec orinoco-smoke python -c \
             "import urllib.request; urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=5).read()"
 
+          # Confirm the image runs unprivileged, has UK timezone data and
+          # includes the encrypted backup CLI and its runtime dependencies.
+          test "$(docker exec orinoco-smoke id -u)" != "0"
+          docker exec orinoco-smoke python -c \
+            "from zoneinfo import ZoneInfo; ZoneInfo('Europe/London')"
+          docker exec orinoco-smoke python -m orinoco.backups --help >/dev/null
+
           ready_code=$(curl --silent --output /tmp/orinoco-ready.json --write-out "%{http_code}" http://127.0.0.1:8080/readyz)
           test "$ready_code" = "503"
           grep -q "model_missing" /tmp/orinoco-ready.json
