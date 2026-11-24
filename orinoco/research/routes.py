@@ -5,7 +5,8 @@ from __future__ import annotations
 import os
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel, Field, field_validator
+
+from orinoco.auth.sessions import get_session_userfrom pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import User, get_database_path, get_user_by_id, initialise_database
 from orinoco.research.searxng import SearchUnavailable, SearXNGClient
@@ -17,17 +18,8 @@ router = APIRouter(prefix="/api/research", tags=["research"])
 
 
 def _current_user(request: Request) -> User:
-    """Resolve the active account for an authenticated research request."""
-    user_id = request.session.get("user_id")
-    if not isinstance(user_id, int):
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    database_path = get_database_path()
-    initialise_database(database_path)
-    user = get_user_by_id(user_id, database_path=database_path)
-    if user is None or not user.active:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    return user
+    """Resolve the active account from a session that has not been revoked."""
+    return get_session_user(request)
 
 
 @router.get("/search")
