@@ -27,7 +27,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - S3-compatible encrypted backup upload over HTTPS, with remote size and SHA-256 metadata verification.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed 88 tests before the S3 upload tests were added. The backup-enabled custom container image built and passed its runtime smoke test. The image has not yet been published to GHCR or tested on a live Pterodactyl node. S3 upload tests are being added and must pass before the next status update.
+The latest completed GitHub Actions Python test run passed 91 tests, including mocked S3 upload and remote-checksum verification. The backup-enabled custom container image built and passed its runtime smoke test. The image has not yet been published to GHCR or tested on a live Pterodactyl node. S3 upload tests are being added and must pass before the next status update.
 
 ## Confirmed direction
 
