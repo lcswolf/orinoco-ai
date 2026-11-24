@@ -32,6 +32,8 @@ def document_storage_lock() -> Iterator[None]:
     sharing the same persistent Pterodactyl data directory.
     """
     root = get_document_root()
+    if root.is_symlink():
+        raise ValueError("document root must not be a symbolic link")
     root.parent.mkdir(parents=True, exist_ok=True)
     lock_path = root.parent / ".documents.lock"
     flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
@@ -100,7 +102,10 @@ def store_document(data: bytes, *, user_id: int | None, scope: str, extension: s
 
 def resolve_document_path(relative_path: str) -> Path:
     """Resolve a stored relative path and reject traversal outside the document root."""
-    root = get_document_root().resolve()
+    configured_root = get_document_root()
+    if configured_root.is_symlink():
+        raise ValueError("document root must not be a symbolic link")
+    root = configured_root.resolve()
     relative = Path(relative_path)
     if relative.is_absolute() or not relative.parts or ".." in relative.parts:
         raise ValueError("invalid document storage path")
