@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed Python CI run: 145 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest container build has succeeded; the expanded smoke test is being extended to confirm the daily backup scheduler process starts under Supervisor.
+Latest completed Python CI run: 154 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reports no known vulnerabilities. The scheduler-enabled container build passed its expanded smoke test; the latest image including the conversation-deletion UI is being revalidated.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -78,7 +78,7 @@ The users table now has a versioned session counter. New sign-ins store that ver
 
 ### Login throttle memory use — hardened
 
-The failed-login tracker now has a fixed maximum number of tracked usernames and evicts the least-recently-used entry when full. Its Retry-After value reflects the remaining lockout window instead of always reporting the full window. It remains process-local and username-based, so reverse-proxy/IP-level rate limits are still required before public exposure.
+The failed-login tracker now applies rolling windows per username and per observed client address, has fixed memory bounds for both maps, and reports the remaining Retry-After window. It remains process-local and deliberately ignores untrusted forwarded-IP headers, so reverse-proxy rate limits and trusted-proxy configuration are still required before public exposure.
 
 ### Browser security headers — added
 
@@ -98,7 +98,15 @@ The runtime now installs the operating-system timezone database so the configure
 
 ### Runtime and CI version pins — checked
 
-The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 145 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 154 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
+
+### SQLite file permissions and symlink handling — hardened
+
+The database layer now opens/creates the SQLite file with owner-only permissions and rejects symbolic-link database paths before connecting. Regression tests cover both permission mode and link rejection.
+
+### Conversation deletion — implemented
+
+Users can delete their own conversation and all associated messages through a CSRF-protected API. Ownership is enforced in the database DELETE query, and foreign-key cascade removes messages. The interface requires confirmation and explains that existing encrypted backups may retain prior copies until retention expires.
 
 ### External research link handling — hardened
 
@@ -132,12 +140,15 @@ The README, architecture, Egg and development guide now distinguish implemented 
 
 - [ ] Add the agreed editable personality controls: administrator-managed core persona and per-user voice, tone and answer-detail preferences. The current default prompt now reflects the bright voice and 65% humour choice, but the settings UI/persistence is not yet implemented.
 
-- [ ] Finish authentication/session review, including IP-level rate limiting, cookie/proxy assumptions and session-secret rotation. Add application-level request limits and consider per-user document/storage quotas and chat retention before opening access to more than the intended small group.
+- [x] Add bounded per-client-address login throttling alongside per-username limits.
+- [x] Add owner-only SQLite file permissions and symbolic-link rejection.
+- [ ] Finish authentication/session review, including trusted-proxy configuration and session-secret rotation. Add application-level request limits and consider per-user document/storage quotas and chat retention before opening access to more than the intended small group.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.
-- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
+- [x] Review SQLite file creation permissions and reject symbolic-link database paths.
+- [ ] Continue reviewing database functions and schema evolution for safe upgrades from an existing installation.
 - [x] Add bounded Office ZIP expansion checks and regression coverage.
 - [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.
-- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
+- [ ] Finish review of private/shared document ownership, parser edge cases and cleanup paths. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
@@ -149,12 +160,13 @@ The README, architecture, Egg and development guide now distinguish implemented 
 - [ ] Finalise the Leaseweb VPS deployment plan: Caddy HTTPS, Tailscale Serve for private access (no Funnel), firewall exposure limited to required ports, and reverse-proxy request/rate limits.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
-- [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
-- [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
+- [x] Validate external links and render untrusted search/document/chat text without HTML parsing.
+- [ ] Finish keyboard navigation, mobile layout and API error-state review.
+- [x] Integrate the original Womble-inspired Orinoco mascot, accessible SVG artwork and UK woodland visual treatment.
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm 136 passing tests, a clean pip-audit scan and a scheduler-enabled container build/smoke test.
+- [x] Confirm 154 passing tests, a clean pip-audit scan and a scheduler-enabled container build/smoke test.
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
