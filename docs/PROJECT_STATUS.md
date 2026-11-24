@@ -50,6 +50,7 @@ The latest completed GitHub Actions Python test run passed 103 tests, including 
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Original Womble-inspired mascot artwork and final UK-oriented interface treatment.
+- Administrator-editable core personality and per-user voice, tone and answer-detail preferences.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
 - Production security review, MFA, account recovery and server-side session revocation across all devices.
