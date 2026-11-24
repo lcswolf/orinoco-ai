@@ -34,7 +34,7 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 ## Repository status
 
-The repository includes a custom responsive interface, sign-in dialog, CSRF-protected login/logout API, signed secure sessions, SQLite account storage, Argon2 password hashing, a local administrator bootstrap command, authenticated chat, per-user saved conversations, FastAPI liveness/readiness endpoints, tests and a supervised Ollama runtime.
+The repository includes a custom responsive interface, sign-in dialog, CSRF-protected login/logout API, signed secure sessions, SQLite account storage, Argon2 password hashing, administrator account management, authenticated chat, per-user saved conversations, password changes, FastAPI liveness/readiness endpoints, tests and a supervised Ollama runtime.
 
 User-management screens, per-user memories, documents, Discord and search are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
