@@ -77,21 +77,24 @@ def _encrypt_file(source: Path, destination: Path, key: bytes) -> None:
     """
     nonce = secrets.token_bytes(12)
     encryptor = Cipher(algorithms.AES(key), modes.GCM(nonce)).encryptor()
-    descriptor = os.open(
-        destination,
-        os.O_WRONLY | os.O_CREAT | os.O_EXCL,
-        0o600,
-    )
     try:
-        with source.open("rb") as input_file, os.fdopen(descriptor, "wb") as output_file:
-            output_file.write(MAGIC)
-            output_file.write(nonce)
-            while chunk := input_file.read(CHUNK_SIZE):
-                output_file.write(encryptor.update(chunk))
-            output_file.write(encryptor.finalize())
-            output_file.write(encryptor.tag)
-            output_file.flush()
-            os.fsync(output_file.fileno())
+        # Open the source first so a missing/unreadable source cannot leak the
+        # newly-created destination descriptor.
+        with source.open("rb") as input_file:
+            descriptor = os.open(
+                destination,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            with os.fdopen(descriptor, "wb") as output_file:
+                output_file.write(MAGIC)
+                output_file.write(nonce)
+                while chunk := input_file.read(CHUNK_SIZE):
+                    output_file.write(encryptor.update(chunk))
+                output_file.write(encryptor.finalize())
+                output_file.write(encryptor.tag)
+                output_file.flush()
+                os.fsync(output_file.fileno())
     except Exception:
         destination.unlink(missing_ok=True)
         raise
@@ -398,12 +401,10 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
         old_documents = document_root.with_name(document_root.name + ".pre-restore")
 
         # Check every recovery destination before creating any of the copies.
-        if database_backup.exists():
-            raise BackupError(f"Recovery file already exists: {database_backup}")
-        if secret_backup.exists():
-            raise BackupError(f"Recovery file already exists: {secret_backup}")
-        if old_documents.exists():
-            raise BackupError(f"Recovery directory already exists: {old_documents}")
+        # is_symlink() also detects dangling links, which exists() does not.
+        for recovery_path in (database_backup, secret_backup, old_documents):
+            if recovery_path.is_symlink() or recovery_path.exists():
+                raise BackupError(f"Recovery path already exists or is unsafe: {recovery_path}")
 
         try:
             if database_existed:
