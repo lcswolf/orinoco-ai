@@ -25,7 +25,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed all 62 tests before the new SearXNG route tests were added. The container image build and runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed all 80 tests, including SearXNG search, SSRF protections and local webpage summarisation. The container image build and runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
