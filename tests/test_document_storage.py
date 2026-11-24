@@ -41,3 +41,18 @@ def test_document_path_resolver_rejects_traversal_and_symlinks(tmp_path, monkeyp
     with pytest.raises(ValueError, match="symbolic links"):
         storage.resolve_document_path("linked.txt")
     assert target.read_text(encoding="utf-8") == "keep"
+
+
+def test_document_storage_root_cannot_be_a_symlink(tmp_path, monkeypatch) -> None:
+    """The configured document root itself must not redirect storage elsewhere."""
+    import pytest
+
+    target = tmp_path / "real-documents"
+    target.mkdir()
+    link = tmp_path / "documents-link"
+    link.symlink_to(target, target_is_directory=True)
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(link))
+
+    with pytest.raises(ValueError, match="document root must not be a symbolic link"):
+        storage.resolve_document_path("private/example.txt")
+    assert list(target.iterdir()) == []
