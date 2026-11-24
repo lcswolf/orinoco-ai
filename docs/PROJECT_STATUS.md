@@ -24,10 +24,10 @@ This page separates confirmed project decisions from implementation work. A plan
 - Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
 - Encrypted local backup creation, verification and confirmed restore CLI using AES-256-GCM.
-- S3-compatible encrypted backup upload over HTTPS, with remote size and SHA-256 metadata verification.
+- S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification.
 - Automated Python tests and frontend JavaScript syntax validation.
 
-The latest completed GitHub Actions Python test run passed 96 tests, including first-admin bootstrap, Office archive expansion limits, encrypted backup upload and verification of downloaded remote bytes. The earlier S3-enabled image passed its container smoke test; the current audit-hardened image build is being re-run. No image has been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed 102 tests, including first-admin bootstrap, sensitive-memory filtering, Office archive expansion limits, encrypted backup upload/restore and SQLite schema upgrade protection. The audit-hardened container image build is being re-run. No image has been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -49,6 +49,7 @@ The latest completed GitHub Actions Python test run passed 96 tests, including f
 - Automatic daily backup scheduling, retention and remote restore convenience; safe application update/rollback.
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
+- Original Womble-inspired mascot artwork and final UK-oriented interface treatment.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
 - Production security review, MFA, account recovery and server-side session revocation across all devices.
