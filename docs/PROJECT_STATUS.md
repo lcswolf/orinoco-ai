@@ -63,7 +63,7 @@ The latest completed GitHub Actions Python test run passed 136 tests, with one n
 
 1. Finish the repository-wide pre-release audit, dependency audit and final container smoke test.
 2. Validate the manual update/rollback runbook on a disposable Pterodactyl server, then add automated migration/update safeguards.
-3. Complete the agreed persona settings and original Orinoco mascot/UK interface treatment.
+3. Complete the agreed per-user persona settings and final accessibility/mobile polish.
 4. Validate the Egg on a disposable server in the user's Panel and perform a real backup/restore drill.
 5. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
 
