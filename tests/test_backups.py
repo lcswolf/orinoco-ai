@@ -254,3 +254,18 @@ def test_failed_restore_rolls_back_session_secret(tmp_path, monkeypatch) -> None
     assert (documents / "private" / "note.txt").read_text(encoding="utf-8") == "private backup content"
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT username FROM users").fetchone()[0] == "backup-user"
+
+
+def test_restore_rejects_dangling_recovery_symlink(tmp_path, monkeypatch) -> None:
+    """Restore must refuse dangling recovery links before touching live data."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    backup = backups.create_backup()
+    recovery_path = database.with_suffix(database.suffix + ".pre-restore")
+    recovery_path.symlink_to(tmp_path / "missing-recovery-target")
+
+    with pytest.raises(backups.BackupError, match="already exists or is unsafe"):
+        backups.restore_backup(backup, confirm=True)
+
+    assert recovery_path.is_symlink()
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("SELECT username FROM users").fetchone()[0] == "backup-user"
