@@ -97,8 +97,8 @@ server {
 
     proxy_connect_timeout 5s;
     proxy_send_timeout 30s;
-    # Local model generation can be slow on the planned small VPS.
-    proxy_read_timeout 300s;
+    # Keep this above the Ollama client's 600-second request timeout.
+    proxy_read_timeout 660s;
     send_timeout 300s;
     proxy_buffering off;
 
