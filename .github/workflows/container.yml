@@ -44,16 +44,36 @@ jobs:
       - name: Validate Caddy and Nginx proxy templates
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          caddy_log="$RUNNER_TEMP/caddy-validation.log"
+          nginx_log="$RUNNER_TEMP/nginx-validation.log"
+
           docker run --rm \
             --env ACME_EMAIL=ops@example.net \
             --env ORINOCO_DOMAIN=orinoco.example.net \
             --env ORINOCO_PUBLIC_IPV4=203.0.113.10 \
             --volume "$PWD/deploy/caddy/Caddyfile.example:/etc/caddy/Caddyfile:ro" \
-            caddy:2.11.0-alpine validate --config /etc/caddy/Caddyfile --adapter caddyfile
+            caddy:2.11.0-alpine validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+            2>&1 | tee "$caddy_log"
+          caddy_status=${PIPESTATUS[0]}
+
           docker run --rm \
             --volume "$PWD/deploy/nginx/orinoco.conf.example:/etc/nginx/conf.d/orinoco.conf:ro" \
-            nginx:1.28-alpine nginx -t
+            nginx:1.28-alpine nginx -t 2>&1 | tee "$nginx_log"
+          nginx_status=${PIPESTATUS[0]}
+
+          if [ "$caddy_status" -ne 0 ] || [ "$nginx_status" -ne 0 ]; then
+            echo "One or more reverse-proxy templates failed validation."
+            exit 1
+          fi
+
+      - name: Upload proxy validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proxy-validation-logs
+          path: ${{ runner.temp }}/*-validation.log
+          if-no-files-found: ignore
 
       - name: Build image (do not publish)
         uses: docker/build-push-action@v7.4.0
