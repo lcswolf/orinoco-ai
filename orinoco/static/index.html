@@ -11,7 +11,7 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Main navigation">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
       <a class="brand" href="/" aria-label="Orinoco home">
         <span class="brand-mark" aria-hidden="true">o</span>
         <span class="brand-name">orinoco</span>
@@ -32,10 +32,11 @@
       <div class="privacy-note"><span class="privacy-dot"></span><span>Private by design<br><small>Local AI · Your own server</small></span></div>
       <div class="user-placeholder"><span class="avatar" id="user-avatar">?</span><span><strong id="user-name">Not signed in</strong><small id="user-role">Your private workspace</small></span></div>
     </aside>
+    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Close navigation menu" hidden></button>
 
     <main class="main-panel">
       <header class="topbar">
-        <button class="mobile-brand" type="button" aria-label="Orinoco menu"><span class="brand-mark">o</span><strong>orinoco</strong></button>
+        <button class="mobile-brand" type="button" aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false"><span class="brand-mark">o</span><strong>orinoco</strong></button>
         <div class="topbar-spacer"></div>
         <div class="connection" id="connection-status"><span class="status-dot"></span><span>Checking local model…</span></div>
         <select class="mobile-conversations" id="mobile-conversations" aria-label="Recent conversations"><option value="">Recent chats</option></select>
