@@ -178,8 +178,8 @@ def create_user(
     role: str = "user",
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> User:
+    """Create an account with a password hash; reject invalid roles and duplicate usernames."""
     if role not in {"admin", "user"}:
-        """Create an account with a password hash; reject invalid roles and duplicate usernames."""
         raise AccountError("role must be admin or user")
     normalized = _validate_username(username)
     try:
@@ -244,8 +244,8 @@ def set_user_active(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
+    """Suspend or reactivate an account while protecting the last active administrator."""
     with _database(database_path) as connection:
-        """Suspend or reactivate an account while protecting the last active administrator."""
         user = connection.execute(
             "SELECT role, active FROM users WHERE id = ?",
             (user_id,),
@@ -272,8 +272,8 @@ def change_user_password(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
+    """Verify the current password before replacing the stored password hash."""
     try:
-        """Verify the current password before replacing the stored password hash."""
         new_hash = hash_password(new_password)
     except ValueError as exc:
         raise AccountError(str(exc)) from exc
@@ -296,9 +296,9 @@ def change_user_password(
 def get_user_by_username(
     username: str, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
+    """Look up an account by its case-insensitive username."""
     normalized = username.strip().lower()
     with _database(database_path) as connection:
-        """Look up an account by its case-insensitive username."""
         row = connection.execute(
             """
             SELECT id, username, role, active, created_at
@@ -325,10 +325,10 @@ def create_conversation(
     title: str = "New conversation",
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> int:
+    """Create a conversation owned by the supplied account and return its ID."""
     now = datetime.now(UTC).isoformat()
     safe_title = " ".join(title.split())[:80] or "New conversation"
     with _database(database_path) as connection:
-        """Create a conversation owned by the supplied account and return its ID."""
         cursor = connection.execute(
             """
             INSERT INTO conversations (user_id, title, created_at, updated_at)
@@ -342,8 +342,8 @@ def create_conversation(
 def list_conversations(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> list[dict[str, object]]:
+    """List only conversations owned by the supplied account, newest first."""
     with _database(database_path) as connection:
-        """List only conversations owned by the supplied account, newest first."""
         rows = connection.execute(
             """
             SELECT c.id, c.title, c.created_at, c.updated_at,
@@ -372,8 +372,8 @@ def get_conversation(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, object] | None:
+    """Fetch a conversation and its messages only when the requesting account owns it."""
     with _database(database_path) as connection:
-        """Fetch a conversation and its messages only when the requesting account owns it."""
         row = connection.execute(
             """
             SELECT id, title, created_at, updated_at
@@ -417,8 +417,8 @@ def save_exchange(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
+    """Atomically append a user/assistant exchange after confirming conversation ownership."""
     if not user_content.strip() or len(user_content) > 4000:
-        """Atomically append a user/assistant exchange after confirming conversation ownership."""
         raise ValueError("user message must contain 1–4000 characters")
     if not assistant_content.strip() or len(assistant_content) > 16000:
         raise ValueError("assistant response must contain 1–16000 characters")
@@ -454,9 +454,9 @@ def get_recent_messages(
     limit: int = 10,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> list[dict[str, str]]:
+    """Return a bounded chronological message window for an account-owned conversation."""
     bounded_limit = max(1, min(limit, 20))
     with _database(database_path) as connection:
-        """Return a bounded chronological message window for an account-owned conversation."""
         rows = connection.execute(
             """
             SELECT m.role, m.content
@@ -482,8 +482,8 @@ def add_conversation_message(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> int | None:
+    """Append one validated message to an account-owned conversation."""
     if role not in {"user", "assistant"}:
-        """Append one validated message to an account-owned conversation."""
         raise ValueError("role must be user or assistant")
     if not content.strip() or len(content) > 16000:
         raise ValueError("message must contain 1–16000 characters")
@@ -520,7 +520,6 @@ def create_memory(
     """Save a memory owned by one user."""
     cleaned = " ".join(content.split())
     if not cleaned or len(cleaned) > 1000:
-        """Save a memory with an explicit owner and manual/automatic provenance."""
         raise ValueError("memory must contain 1–1000 characters")
     if source not in {"manual", "automatic"}:
         raise ValueError("memory source must be manual or automatic")
@@ -543,7 +542,6 @@ def list_memories(
 ) -> list[dict[str, object]]:
     """List only memories belonging to the requested account."""
     with _database(database_path) as connection:
-        """Return only memories belonging to the supplied account."""
         rows = connection.execute(
             """
             SELECT id, content, source, created_at, updated_at
@@ -573,8 +571,8 @@ def update_memory(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
     cleaned = " ".join(content.split())
+    """Edit a memory only when its ID and owner account both match."""
     if not cleaned or len(cleaned) > 1000:
-        """Edit a memory only when its ID and owner account both match."""
         raise ValueError("memory must contain 1–1000 characters")
     now = datetime.now(UTC).isoformat()
     with _database(database_path) as connection:
@@ -591,8 +589,8 @@ def delete_memory(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
+    """Delete a memory only when its ID and owner account both match."""
     with _database(database_path) as connection:
-        """Delete a memory only when its ID and owner account both match."""
         cursor = connection.execute(
             "DELETE FROM memories WHERE id = ? AND user_id = ?",
             (memory_id, user_id),
@@ -613,8 +611,8 @@ def create_document(
     extracted_text: str,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> int:
+    """Register extracted document content and metadata with private/shared ownership rules."""
     if scope not in {"private", "shared"}:
-        """Register extracted document content and metadata with private/shared ownership rules."""
         raise ValueError("document scope must be private or shared")
     if (scope == "private") != (owner_user_id is not None):
         raise ValueError("private documents require an owner; shared documents do not")
@@ -648,8 +646,8 @@ def list_documents(
     shared_only: bool = False,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> list[dict[str, object]]:
+    """List private documents for the user and shared documents available to them."""
     with _database(database_path) as connection:
-        """List private documents for the user and shared documents available to them."""
         if shared_only:
             rows = connection.execute(
                 """
@@ -688,8 +686,8 @@ def get_document(
     allow_shared: bool = True,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, object] | None:
+    """Fetch document metadata/content only for its owner or when shared access is allowed."""
     with _database(database_path) as connection:
-        """Fetch document metadata/content only for its owner or when shared access is allowed."""
         row = connection.execute(
             """
             SELECT id, owner_user_id, scope, original_name, stored_path,
@@ -722,8 +720,8 @@ def delete_document(
     allow_shared: bool = False,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> str | None:
+    """Remove an owned private document or an authorised shared document and return its stored path."""
     with _database(database_path) as connection:
-        """Remove an owned private document or an authorised shared document and return its stored path."""
         row = connection.execute(
             """
             SELECT stored_path FROM documents
@@ -759,8 +757,8 @@ def search_documents(
         term for term in re.findall(r"[A-Za-z0-9_]{2,}", query.lower())
         if term not in stop_words
     ][:8]
+    """Search private and shared document text while enforcing account-level visibility."""
     if not terms:
-        """Search private and shared document text while enforcing account-level visibility."""
         return []
 
     with _database(database_path) as connection:
@@ -793,8 +791,8 @@ def search_documents(
 def get_user_by_id(
     user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
+    """Look up an account by its numeric ID without returning credential material."""
     with _database(database_path) as connection:
-        """Look up an account by its numeric ID without returning credential material."""
         row = connection.execute(
             """
             SELECT id, username, role, active, created_at
@@ -819,9 +817,9 @@ def authenticate_user(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> User | None:
+    """Verify credentials and return only active accounts."""
     normalized = username.strip().lower()
     with _database(database_path) as connection:
-        """Verify credentials and return only active accounts."""
         row = connection.execute(
             """
             SELECT id, username, password_hash, role, active, created_at
