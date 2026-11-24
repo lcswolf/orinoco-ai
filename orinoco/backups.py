@@ -22,6 +22,7 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from orinoco import __version__
@@ -104,6 +105,9 @@ def _decrypt_file(source: Path, destination: Path, key: bytes) -> None:
                 output_file.write(decryptor.finalize())
                 output_file.flush()
                 os.fsync(output_file.fileno())
+        except InvalidTag as exc:
+            destination.unlink(missing_ok=True)
+            raise BackupError("Backup authentication failed: wrong key or damaged file.") from exc
         except Exception:
             destination.unlink(missing_ok=True)
             raise
