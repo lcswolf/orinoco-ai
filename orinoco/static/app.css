@@ -118,7 +118,8 @@ h1 em { color: #8bd9bd; font-style: normal; }
     backdrop-filter: blur(2px);
   }
   .topbar { height: 60px; padding: 0 18px; }
-  .mobile-brand { display: flex; align-items: center; gap: 9px; border: 0; background: none; color: var(--text); font-size: 16px; }
+  .mobile-brand { display: flex; align-items: center; gap: 7px; border: 0; background: none; color: var(--text); font-size: 16px; }
+  .mobile-menu-icon { color: var(--muted); font-size: 16px; line-height: 1; }
   .mobile-brand .brand-mark { width: 29px; height: 29px; border-radius: 10px 10px 10px 4px; font-size: 23px; }
   .icon-button { margin-left: 8px; }
   .mobile-conversations { display: block; width: 94px; min-width: 0; margin-left: 8px; padding: 7px 4px; border: 1px solid var(--line); border-radius: 8px; background: #14232e; color: #a9c0b9; font-size: 10px; }
