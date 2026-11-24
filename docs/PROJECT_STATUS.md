@@ -1,8 +1,21 @@
 # Project Status
 
-**Overall status: planning and repository scaffolding.**
+**Overall status: early implementation — foundation scaffold committed.**
 
 This page separates confirmed project decisions from implementation work. A planned feature is not considered implemented until code, tests and documentation exist.
+
+## Implemented in the repository
+
+- Public project repository and initial project documentation.
+- Minimal FastAPI application package.
+- Root information endpoint and `/healthz` health endpoint.
+- Initial automated tests for the endpoints.
+- Python dependency manifests for runtime and development.
+- Docker image foundation targeting Pterodactyl's container conventions.
+- Startup entrypoint that expands simple uppercase `{{VARIABLE}}` placeholders without evaluating a shell command.
+- Local development and container build instructions.
+
+The initial tests were run in the development environment and passed (2 tests). The Docker image has not yet been built or tested in Docker.
 
 ## Confirmed direction
 
@@ -20,27 +33,28 @@ This page separates confirmed project decisions from implementation work. A plan
 
 ## Not implemented yet
 
-- Orinoco application and web interface.
-- Authentication, roles and account management.
-- Chat storage and per-user memory controls.
-- Document ingestion and retrieval.
-- Ollama integration and model management.
-- Web search and URL fetching.
+- User interface, authentication, roles and account management.
+- Chat orchestration, chat storage and per-user memory controls.
+- Database and document ingestion/retrieval.
+- Ollama process management, model selection and model downloads.
+- Web search and safe URL fetching.
 - Discord integration and voice features.
-- Docker image, process supervision and Pterodactyl Egg.
-- Installer, updater, backup and restore tooling.
-- Automated tests and production deployment.
+- Production-ready Pterodactyl Egg and installation script.
+- Published GHCR image, automated image build/release pipeline.
+- Backup, restore, update and rollback tooling.
+- Production security review and deployment.
 
 ## Suggested implementation sequence
 
-1. Define the application architecture, data model and security boundaries.
-2. Build a minimal web application and local Ollama connection.
-3. Add authentication, roles and isolated chat storage.
-4. Add memory review and user document retrieval.
-5. Add optional web search and safe URL summarisation.
-6. Package the application in a non-root Docker image and create the Pterodactyl Egg.
-7. Add backup, restore, health checks and update/rollback procedures.
-8. Add Discord text integration; consider voice only after the core is stable.
+1. Stabilise the application/container foundation and add CI validation.
+2. Design the data model and security boundaries.
+3. Add a minimal chat flow connected to local Ollama.
+4. Add authentication, roles and isolated chat storage.
+5. Add memory review and user document retrieval.
+6. Add optional web search and safe URL summarisation.
+7. Finalise and test the Pterodactyl Egg against the exact installed Panel/Wings version.
+8. Add backup, restore, health checks and update/rollback procedures.
+9. Add Discord text integration; consider voice only after the core is stable.
 
 ## Resource assumptions
 
