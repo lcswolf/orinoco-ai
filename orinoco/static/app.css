@@ -47,6 +47,7 @@ button:disabled { cursor: default; opacity: .8; }
 .icon-button { width: 35px; height: 35px; margin-left: 22px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--muted); }
 .mobile-brand { display: none; }
 .sidebar-backdrop { display: none; }
+.mobile-nav-close { display: none; }
 .mobile-conversations { display: none; }
 .welcome { width: min(720px, calc(100% - 48px)); margin: auto; padding: 58px 0 42px; text-align: center; }
 .welcome-eyebrow { display: flex; align-items: center; justify-content: center; gap: 11px; color: #80bda9; font-size: 9px; font-weight: 700; letter-spacing: 2px; }
@@ -90,6 +91,21 @@ h1 em { color: #8bd9bd; font-style: normal; }
     box-shadow: 18px 0 45px rgba(0,0,0,.38);
   }
   .sidebar.mobile-open { transform: translateX(0); }
+  .mobile-nav-close {
+    position: absolute;
+    top: 20px;
+    right: 15px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 22px;
+    line-height: 1;
+  }
   .sidebar-backdrop:not([hidden]) {
     position: fixed;
     inset: 0;
