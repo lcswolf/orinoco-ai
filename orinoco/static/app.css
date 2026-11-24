@@ -248,3 +248,21 @@ h1 em { color: #8bd9bd; font-style: normal; }
 .summary-result-heading h2 { margin: 0; color: #d6e8df; font-size: 14px; line-height: 1.5; }
 .summary-result-heading a { flex: 0 0 auto; color: #85cdb5; font-size: 10px; text-decoration: none; }
 #summary-text { color: #c1d2cd; font-size: 12px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+
+/* The chat search switch makes external query sharing explicit for each message. */
+.web-search-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 10px;
+  color: #8fa9a5;
+  font-size: 10px;
+  cursor: pointer;
+}
+.web-search-toggle input {
+  accent-color: #77d8bd;
+}
+.web-search-toggle input:disabled {
+  cursor: not-allowed;
+}
