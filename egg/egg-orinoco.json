@@ -269,6 +269,15 @@
       "user_viewable": true,
       "user_editable": false,
       "rules": "required|integer|min:1|max:120"
+    },
+    {
+      "name": "Maximum Pending Chat Requests",
+      "description": "Maximum number of chat requests allowed to wait behind the single local model generation. Defaults to 8; set 0 to disable waiting and reject requests while a generation is active.",
+      "env_variable": "ORINOCO_MAX_PENDING_GENERATIONS",
+      "default_value": "8",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:0|max:32"
     }
   ]
 }
