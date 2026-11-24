@@ -5,9 +5,11 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from collections.abc import Iterator
 
 from orinoco.auth.passwords import hash_password, verify_password
 
@@ -39,9 +41,20 @@ def _connect(database_path: Path) -> sqlite3.Connection:
     return connection
 
 
+
+@contextmanager
+def _database(database_path: Path) -> Iterator[sqlite3.Connection]:
+    connection = _connect(database_path)
+    try:
+        with connection:
+            yield connection
+    finally:
+        connection.close()
+
+
 def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
     """Create the initial schema without overwriting existing user data."""
-    with _connect(database_path) as connection:
+    with _database(database_path) as connection:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
