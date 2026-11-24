@@ -541,3 +541,37 @@ def test_generation_queue_rejects_excess_waiters_and_releases_capacity(monkeypat
         await third_request.aclose()
 
     asyncio.run(exercise_queue())
+
+
+
+def test_full_memory_quota_does_not_fail_successful_chat(tmp_path, monkeypatch) -> None:
+    """Automatic memory extraction quietly stops at the per-user cap."""
+    from orinoco.db import create_memory
+
+    database = tmp_path / "full-memory-quota.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_MAX_MEMORIES_PER_USER", "1")
+    monkeypatch.delenv("AUTO_SAVE_MEMORIES", raising=False)
+    initialise_database(database)
+    user = create_user("fullmemory", "a-long-test-password-123", database_path=database)
+    create_memory(
+        user.id,
+        "Existing saved preference.",
+        source="manual",
+        database_path=database,
+    )
+    monkeypatch.setattr(chat_routes, "OllamaClient", MemoryOllamaClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "fullmemory", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "I prefer clear, practical step-by-step answers."},
+        )
+        memories = client.get("/api/memories").json()["memories"]
+
+    assert response.status_code == 200
+    assert response.json()["assistant_message"] == "Hello from Orinoco."
+    assert response.json()["saved_memories"] == []
+    assert len(memories) == 1
