@@ -41,7 +41,9 @@ logger = logging.getLogger(__name__)
 
 # Local inference is deliberately serial on the initial VPS. Bound how quickly
 # one account can add work to that queue; the reverse proxy adds an edge limit.
-MAX_CHAT_REQUESTS_PER_MINUTE = 10
+MAX_CHAT_REQUESTS_PER_MINUTE = int(os.environ.get("ORINOCO_CHAT_REQUESTS_PER_MINUTE", "10"))
+if not 1 <= MAX_CHAT_REQUESTS_PER_MINUTE <= 120:
+    raise RuntimeError("ORINOCO_CHAT_REQUESTS_PER_MINUTE must be between 1 and 120.")
 CHAT_RATE_WINDOW_SECONDS = 60
 MAX_TRACKED_CHAT_USERS = 10_000
 _chat_request_failures: OrderedDict[int, deque[float]] = OrderedDict()
