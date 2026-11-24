@@ -66,7 +66,7 @@ The current source scan found no use of `eval`, `shell=True`, `pickle.loads` or 
 
 ### Account-wide session revocation — implemented
 
-The users table now has a versioned session counter. New sign-ins store that version in the signed cookie; password changes and account suspension/reactivation increment it. All authenticated route groups validate the version, so old cookies cannot become valid again after an account is reactivated. The database performs an additive v4-to-v5 migration, with regression tests for migration, password-change revocation and suspend/reactivate revocation.
+The users table now has a versioned session counter. New sign-ins store that version in the signed cookie; password changes and account suspension/reactivation increment it. All authenticated route groups validate the version, so old cookies cannot become valid again after an account is reactivated. The database performs an additive v4-to-v5 migration, with regression tests for migration, password-change revocation and suspend/reactivate revocation. Existing browser cookies created before this change will require one fresh sign-in after upgrade.
 
 ### Login throttle memory use — hardened
 
