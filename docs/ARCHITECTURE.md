@@ -9,7 +9,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 ## High-level components
 
 - **Custom web interface:** lightweight HTML, CSS and JavaScript served by FastAPI. It now includes sign-in, authenticated chat, conversation history, account settings, memory controls and private/shared document-library screens.
-- **Web application:** Python/FastAPI. It serves the interface, liveness/readiness endpoints and future authenticated application APIs.
+- **Web application:** Python/FastAPI. It serves the interface, liveness/readiness endpoints and authenticated account, chat, document and research APIs.
 - **Local inference:** Ollama, running in the same Pterodactyl container under Supervisor. Its API binds only to 127.0.0.1:11434; it is not exposed as a public allocation.
 - **Model storage:** persistent /home/container/data/models directory. The first-run initialiser downloads the configured curated model when automatic download is enabled.
 - **Application database:** SQLite stores accounts, settings, conversations, personal memories and document metadata/extracted text. Access is scoped server-side to the owning user or the authorised shared library.
@@ -41,7 +41,7 @@ SearXNG may be hosted separately to reduce memory pressure. It is optional and m
 - Public ingress should be limited to the HTTPS reverse proxy and the minimum ports needed for certificate issuance.
 - The web application should receive traffic through the proxy and its assigned Pterodactyl allocation.
 - Ollama binds to loopback inside the Orinoco container; it must not receive a public allocation.
-- The future database must remain internal.
+- SQLite and all application data files remain inside the private container data directory; no database port is exposed.
 - Discord and search integrations require outbound connectivity.
 - Private remote access may be provided through Tailscale; public exposure through a private-network tunnel is not required.
 
@@ -79,11 +79,12 @@ Encrypted backup tooling creates a SQLite online snapshot, uploaded document tre
 
 Application, Egg/image and model updates are separate operations. Updates should verify the release, create a backup, apply migrations, run health checks and provide a documented rollback route.
 
-## Open design decisions
+## Remaining operational decisions
 
-- Automatic backup schedule, retention and remote restore workflow.
+- Remote object-storage lifecycle/retention policy and restore-from-remote convenience.
 - Application update, database migration and rollback workflow.
 - Final off-site object-storage provider and operational key-management procedure.
+- Reverse-proxy request/rate limits and the exact public/private access arrangement.
 
 ## Source-code map
 
