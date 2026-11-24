@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed CI run: 115 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest audit-hardened container image, including session-revocation and document-storage hardening, has built and passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI).
+Latest completed CI run: 118 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The latest audit-hardened container image, including session-revocation and document-storage hardening, has built and passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI).
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -107,7 +107,7 @@ The README and development guide now distinguish implemented encrypted backup op
 - [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.
 - [ ] Finish review of private/shared document ownership, file permissions and parser edge cases. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
-- [ ] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
+- [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
 - [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
 - [ ] Implement and test automatic daily backups, retention and clear failure reporting.
