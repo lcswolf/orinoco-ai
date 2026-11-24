@@ -5,7 +5,8 @@ from __future__ import annotations
 import hmac
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field, field_validator
+
+from orinoco.auth.sessions import get_session_userfrom pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import (
     User, create_memory, delete_memory, get_database_path, get_user_by_id,
@@ -37,17 +38,8 @@ def _require_csrf(request: Request) -> None:
 
 
 def _current_user(request: Request) -> User:
-    """Resolve the active account from the signed request session."""
-    user_id = request.session.get("user_id")
-    if not isinstance(user_id, int):
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    path = get_database_path()
-    initialise_database(path)
-    user = get_user_by_id(user_id, database_path=path)
-    if user is None or not user.active:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    return user
+    """Resolve the active account from a session that has not been revoked."""
+    return get_session_user(request)
 
 
 @router.get("")
