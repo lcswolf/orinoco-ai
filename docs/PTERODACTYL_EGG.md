@@ -8,7 +8,7 @@ This Egg targets the legacy Pterodactyl 1.x import format and is intended for Pa
 
 - `egg/egg-orinoco.json` — importable PTDL_v1 Egg definition.
 - `docker/Dockerfile` — custom runtime image, including the pinned Ollama release.
-- `docker/supervisord.conf` — supervises the web app, Ollama and first-run model download.
+- `docker/supervisord.conf` — supervises the web app, Ollama, first-run model download and daily backup scheduler.
 - `docker/ollama-start.sh` — starts Ollama bound only to loopback.
 - `docker/model-init.sh` — downloads the selected model into persistent server storage when enabled.
 - `docker/web-start.sh` — starts the web app on the primary Pterodactyl allocation.
@@ -30,7 +30,9 @@ The image pins Ollama 0.40.18, disables Ollama cloud features and limits model c
 - Per-user automatic memories with review/edit/delete controls.
 - Private and shared document libraries for TXT, Markdown, PDF, DOCX, XLSX and PPTX, with bounded extraction and FTS5 keyword retrieval.
 - Explicit web-search workspace and per-message opt-in chat search using a configured SearXNG service.
-- Encrypted local backup creation, verification and confirmed restore.\n- S3-compatible off-site upload with remote object byte verification.\n- Liveness endpoint `/healthz` and model readiness endpoint `/readyz`.
+- Encrypted local backup creation, verification and confirmed restore.
+- S3-compatible off-site upload with remote object byte verification.
+- Liveness endpoint `/healthz` and model readiness endpoint `/readyz`.
 
 User-triggered public webpage fetching and local summarisation are implemented with DNS-pinned public-IP resolution and redirect checks. Discord and voice are still under development. The SearXNG feature requires the administrator to configure `SEARXNG_URL` and enable `ENABLE_WEB_SEARCH`. Search queries are sent to that configured service and its upstream providers. The chat search toggle is off by default for each message.
 
