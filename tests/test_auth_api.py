@@ -208,3 +208,38 @@ def test_suspend_and_reactivate_does_not_revive_old_session(tmp_path, monkeypatc
             json={"username": "targetuser", "password": "a-long-user-password-123"},
         )
         assert new_login.status_code == 200
+
+
+def test_session_secret_rejects_symbolic_link(tmp_path, monkeypatch) -> None:
+    """A configured session-secret path must never redirect reads outside private storage."""
+    import pytest
+
+    from orinoco.auth.sessions import get_session_secret
+
+    target = tmp_path / "external-secret.txt"
+    target.write_text("external-secret-value-long-enough-to-pass-validation", encoding="utf-8")
+    link = tmp_path / "data" / ".session_secret"
+    link.parent.mkdir()
+    link.symlink_to(target)
+    monkeypatch.delenv("ORINOCO_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ORINOCO_SESSION_SECRET_PATH", str(link))
+
+    with pytest.raises(RuntimeError, match="must not be a symbolic link"):
+        get_session_secret()
+
+
+def test_existing_session_secret_permissions_are_restricted(tmp_path, monkeypatch) -> None:
+    """Loading a persistent signing secret repairs permissive file mode bits."""
+    import os
+
+    from orinoco.auth.sessions import get_session_secret
+
+    secret = tmp_path / "data" / ".session_secret"
+    secret.parent.mkdir()
+    secret.write_text("existing-session-secret-value-long-enough", encoding="utf-8")
+    secret.chmod(0o644)
+    monkeypatch.delenv("ORINOCO_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ORINOCO_SESSION_SECRET_PATH", str(secret))
+
+    assert get_session_secret() == "existing-session-secret-value-long-enough"
+    assert os.stat(secret).st_mode & 0o777 == 0o600
