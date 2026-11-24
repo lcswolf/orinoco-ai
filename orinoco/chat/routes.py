@@ -53,6 +53,8 @@ _SENSITIVE_MEMORY_TERMS = (
 )
 _EMAIL_PATTERN = re.compile(r"\b[^\s@]+@[^\s@]+\.[^\s@]+\b")
 _PHONE_PATTERN = re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)")
+_ADDRESS_PATTERN = re.compile(r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr|close|court|ct|crescent|way|place|pl|terrace|ter)\b", re.IGNORECASE)
+_UK_POSTCODE_PATTERN = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.IGNORECASE)
 
 
 def extract_memory_candidates(raw: str) -> list[str]:
