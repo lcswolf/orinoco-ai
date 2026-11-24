@@ -161,7 +161,7 @@ def test_password_change_revokes_other_signed_in_sessions(tmp_path, monkeypatch)
         assert changed.status_code == 200
         assert first.get("/api/auth/me").json()["authenticated"] is True
         assert second.get("/api/auth/me").json()["authenticated"] is False
-        assert second.get("/api/chat/conversations").status_code == 401
+        assert second.get("/api/conversations").status_code == 401
 
 
 def test_suspend_and_reactivate_does_not_revive_old_session(tmp_path, monkeypatch) -> None:
