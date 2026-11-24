@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed Python CI run: 170 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reports no known vulnerabilities. The latest container build including conversation deletion, schema v6 and persona settings passed its expanded smoke test. A final CLI error-handling adjustment is being rebuilt.
+Latest completed Python CI run (#715) on commit `cf90f2b9`: 183 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reports no known vulnerabilities. Container build/smoke run #333 passed on runtime commit `e37af30e`; subsequent changes through `cf90f2b9` were tests, Egg settings and documentation, not container runtime code. The image has not been published to GHCR or deployed. A live Pterodactyl import, deployment and recovery drill remain outstanding.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -94,7 +94,7 @@ The application now sends a restrictive Content Security Policy, clickjacking pr
 
 ### SQLite schema version safety — strengthened
 
-The database initializer now completes the known additive v1–v5 table/index and session-version upgrades plus v6 per-user response-preference and administrator-persona tables. It refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover a v5-to-v6 upgrade without losing accounts, defaults and a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
+The database initializer now completes the known additive v1–v5 table/index and session-version upgrades plus v6 per-user response-preference and administrator-persona tables, plus v7 per-user automatic-memory preference. It refuses to modify a database with a newer schema version instead of silently resetting its version number. Regression tests cover additive schema upgrades without losing accounts or defaults, plus refusal to modify a future-version database. Non-additive schema changes will still require an explicit migration before the schema version is increased.
 
 ### Local inference boundary — hardened
 
@@ -106,7 +106,7 @@ The runtime now installs the operating-system timezone database so the configure
 
 ### Runtime and CI version pins — checked
 
-The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 170 tests. One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 183 tests (run #715 on `cf90f2b9`). One Starlette/httpx TestClient deprecation warning remains under review; it does not currently fail tests. The final release gate will repeat the dependency audit, full suite and container smoke test on the same commit.
 
 ### SQLite file permissions and symlink handling — hardened
 
@@ -199,7 +199,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm 183 passing tests, a clean pip-audit scan and a successful container smoke test for the bounded generation/memory runtime (Python test run #699; container build #333). Repeat both on the final release commit.
+- [x] Confirm 183 passing tests, a clean pip-audit scan and a successful container smoke test for the bounded generation/memory runtime (Python test run #715; container build #333). Repeat both on the final release commit.
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
