@@ -15,6 +15,7 @@ PLACEHOLDER = re.compile(r"\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}")
 
 
 def main() -> int:
+    """Expand Pterodactyl placeholders and replace this process with the configured startup command."""
     startup = os.environ.get("STARTUP", "").strip()
     if not startup:
         print("ERROR: Pterodactyl did not provide STARTUP.", file=sys.stderr)
