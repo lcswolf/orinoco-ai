@@ -461,3 +461,30 @@ def test_backup_verification_rejects_negative_database_schema_version(tmp_path, 
 
     with pytest.raises(backups.BackupError, match="invalid negative schema version"):
         backups.verify_backup(backup)
+
+
+def test_backup_verification_requires_version_six_preference_tables(tmp_path, monkeypatch) -> None:
+    """A current-schema backup missing v6 tables must not be accepted as complete."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    with sqlite3.connect(database) as connection:
+        connection.execute("DROP TABLE user_preferences")
+
+    backup = backups.create_backup()
+
+    with pytest.raises(backups.BackupError, match="missing required Orinoco tables"):
+        backups.verify_backup(backup)
+
+
+def test_legacy_v5_backup_can_be_verified_for_additive_upgrade(tmp_path, monkeypatch) -> None:
+    """A supported v5 snapshot need not contain tables introduced by schema v6."""
+    database, _, _ = configure_backup_paths(monkeypatch, tmp_path)
+    with sqlite3.connect(database) as connection:
+        connection.execute("DROP TABLE user_preferences")
+        connection.execute("DROP TABLE assistant_persona")
+        connection.execute("PRAGMA user_version = 5")
+
+    backup = backups.create_backup()
+
+    manifest = backups.verify_backup(backup)
+
+    assert manifest["format"] == "orinoco-backup-v1"
