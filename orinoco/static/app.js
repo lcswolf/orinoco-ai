@@ -102,6 +102,7 @@ function showAccount(user) {
     chatInput.placeholder = "Sign in to start a private conversation…";
     chatHint.textContent = "Sign in to start a private conversation. Your chats are saved to your own account.";
     currentConversationId = null;
+    showChatView();
     clearThread();
     conversationList.replaceChildren();
     mobileConversations.replaceChildren(new Option("Recent chats", ""));
