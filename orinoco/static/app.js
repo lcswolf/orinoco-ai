@@ -26,6 +26,8 @@ const documentsLink = document.getElementById("documents-link");
 const chatLink = document.getElementById("chat-link");
 const chatView = document.querySelector(".welcome");
 const documentsView = document.getElementById("documents-view");
+const researchLink = document.getElementById("research-link");
+const researchView = document.getElementById("research-view");
 const sharedDocumentTools = document.getElementById("shared-document-tools");
 let currentUser = null;
 let currentConversationId = null;
@@ -77,6 +79,8 @@ function showAccount(user) {
     memoriesLink.setAttribute("aria-disabled", "false");
     documentsLink.classList.remove("unavailable");
     documentsLink.setAttribute("aria-disabled", "false");
+    researchLink.classList.remove("unavailable");
+    researchLink.setAttribute("aria-disabled", "false");
     userName.textContent = user.username;
     userRole.textContent = user.role === "admin" ? "Administrator" : "Standard account";
     userAvatar.textContent = user.username.charAt(0).toUpperCase();
@@ -95,6 +99,8 @@ function showAccount(user) {
     memoriesLink.setAttribute("aria-disabled", "true");
     documentsLink.classList.add("unavailable");
     documentsLink.setAttribute("aria-disabled", "true");
+    researchLink.classList.add("unavailable");
+    researchLink.setAttribute("aria-disabled", "true");
     userName.textContent = "Not signed in";
     userRole.textContent = "Your private workspace";
     userAvatar.textContent = "?";
@@ -371,6 +377,7 @@ function setActiveNavigation(activeLink) {
 function showChatView() {
   chatView.hidden = false;
   documentsView.hidden = true;
+  researchView.hidden = true;
   setActiveNavigation(chatLink);
 }
 
@@ -381,8 +388,20 @@ function showDocumentsView() {
   }
   chatView.hidden = true;
   documentsView.hidden = false;
+  researchView.hidden = true;
   setActiveNavigation(documentsLink);
   loadDocuments();
+}
+
+function showResearchView() {
+  if (!currentUser) {
+    loginDialog.showModal();
+    return;
+  }
+  chatView.hidden = true;
+  documentsView.hidden = true;
+  researchView.hidden = false;
+  setActiveNavigation(researchLink);
 }
 
 function setDocumentFeedback(id, message, isError = false) {
@@ -512,6 +531,10 @@ async function uploadDocument(formId, inputId, feedbackId, endpoint) {
 documentsLink.addEventListener("click", event => {
   event.preventDefault();
   showDocumentsView();
+});
+researchLink.addEventListener("click", event => {
+  event.preventDefault();
+  showResearchView();
 });
 chatLink.addEventListener("click", event => {
   event.preventDefault();
@@ -780,3 +803,55 @@ document.getElementById("memory-form").addEventListener("submit", async (event) 
   }
 });
 
+
+
+document.getElementById("research-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!currentUser) {
+    loginDialog.showModal();
+    return;
+  }
+  const query = document.getElementById("research-query").value.trim();
+  const feedback = document.getElementById("research-feedback");
+  const results = document.getElementById("research-results");
+  const button = document.getElementById("research-submit");
+  if (query.length < 3) return;
+  button.disabled = true;
+  button.textContent = "Searching…";
+  feedback.hidden = true;
+  results.replaceChildren();
+  try {
+    const response = await fetch("/api/research/search?q=" + encodeURIComponent(query), {
+      headers: { Accept: "application/json" },
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || "Web search is unavailable.");
+    if (!payload.results.length) {
+      showFeedback(feedback, "No results were returned for that search.", true);
+      return;
+    }
+    for (const result of payload.results) {
+      const card = document.createElement("article");
+      card.className = "research-result";
+      const heading = document.createElement("h2");
+      const link = document.createElement("a");
+      link.href = result.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = result.title;
+      heading.append(link);
+      const summary = document.createElement("p");
+      summary.textContent = result.content || "No summary was provided by the search service.";
+      const url = document.createElement("div");
+      url.className = "result-url";
+      url.textContent = result.url;
+      card.append(heading, summary, url);
+      results.append(card);
+    }
+  } catch (error) {
+    showFeedback(feedback, error.message || "Web search is unavailable.", true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Search";
+  }
+});
