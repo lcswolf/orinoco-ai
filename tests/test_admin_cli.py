@@ -21,3 +21,17 @@ def test_admin_bootstrap_uses_configured_database_path(tmp_path, monkeypatch) ->
         "a-very-long-admin-password-123",
         database_path=database,
     ) is not None
+
+
+def test_admin_bootstrap_refuses_when_any_account_already_exists(tmp_path, monkeypatch) -> None:
+    """The one-time setup command must not become an alternate admin-creation path."""
+    from orinoco.db import create_user, initialise_database
+
+    database = tmp_path / "existing.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("existinguser", "a-long-existing-password-123", database_path=database)
+    monkeypatch.setattr("builtins.input", lambda prompt: (_ for _ in ()).throw(AssertionError("must not prompt")))
+    monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "create-admin"])
+
+    assert main() == 2
