@@ -10,6 +10,7 @@ from orinoco.db import get_database_path
 
 
 def get_session_secret() -> str:
+    """Load the configured signing secret or create a persistent, owner-readable secret file."""
     configured = os.environ.get("ORINOCO_SECRET_KEY")
     if configured:
         if len(configured) < 32:
@@ -58,5 +59,6 @@ def get_session_secret() -> str:
 
 
 def secure_cookie_enabled() -> bool:
+    """Return whether session cookies must be marked Secure for HTTPS deployments."""
     value = os.environ.get("ORINOCO_COOKIE_SECURE", "true").strip().lower()
     return value not in {"0", "false", "no", "off"}
