@@ -143,6 +143,60 @@
       "user_viewable": false,
       "user_editable": false,
       "rules": "nullable|string|max:128"
+    },
+    {
+      "name": "S3 Backup Endpoint",
+      "description": "HTTPS endpoint for a private S3-compatible object-storage service. Leave blank until remote backup storage is configured.",
+      "env_variable": "ORINOCO_BACKUP_S3_ENDPOINT",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:512"
+    },
+    {
+      "name": "S3 Backup Bucket",
+      "description": "Private bucket name for encrypted Orinoco backup files.",
+      "env_variable": "ORINOCO_BACKUP_S3_BUCKET",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:255"
+    },
+    {
+      "name": "S3 Backup Access Key ID",
+      "description": "Restricted object-storage access key. Grant access only to the dedicated backup bucket.",
+      "env_variable": "ORINOCO_BACKUP_S3_ACCESS_KEY_ID",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:256"
+    },
+    {
+      "name": "S3 Backup Secret Access Key",
+      "description": "Secret for the restricted object-storage access key. Keep this hidden from normal users.",
+      "env_variable": "ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:512"
+    },
+    {
+      "name": "S3 Backup Region",
+      "description": "Object-storage region or provider region identifier.",
+      "env_variable": "ORINOCO_BACKUP_S3_REGION",
+      "default_value": "us-east-1",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|string|max:128"
+    },
+    {
+      "name": "S3 Backup Prefix",
+      "description": "Folder-like object key prefix used for Orinoco backups.",
+      "env_variable": "ORINOCO_BACKUP_S3_PREFIX",
+      "default_value": "orinoco",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|max:512"
     }
   ]
 }
