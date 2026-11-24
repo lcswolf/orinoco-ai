@@ -263,7 +263,7 @@
     },
     {
       "name": "Trusted Proxy IPs",
-      "description": "Comma-separated exact IP addresses or CIDR ranges for the host reverse proxy. Leave blank until the proxy peer address has been measured from inside the container. Forwarded client IPs are ignored unless the connecting peer matches this allowlist.",
+      "description": "Comma-separated exact IP addresses or narrow CIDR ranges for the host reverse proxy (IPv4 /24 or narrower; IPv6 /64 or narrower). Leave blank until the proxy peer address has been measured from inside the container. Forwarded client IPs are ignored unless the connecting peer matches this allowlist.",
       "env_variable": "ORINOCO_TRUSTED_PROXY_IPS",
       "default_value": "",
       "user_viewable": false,
