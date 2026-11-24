@@ -108,3 +108,24 @@ def test_login_failure_tracker_has_a_hard_memory_bound(monkeypatch) -> None:
 
     assert len(auth_routes._login_failures) == 2
     assert "first-user" not in auth_routes._login_failures
+
+
+def test_login_rate_limit_retry_after_reflects_oldest_failure(monkeypatch) -> None:
+    """The response delay should match the remaining lockout window, not always 15 minutes."""
+    from collections import OrderedDict, deque
+    import time
+
+    from fastapi import HTTPException
+    from orinoco.auth import routes as auth_routes
+
+    now = time.monotonic()
+    monkeypatch.setattr(auth_routes, "_login_failures", OrderedDict({"locked-user": deque([now - 890] * 5)}))
+    monkeypatch.setattr(auth_routes.time, "monotonic", lambda: now)
+
+    try:
+        auth_routes._check_login_rate("locked-user")
+    except HTTPException as exc:
+        assert exc.status_code == 429
+        assert exc.headers["Retry-After"] == "10"
+    else:
+        raise AssertionError("expected rate limit response")
