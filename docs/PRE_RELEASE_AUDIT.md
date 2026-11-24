@@ -76,6 +76,8 @@ The README and development guide now distinguish implemented encrypted backup op
 
 ## Remaining review work
 
+- [ ] Add the agreed editable personality controls: administrator-managed core persona and per-user voice, tone and answer-detail preferences. The current default prompt now reflects the bright voice and 65% humour choice, but the settings UI/persistence is not yet implemented.
+
 - [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.\n- [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
 - [x] Add bounded Office ZIP expansion checks and regression coverage.\n- [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.\n- [ ] Finish review of private/shared document ownership, file permissions and parser edge cases.
