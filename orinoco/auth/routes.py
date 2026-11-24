@@ -160,6 +160,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     _require_csrf(request)
     username = payload.username.strip().lower()
     remote_ip = request.client.host if request.client else None
+    identity_key = _login_identity_key(username, remote_ip)
     _check_login_rate(username, remote_ip)
     initialise_database(get_database_path())
     user = authenticate_user(
@@ -169,7 +170,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
     )
     if user is None:
         failed_at = time.monotonic()
-        _login_failures_for(username).append(failed_at)
+        _login_failures_for(identity_key).append(failed_at)
         if remote_ip:
             _login_ip_failures_for(remote_ip).append(failed_at)
         raise HTTPException(
@@ -177,7 +178,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
             detail="The username or password was not recognised.",
         )
 
-    _login_failures.pop(username, None)
+    _login_failures.pop(identity_key, None)
     # Rotate the session after authentication to prevent session fixation.
     request.session.clear()
     request.session["user_id"] = user.id
