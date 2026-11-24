@@ -92,6 +92,8 @@ async def get_ollama_readiness() -> dict[str, str]:
         response = await client.get(f"{OLLAMA_API_BASE}/api/tags")
         response.raise_for_status()
         payload = response.json()
+    if not isinstance(payload, dict) or not isinstance(payload.get("models"), list):
+        raise ValueError("Ollama returned an invalid model list")
 
     available_models = {
         item.get("name") or item.get("model")
