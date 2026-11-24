@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed CI run: 113 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The previous audit-hardened container image passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI). A rebuild containing the latest authentication and document-storage hardening is in progress.
+Latest completed CI run: 115 tests passed, with one Starlette/httpx TestClient deprecation warning. The Node 20 GitHub Actions warning has been removed by upgrading the workflow actions. The previous audit-hardened container image passed its expanded runtime smoke test (non-root, loopback Ollama, UK timezone and backup CLI). A rebuild containing the latest authentication and document-storage hardening is in progress.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -64,6 +64,10 @@ The model-generated memory filter now uses word-boundary matching and covers add
 
 The current source scan found no use of `eval`, `shell=True`, `pickle.loads` or frontend `innerHTML`. The Pterodactyl entrypoint tokenises its startup command with `shlex.split` and replaces the process with `execvp`; it does not evaluate the command through a shell. Continue to review new code against the same rules.
 
+### Account-wide session revocation — implemented
+
+The users table now has a versioned session counter. New sign-ins store that version in the signed cookie; password changes and account suspension/reactivation increment it. All authenticated route groups validate the version, so old cookies cannot become valid again after an account is reactivated. The database performs an additive v4-to-v5 migration, with regression tests for migration, password-change revocation and suspend/reactivate revocation.
+
 ### Login throttle memory use — hardened
 
 The failed-login tracker now has a fixed maximum number of tracked usernames and evicts the least-recently-used entry when full. Its Retry-After value reflects the remaining lockout window instead of always reporting the full window. It remains process-local and username-based, so reverse-proxy/IP-level rate limits are still required before public exposure.
@@ -96,7 +100,7 @@ The README and development guide now distinguish implemented encrypted backup op
 
 - [ ] Add the agreed editable personality controls: administrator-managed core persona and per-user voice, tone and answer-detail preferences. The current default prompt now reflects the bright voice and 65% humour choice, but the settings UI/persistence is not yet implemented.
 
-- [ ] Finish authentication/session review, including rate-limit behaviour, cookie/proxy assumptions, secret rotation and revocation. Add application-level request limits and consider per-user document/storage quotas and chat retention before opening access to more than the intended small group.
+- [ ] Finish authentication/session review, including IP-level rate limiting, cookie/proxy assumptions and session-secret rotation. Add application-level request limits and consider per-user document/storage quotas and chat retention before opening access to more than the intended small group.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.
 - [ ] Review all database functions and schema evolution for safe upgrades from an existing installation.
 - [x] Add bounded Office ZIP expansion checks and regression coverage.
