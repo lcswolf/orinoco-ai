@@ -124,6 +124,7 @@ def test_authenticated_summary_uses_local_model_and_returns_source(tmp_path, mon
 def test_unsafe_webpage_is_rejected_before_model_call(tmp_path, monkeypatch) -> None:
     database = tmp_path / "orinoco.sqlite3"
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ENABLE_WEB_SEARCH", "true")
     initialise_database(database)
     create_user("webuser", "a-long-test-password-123", database_path=database)
 
