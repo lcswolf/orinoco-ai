@@ -10,6 +10,7 @@ from orinoco.db import AccountError, create_user, initialise_database
 
 
 def create_initial_admin() -> int:
+    """Create the first administrator only when no account exists; never reset an existing installation."""
     initialise_database()
     print("Create the first Orinoco administrator account.")
     print("Usernames: 3–32 characters; letters, numbers, dots, underscores or hyphens.")
@@ -30,6 +31,7 @@ def create_initial_admin() -> int:
 
 
 def main() -> int:
+    """Parse the command-line options for the one-time initial administrator setup."""
     parser = argparse.ArgumentParser(prog="python -m orinoco.admin")
     parser.add_argument("command", choices=("create-admin",))
     args = parser.parse_args()
