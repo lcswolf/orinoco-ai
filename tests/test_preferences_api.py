@@ -37,18 +37,18 @@ def test_preferences_api_is_authenticated_csrf_protected_and_per_user(tmp_path, 
         saved = first.put(
             "/api/preferences",
             headers={"X-CSRF-Token": token},
-            json={"voice": "calm", "tone": "direct", "answer_detail": "detailed"},
+            json={"voice": "calm", "tone": "direct", "answer_detail": "detailed", "auto_save_memories": False},
         )
 
     with TestClient(app, base_url="https://testserver") as second:
         _sign_in(second, "preferencetwo", "another-long-password-456")
         other_defaults = second.get("/api/preferences")
 
-    assert defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced"}
+    assert defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
     assert denied.status_code == 403
     assert saved.status_code == 200
-    assert saved.json() == {"voice": "calm", "tone": "direct", "answer_detail": "detailed"}
-    assert other_defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced"}
+    assert saved.json() == {"voice": "calm", "tone": "direct", "answer_detail": "detailed", "auto_save_memories": False}
+    assert other_defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
 
 
 def test_admin_persona_api_is_admin_only_and_csrf_protected(tmp_path, monkeypatch) -> None:
