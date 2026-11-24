@@ -865,3 +865,44 @@ document.getElementById("research-form").addEventListener("submit", async (event
     button.textContent = "Search";
   }
 });
+
+
+document.getElementById("summary-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!currentUser) {
+    loginDialog.showModal();
+    return;
+  }
+  const url = document.getElementById("summary-url").value.trim();
+  const button = document.getElementById("summary-submit");
+  const feedback = document.getElementById("summary-feedback");
+  const resultCard = document.getElementById("summary-result");
+  button.disabled = true;
+  button.textContent = "Fetching…";
+  feedback.hidden = true;
+  resultCard.hidden = true;
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/research/summarise", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf,
+      },
+      body: JSON.stringify({ url }),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || "Could not summarise that webpage.");
+    document.getElementById("summary-title").textContent = payload.title;
+    const source = document.getElementById("summary-source");
+    source.href = payload.url;
+    document.getElementById("summary-text").textContent = payload.summary;
+    resultCard.hidden = false;
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not summarise that webpage.", true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Summarise";
+  }
+});
