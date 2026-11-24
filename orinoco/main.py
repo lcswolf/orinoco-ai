@@ -54,6 +54,32 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.middleware("http")
+async def request_body_limit(request, call_next):
+    """Reject oversized declared request bodies before FastAPI parses them.
+
+    The reverse proxy must also enforce a body limit for chunked requests that
+    do not carry Content-Length; the application check is defence in depth.
+    """
+    raw_length = request.headers.get("content-length")
+    if raw_length is not None:
+        try:
+            content_length = int(raw_length)
+        except ValueError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
+        if content_length < 0:
+            return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
+        max_bytes = int(os.environ.get("ORINOCO_MAX_REQUEST_BODY_BYTES", str(12 * 1024 * 1024)))
+        if max_bytes < 1024 * 1024:
+            return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
+        if content_length > max_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "The request body exceeds the configured size limit."},
+            )
+    return await call_next(request)
+
+
+@app.middleware("http")
 async def security_headers(request, call_next):
     """Apply conservative browser security headers to app and static responses."""
     response = await call_next(request)
