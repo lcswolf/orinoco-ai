@@ -66,20 +66,21 @@ async def delete_shared_document(document_id: int, request: Request) -> dict[str
     )
     if document is None or document["scope"] != "shared":
         raise HTTPException(status_code=404, detail="Shared document not found.")
-    try:
-        # Keep the shared-library row visible if the original file cannot be removed.
-        remove_document_file(str(document["stored_path"]))
-    except (OSError, ValueError) as exc:
-        raise HTTPException(
-            status_code=500,
-            detail="The shared document could not be removed from storage; it remains listed so you can retry.",
-        ) from exc
-    stored_path = delete_document(
-        0,
-        document_id,
-        allow_shared=True,
-        database_path=get_database_path(),
-    )
-    if stored_path is None:
-        raise HTTPException(status_code=404, detail="Shared document not found.")
+    with document_storage_lock():
+        try:
+            # Keep the shared-library row visible if the original file cannot be removed.
+            remove_document_file(str(document["stored_path"]))
+        except (OSError, ValueError) as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="The shared document could not be removed from storage; it remains listed so you can retry.",
+            ) from exc
+        stored_path = delete_document(
+            0,
+            document_id,
+            allow_shared=True,
+            database_path=get_database_path(),
+        )
+        if stored_path is None:
+            raise HTTPException(status_code=404, detail="Shared document not found.")
     return {"deleted": True}
