@@ -13,6 +13,10 @@ This page separates confirmed project decisions from implementation work. A plan
 - Account settings dialog with password changes and an administrator-only user-management screen.
 - Admin API to create standard accounts, list accounts and suspend/reactivate users; the last active administrator cannot be suspended.
 - Working authenticated chat composer with saved conversation list, conversation switching and a mobile recent-chat selector.
+- Private document uploads with per-account storage, supported-format text extraction, download and delete controls.
+- Administrator-managed shared document library, visible as read-only reference material to standard users.
+- Chat retrieval of relevant excerpts from the current user's private documents and the authorised shared library.
+- Responsive document-library workspace in the custom interface, including upload, list, download, delete and administrator shared-library controls.
 - Local Ollama chat orchestration with one generation at a time, bounded response length and a short conversation context window.
 - Atomic saving of user/assistant message pairs and server-side conversation ownership checks.
 - Per-user personal memories with add, list, edit and delete controls.
@@ -35,7 +39,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0 and an install script that prepares persistent data folders.
 - GitHub Actions workflows for Python tests and Docker image build validation.
 
-The latest completed Python test run passed all 47 tests. The custom interface JavaScript syntax check also passes. The expanded image build and container runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The Python test suite and container smoke test are running against the latest document-library interface changes. Earlier backend document API tests passed. The custom interface JavaScript syntax check is part of CI. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -56,7 +60,7 @@ The latest completed Python test run passed all 47 tests. The custom interface J
 ## Not implemented yet
 
 - Conversation deletion/editing, pagination and streaming responses.
-- Document ingestion, retrieval and shared/private libraries.
+- Document search improvements beyond the initial bounded keyword retrieval.
 - Web search and safe URL fetching.
 - Discord integration and voice features.
 - Production-ready Orinoco runtime image, published GHCR package and automated image release pipeline.
@@ -68,7 +72,7 @@ The latest completed Python test run passed all 47 tests. The custom interface J
 ## Suggested implementation sequence
 
 1. Finish frontend and container smoke tests.
-2. Add document ingestion and shared/private knowledge libraries.
+2. Complete the document-library interface and verify upload, isolation, retrieval and container behaviour.
 3. Add optional web research and safe URL summaries.
 4. Add administrator settings, backups, restore and update/rollback procedures.
 5. Add Discord text integration; consider voice only after the core is stable.
