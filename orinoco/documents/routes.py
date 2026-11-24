@@ -28,6 +28,7 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
 def _require_csrf(request: Request) -> None:
+    """Require a valid CSRF token before changing a user's document collection."""
     expected = request.session.get("csrf_token")
     supplied = request.headers.get("x-csrf-token")
     if not isinstance(expected, str) or not isinstance(supplied, str) or not hmac.compare_digest(expected, supplied):
@@ -35,6 +36,7 @@ def _require_csrf(request: Request) -> None:
 
 
 def _current_user(request: Request) -> User:
+    """Resolve the active account from the signed request session."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         raise HTTPException(status_code=401, detail="Please sign in to continue.")
@@ -48,6 +50,7 @@ def _current_user(request: Request) -> User:
 
 
 def _safe_filename(filename: str | None) -> str:
+    """Reduce an upload filename to a safe display name without trusting its path."""
     value = (filename or "upload").replace("\\", "/").split("/")[-1]
     value = "".join(character for character in value if character.isprintable() and character not in "\r\n")
     if not value or value in {".", ".."}:
@@ -56,6 +59,7 @@ def _safe_filename(filename: str | None) -> str:
 
 
 async def _store_upload(file: UploadFile, *, user_id: int, scope: str) -> dict[str, object]:
+    """Validate, extract and persist a document with private/shared ownership metadata."""
     filename = _safe_filename(file.filename)
     data = await file.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:
@@ -99,12 +103,14 @@ async def _store_upload(file: UploadFile, *, user_id: int, scope: str) -> dict[s
 
 @router.get("")
 async def get_documents(request: Request) -> dict[str, object]:
+    """List the current user's private files and documents visible from the shared library."""
     user = _current_user(request)
     return {"documents": list_documents(user.id, database_path=get_database_path())}
 
 
 @router.post("", status_code=201)
 async def upload_private_document(
+    """Store a document privately under the authenticated user's account."""
     request: Request,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
@@ -115,6 +121,7 @@ async def upload_private_document(
 
 @router.get("/{document_id}/download")
 async def download_document(document_id: int, request: Request) -> FileResponse:
+    """Download a document only when the current account is allowed to see it."""
     user = _current_user(request)
     document = get_document(
         user.id,
@@ -141,6 +148,7 @@ async def download_document(document_id: int, request: Request) -> FileResponse:
 
 @router.delete("/{document_id}")
 async def remove_private_document(document_id: int, request: Request) -> dict[str, bool]:
+    """Delete a private document only when the current account owns it."""
     _require_csrf(request)
     user = _current_user(request)
     document = get_document(
