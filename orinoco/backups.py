@@ -141,26 +141,30 @@ def _copy_database_snapshot(destination: Path) -> None:
 
 def _build_archive(staging: Path, archive: Path) -> dict[str, object]:
     """Stage a consistent database, document tree, session secret and manifest."""
-    database_snapshot = staging / "database.sqlite3"
-    _copy_database_snapshot(database_snapshot)
+    from orinoco.documents.storage import document_storage_lock
 
-    document_root = get_document_root()
+    database_snapshot = staging / "database.sqlite3"
     document_count = 0
-    if document_root.exists():
-        if document_root.is_symlink():
-            raise BackupError("Document storage must not be a symbolic link.")
-        # Reject links before copytree so a link cannot make the backup include
-        # files from outside Orinoco's private document directory.
-        if any(item.is_symlink() for item in document_root.rglob("*")):
-            raise BackupError("Document storage contains a symbolic link.")
-        target_documents = staging / "documents"
-        shutil.copytree(document_root, target_documents, symlinks=False)
-        document_count = sum(1 for item in target_documents.rglob("*") if item.is_file())
-        for item in target_documents.rglob("*"):
-            if item.is_symlink():
+    # A cross-process lock keeps the SQLite snapshot and uploaded files in sync
+    # with concurrent uploads/deletions performed by the web application.
+    with document_storage_lock():
+        _copy_database_snapshot(database_snapshot)
+        document_root = get_document_root()
+        if document_root.exists():
+            if document_root.is_symlink():
+                raise BackupError("Document storage must not be a symbolic link.")
+            # Reject links before copytree so a link cannot make the backup include
+            # files from outside Orinoco's private document directory.
+            if any(item.is_symlink() for item in document_root.rglob("*")):
                 raise BackupError("Document storage contains a symbolic link.")
-    else:
-        (staging / "documents").mkdir()
+            target_documents = staging / "documents"
+            shutil.copytree(document_root, target_documents, symlinks=False)
+            document_count = sum(1 for item in target_documents.rglob("*") if item.is_file())
+            for item in target_documents.rglob("*"):
+                if item.is_symlink():
+                    raise BackupError("Document storage contains a symbolic link.")
+        else:
+            (staging / "documents").mkdir()
 
     secret_path = _session_secret_path()
     if secret_path.is_file():
