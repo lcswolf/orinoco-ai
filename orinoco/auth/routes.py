@@ -143,6 +143,7 @@ async def change_password(
     payload: PasswordChangeRequest,
     request: Request,
 ) -> dict[str, bool]:
+    """Verify the current password and update the authenticated account's hash."""
     _require_csrf(request)
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
