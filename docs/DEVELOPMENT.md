@@ -102,10 +102,22 @@ python -m orinoco.backups upload /home/container/data/backups/orinoco-YYYYMMDDTH
 
 The command uploads only encrypted `.oribak` files, sends no public ACL,
 records a SHA-256 checksum as object metadata, checks the remote object size,
-then downloads and hashes the stored bytes before reporting success. This is an explicit CLI
-operation at present; automatic daily scheduling, retention and restore-from-
-remote convenience are not yet implemented. Keep the encryption key and
-object-storage credentials separate from the backup bucket.
+then downloads and hashes the stored bytes before reporting success.
+
+The container now runs a supervised daily backup scheduler. It defaults to
+03:00 in `TIMEZONE` (Europe/London by default), with 14 days of local backup
+retention. Configure `ORINOCO_BACKUP_TIME` in 24-hour `HH:MM` format and
+`ORINOCO_BACKUP_RETENTION_DAYS` between 1 and 365 in the Egg. The scheduler
+creates a local encrypted backup, optionally uploads and verifies it when an
+S3 endpoint is configured, and only then prunes expired local backups. If an
+off-site upload fails, it keeps the new local backup and does not prune older
+ones. Failures are written to the Pterodactyl console and recorded in
+`/home/container/data/backups/.scheduler-status.json`; this file contains
+operational status only, not credentials. The scheduler runs once per local
+calendar day and catches up once after a restart if that day's scheduled time
+has already passed. Configure an object-storage lifecycle policy separately
+if remote retention is required. Keep the encryption key and object-storage
+credentials separate from the backup bucket.
 
 For recovery, stop Orinoco first, preserve the current server data, then run:
 
@@ -142,6 +154,6 @@ The image uses a non-root `container` account and the `/home/container` working 
 - Conversation editing/deletion, pagination and streaming.
 - OCR and advanced semantic document search.
 - Discord and voice integrations.
-- Automatic off-site backup scheduling and retention; safe application updates and rollback; production deployment.
+- Remote object-storage retention/lifecycle policy and restore-from-remote convenience; safe application updates and rollback; production deployment.
 
 Do not expose this development scaffold as a public assistant service.
