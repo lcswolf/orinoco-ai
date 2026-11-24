@@ -40,7 +40,7 @@ The repository now includes SQLite account storage and Argon2 password hashing p
 ORINOCO_DATABASE_PATH=./data/orinoco.sqlite3 python -m orinoco.admin create-admin
 ```
 
-The command asks for a username and password interactively; it does not place the password in shell history. Use a password of at least 12 characters. This is a development/bootstrap foundation only: HTTP login, sessions, user-management screens and account recovery are not implemented yet.
+The command asks for a username and password interactively; it does not place the password in shell history. Use a password of at least 12 characters. The web interface includes a sign-in dialog backed by signed sessions and CSRF-protected login/logout routes. Account creation is still deliberately local-only; public registration, user-management screens, account recovery and MFA are not implemented yet.
 
 ## Run tests
 
@@ -79,7 +79,7 @@ Then visit `http://127.0.0.1:8000/`.
 
 ## Current limitations
 
-- No HTTP login, sessions or user-management interface.
+- No user-management, account recovery or MFA screens.
 - No authenticated chat endpoint or conversation history.
 - No memory, document ingestion, web search or URL summarisation.
 - No Discord or voice integration.
