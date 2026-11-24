@@ -14,7 +14,7 @@ Orinoco aims to provide a friendly, private assistant that can be hosted on a mo
 - Per-user chat history and personal memories, with review, correction and deletion controls.
 - Private user documents and an administrator-managed shared knowledge library.
 - Optional web search through a configured SearXNG instance.
-- Safe summaries of user-provided URLs (planned).
+- User-triggered summaries of public webpages, fetched with SSRF protections and summarised by the local model.
 - Optional Discord text integration and explicitly activated voice features (planned).
 
 ## Design principles
@@ -33,7 +33,7 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 The repository includes a custom responsive interface, secure authentication, administrator user management, authenticated local chat, private conversations and memories, private/shared document libraries, SQLite FTS5 retrieval and an explicit web-search workspace that uses an administrator-configured SearXNG service.
 
-Direct URL fetching/summarisation, Discord, voice, backups and production deployment are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
+Discord, voice, backups and production deployment are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
 See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
