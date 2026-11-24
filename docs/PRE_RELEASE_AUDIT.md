@@ -144,19 +144,31 @@ A failure during automatic memory extraction or persistence is now logged but do
 
 The README, architecture, Egg and development guide now distinguish implemented daily local scheduling/retention from the outstanding remote bucket lifecycle and remote-restore convenience. The Egg's web-search descriptions reflect the implemented SearXNG integration.
 
+### Request and storage resource limits — application controls implemented
+
+The application now rejects oversized declared request bodies (12 MiB default)
+before FastAPI parses them. Private document libraries default to 20 files /
+50 MiB per account; the administrator-managed shared library defaults to
+50 files / 200 MiB. All five settings are configurable in the Egg. Upload quota
+checks run under the document storage lock, and regression coverage verifies
+that one user's quota does not affect another account. The reverse proxy must
+still enforce request-body limits for chunked requests and apply an
+approximately 11 MiB upload-route limit. The current quota lock is process-local;
+a multi-worker deployment needs atomic database quota reservations.
+
 ## Remaining review work
 
 - [x] Add administrator-managed core persona and humour controls plus private per-user response voice, tone and answer-detail preferences, including persistence, API authorisation and prompt integration.
 
 - [x] Add bounded per-client-address login throttling alongside per-username limits.
 - [x] Add owner-only SQLite file permissions and symbolic-link rejection.
-- [ ] Finish authentication/session review, including trusted-proxy configuration and session-secret rotation. Add application-level request limits and consider per-user document/storage quotas and chat retention before opening access to more than the intended small group.
+- [ ] Finish authentication/session review, including trusted-proxy configuration and session-secret rotation. Application-level declared-body limits and configurable per-user/shared document quotas are implemented; reverse-proxy limits (including chunked requests), multi-worker quota reservations and chat retention remain outstanding.
 - [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.
 - [x] Review SQLite file creation permissions and reject symbolic-link database paths.
 - [ ] Continue reviewing database functions and schema evolution for safe upgrades from an existing installation.
 - [x] Add bounded Office ZIP expansion checks and regression coverage.
 - [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.
-- [ ] Finish review of private/shared document ownership, parser edge cases and cleanup paths. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes so oversized multipart bodies are rejected before application parsing.
+- [ ] Finish review of private/shared document ownership, parser edge cases and cleanup paths. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes (and global limits for other routes) so oversized and chunked multipart bodies are rejected before application parsing.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
