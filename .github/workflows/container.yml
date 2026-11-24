@@ -20,7 +20,7 @@ on:
 
 permissions:
   contents: read
- nconcurrency:
+concurrency:
   group: orinoco-container-build-${{ github.ref }}
   cancel-in-progress: true
 
