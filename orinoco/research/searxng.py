@@ -74,7 +74,7 @@ class SearXNGClient:
             )):
                 continue
             try:
-                port = parsed.port
+                _ = parsed.port
             except ValueError:
                 continue
             try:
