@@ -126,14 +126,17 @@ The README, architecture, Egg and development guide now distinguish implemented 
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
 - [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
-- [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.\n- [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
+- [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.
+- [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Finalise the Leaseweb VPS deployment plan: Caddy HTTPS, Tailscale Serve for private access (no Funnel), firewall exposure limited to required ports, and reverse-proxy request/rate limits.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
 - [ ] Integrate the agreed original Womble-inspired Orinoco mascot and UK-oriented interface treatment; the current UI has a simple logo mark but no mascot artwork yet.
-- [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.\n- [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.\n- [ ] Continue reviewing dependency updates and build reproducibility.
+- [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
+- [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
+- [ ] Continue reviewing dependency updates and build reproducibility.
 - [ ] Run the final complete test suite and dependency audit; build and smoke-test the same release commit, including the backup scheduler process.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
