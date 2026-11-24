@@ -1027,7 +1027,11 @@ async function loadMemories() {
 
 memoriesLink.addEventListener("click", async (event) => {
   event.preventDefault();
-  if (!currentUser) return;
+  if (!currentUser) {
+    loginDialog.showModal();
+    document.getElementById("login-username").focus();
+    return;
+  }
   document.getElementById("password-feedback").hidden = true;
   document.getElementById("user-feedback").hidden = true;
   settingsDialog.showModal();
