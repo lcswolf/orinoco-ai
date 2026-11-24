@@ -160,6 +160,10 @@ The one-shot migration command now runs both SQLite's structural `integrity_chec
 
 The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. The operator runbook explains how to run these commands as temporary Pterodactyl startup commands while the application is stopped. Automated image switching and a live upgrade/rollback drill remain outstanding.
 
+### Document storage symlink parents — hardened
+
+Document writes and path resolution now reject symbolic links in every directory component, not only the final file or configured document root. This closes a path-redirection case where a symlinked per-user or shared-library directory could send a new upload outside the intended storage tree. Regression tests cover a symlinked user directory and a symlinked parent that points back inside the root. CI still needs to confirm these latest tests pass.
+
 ### Chat recovery after memory-store failure — hardened
 
 A failure during automatic memory extraction or persistence is now logged but does not discard an otherwise successful assistant response. A regression test verifies that the conversation is still saved and returned.
