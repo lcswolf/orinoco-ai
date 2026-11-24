@@ -191,3 +191,33 @@ def test_pdf_decoded_page_content_is_bounded(monkeypatch) -> None:
 
     with pytest.raises(ValueError, match="32 MiB safety limit"):
         extract_text("oversized-page.pdf", b"%PDF-test")
+
+
+def test_xlsx_workbook_is_closed_when_extraction_fails(monkeypatch) -> None:
+    """A malformed workbook must not leave its read-only ZIP handle open."""
+    import openpyxl
+    from zipfile import ZipFile
+
+    class BrokenSheet:
+        title = "Broken"
+
+        def iter_rows(self, *, values_only):
+            raise RuntimeError("malformed worksheet")
+
+    class FakeWorkbook:
+        worksheets = [BrokenSheet()]
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    workbook = FakeWorkbook()
+    monkeypatch.setattr(openpyxl, "load_workbook", lambda *_args, **_kwargs: workbook)
+    buffer = BytesIO()
+    with ZipFile(buffer, "w") as archive:
+        archive.writestr("placeholder.txt", "valid ZIP container")
+
+    with pytest.raises(ValueError, match="Could not read this XLSX workbook"):
+        extract_text("broken.xlsx", buffer.getvalue())
+
+    assert workbook.closed is True
