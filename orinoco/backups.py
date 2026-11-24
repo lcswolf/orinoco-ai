@@ -321,7 +321,7 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
         # Check every recovery destination before creating any of the copies.
         if database_backup.exists():
             raise BackupError(f"Recovery file already exists: {database_backup}")
-        if secret_existed and secret_backup.exists():
+        if secret_backup.exists():
             raise BackupError(f"Recovery file already exists: {secret_backup}")
         if old_documents.exists():
             raise BackupError(f"Recovery directory already exists: {old_documents}")
