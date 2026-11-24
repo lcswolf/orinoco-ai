@@ -162,3 +162,49 @@ def test_password_change_revokes_other_signed_in_sessions(tmp_path, monkeypatch)
         assert first.get("/api/auth/me").json()["authenticated"] is True
         assert second.get("/api/auth/me").json()["authenticated"] is False
         assert second.get("/api/chat/conversations").status_code == 401
+
+
+def test_suspend_and_reactivate_does_not_revive_old_session(tmp_path, monkeypatch) -> None:
+    """An account's pre-suspension cookie stays revoked after reactivation."""
+    database = tmp_path / "accounts.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("adminuser", "a-long-admin-password-123", role="admin", database_path=database)
+    target = create_user("targetuser", "a-long-user-password-123", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as admin, TestClient(app, base_url="https://testserver") as user:
+        for client, username, password in (
+            (admin, "adminuser", "a-long-admin-password-123"),
+            (user, "targetuser", "a-long-user-password-123"),
+        ):
+            token = client.get("/api/auth/csrf").json()["csrf_token"]
+            assert client.post(
+                "/api/auth/login",
+                headers={"X-CSRF-Token": token},
+                json={"username": username, "password": password},
+            ).status_code == 200
+
+        admin_token = admin.get("/api/auth/csrf").json()["csrf_token"]
+        suspended = admin.patch(
+            f"/api/admin/users/{target.id}",
+            headers={"X-CSRF-Token": admin_token},
+            json={"active": False},
+        )
+        assert suspended.status_code == 200
+        assert user.get("/api/auth/me").json()["authenticated"] is False
+
+        reactivated = admin.patch(
+            f"/api/admin/users/{target.id}",
+            headers={"X-CSRF-Token": admin_token},
+            json={"active": True},
+        )
+        assert reactivated.status_code == 200
+        assert user.get("/api/auth/me").json()["authenticated"] is False
+
+        new_token = user.get("/api/auth/csrf").json()["csrf_token"]
+        new_login = user.post(
+            "/api/auth/login",
+            headers={"X-CSRF-Token": new_token},
+            json={"username": "targetuser", "password": "a-long-user-password-123"},
+        )
+        assert new_login.status_code == 200
