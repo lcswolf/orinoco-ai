@@ -98,7 +98,6 @@ def extract_memory_candidates(raw: str) -> list[str]:
 
 
 async def _save_automatic_memories(
-    """Save eligible memory candidates against the current user's account only."""
     client: OllamaClient,
     user_id: int,
     history: list[dict[str, str]],
@@ -200,7 +199,6 @@ async def conversations(request: Request) -> dict[str, object]:
 
 @router.post("/conversations")
 async def new_conversation(
-    """Create a conversation owned by the signed-in account."""
     payload: NewConversationRequest,
     request: Request,
 ) -> dict[str, object]:
@@ -217,7 +215,6 @@ async def new_conversation(
 
 @router.get("/conversations/{conversation_id}")
 async def conversation_detail(
-    """Return a conversation only when it belongs to the signed-in account."""
     conversation_id: int,
     request: Request,
 ) -> dict[str, object]:
