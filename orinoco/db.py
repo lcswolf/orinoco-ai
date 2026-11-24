@@ -72,7 +72,37 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
             """
         )
         connection.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
-        connection.execute("PRAGMA user_version = 1")
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_conversations_user_updated "
+            "ON conversations(user_id, updated_at DESC)"
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+                role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+                content TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_messages_conversation "
+            "ON messages(conversation_id, id)"
+        )
+        connection.execute("PRAGMA user_version = 2")
     try:
         database_path.chmod(0o600)
     except OSError:
@@ -156,6 +186,153 @@ def get_user_by_username(
         created_at=str(row["created_at"]),
     )
 
+
+
+
+def create_conversation(
+    user_id: int,
+    *,
+    title: str = "New conversation",
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> int:
+    now = datetime.now(UTC).isoformat()
+    safe_title = " ".join(title.split())[:80] or "New conversation"
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO conversations (user_id, title, created_at, updated_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, safe_title, now, now),
+        )
+        return int(cursor.lastrowid)
+
+
+def list_conversations(
+    user_id: int, *, database_path: Path = DEFAULT_DATABASE_PATH
+) -> list[dict[str, object]]:
+    with _database(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT c.id, c.title, c.created_at, c.updated_at,
+                   (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) AS message_count
+            FROM conversations c
+            WHERE c.user_id = ?
+            ORDER BY c.updated_at DESC, c.id DESC
+            """,
+            (user_id,),
+        ).fetchall()
+    return [
+        {
+            "id": int(row["id"]),
+            "title": str(row["title"]),
+            "created_at": str(row["created_at"]),
+            "updated_at": str(row["updated_at"]),
+            "message_count": int(row["message_count"]),
+        }
+        for row in rows
+    ]
+
+
+def get_conversation(
+    user_id: int,
+    conversation_id: int,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> dict[str, object] | None:
+    with _database(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT id, title, created_at, updated_at
+            FROM conversations WHERE id = ? AND user_id = ?
+            """,
+            (conversation_id, user_id),
+        ).fetchone()
+        if row is None:
+            return None
+        messages = connection.execute(
+            """
+            SELECT id, role, content, created_at
+            FROM messages WHERE conversation_id = ?
+            ORDER BY id ASC
+            """,
+            (conversation_id,),
+        ).fetchall()
+    return {
+        "id": int(row["id"]),
+        "title": str(row["title"]),
+        "created_at": str(row["created_at"]),
+        "updated_at": str(row["updated_at"]),
+        "messages": [
+            {
+                "id": int(message["id"]),
+                "role": str(message["role"]),
+                "content": str(message["content"]),
+                "created_at": str(message["created_at"]),
+            }
+            for message in messages
+        ],
+    }
+
+
+def get_recent_messages(
+    user_id: int,
+    conversation_id: int,
+    *,
+    limit: int = 10,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> list[dict[str, str]]:
+    bounded_limit = max(1, min(limit, 20))
+    with _database(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT m.role, m.content
+            FROM messages m
+            JOIN conversations c ON c.id = m.conversation_id
+            WHERE c.id = ? AND c.user_id = ?
+            ORDER BY m.id DESC
+            LIMIT ?
+            """,
+            (conversation_id, user_id, bounded_limit),
+        ).fetchall()
+    return [
+        {"role": str(row["role"]), "content": str(row["content"])}
+        for row in reversed(rows)
+    ]
+
+
+def add_conversation_message(
+    user_id: int,
+    conversation_id: int,
+    role: str,
+    content: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> int | None:
+    if role not in {"user", "assistant"}:
+        raise ValueError("role must be user or assistant")
+    if not content.strip() or len(content) > 16000:
+        raise ValueError("message must contain 1–16000 characters")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        owned = connection.execute(
+            "SELECT id FROM conversations WHERE id = ? AND user_id = ?",
+            (conversation_id, user_id),
+        ).fetchone()
+        if owned is None:
+            return None
+        cursor = connection.execute(
+            """
+            INSERT INTO messages (conversation_id, role, content, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (conversation_id, role, content, now),
+        )
+        connection.execute(
+            "UPDATE conversations SET updated_at = ? WHERE id = ?",
+            (now, conversation_id),
+        )
+        return int(cursor.lastrowid)
 
 
 def get_user_by_id(
