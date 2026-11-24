@@ -326,3 +326,31 @@ def test_chat_can_include_opt_in_web_search_context(tmp_path, monkeypatch) -> No
     )
     assert "untrusted reference data" in reference_context
     assert "Use a stable release." in reference_context
+
+
+def test_memory_persistence_failure_does_not_discard_successful_chat_reply(tmp_path, monkeypatch) -> None:
+    """An auxiliary memory-store failure must not turn a valid model reply into a failed chat."""
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("memoryfailure", "a-long-test-password-123", database_path=database)
+    monkeypatch.setattr(chat_routes, "OllamaClient", FakeOllamaClient)
+
+    async def fail_memory_save(*args, **kwargs):
+        raise RuntimeError("simulated memory database outage")
+
+    monkeypatch.setattr(chat_routes, "_save_automatic_memories", fail_memory_save)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "memoryfailure", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "Hello, please remember this if appropriate."},
+        )
+        conversations = client.get("/api/conversations").json()["conversations"]
+
+    assert response.status_code == 200
+    assert response.json()["assistant_message"] == "Hello from Orinoco."
+    assert len(conversations) == 1
+    assert conversations[0]["message_count"] == 2
