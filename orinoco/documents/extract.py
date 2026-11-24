@@ -156,9 +156,10 @@ def _extract_docx(data: bytes) -> str:
 
 
 def _extract_xlsx(data: bytes) -> str:
-    """Extract bounded cell values from workbook sheets without loading them all into memory."""
+    """Extract bounded cell values and always close the read-only workbook."""
     from openpyxl import load_workbook
 
+    workbook = None
     try:
         workbook = load_workbook(BytesIO(data), read_only=True, data_only=True)
         parts: list[str] = []
@@ -175,10 +176,17 @@ def _extract_xlsx(data: bytes) -> str:
                     break
             if cells_seen >= 20000:
                 break
-        workbook.close()
         return "\n".join(parts)
     except Exception as exc:
         raise ValueError("Could not read this XLSX workbook.") from exc
+    finally:
+        if workbook is not None:
+            try:
+                workbook.close()
+            except Exception:
+                # Preserve the original extraction error if closing a malformed
+                # workbook also fails.
+                pass
 
 
 def _extract_pptx(data: bytes) -> str:
