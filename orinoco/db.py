@@ -24,7 +24,7 @@ def get_database_path() -> Path:
 
 
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
-CURRENT_SCHEMA_VERSION = 6
+CURRENT_SCHEMA_VERSION = 7
 
 
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 f"Database schema version {schema_version} is newer than this Orinoco build "
                 f"(supports up to {CURRENT_SCHEMA_VERSION}). Refusing to modify it."
             )
-        # Schema upgrades through v6 are additive: create missing tables/indexes,
+        # Schema upgrades through v7 are additive: create missing tables/indexes,
         # then add the session version column if an earlier users table lacks it.
         connection.execute(
             """
@@ -210,10 +210,25 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                     CHECK (tone IN ('friendly', 'direct', 'playful')),
                 answer_detail TEXT NOT NULL DEFAULT 'balanced'
                     CHECK (answer_detail IN ('concise', 'balanced', 'detailed')),
+                auto_save_memories INTEGER NOT NULL DEFAULT 1
+                    CHECK (auto_save_memories IN (0, 1)),
                 updated_at TEXT NOT NULL
             )
             """
         )
+        # v7 adds a per-account opt-out for automatic memory extraction.
+        preference_columns = {
+            str(row["name"])
+            for row in connection.execute("PRAGMA table_info(user_preferences)").fetchall()
+        }
+        if "auto_save_memories" not in preference_columns:
+            connection.execute(
+                """
+                ALTER TABLE user_preferences
+                ADD COLUMN auto_save_memories INTEGER NOT NULL DEFAULT 1
+                    CHECK (auto_save_memories IN (0, 1))
+                """
+            )
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS assistant_persona (
@@ -620,10 +635,10 @@ def get_user_preferences(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, str]:
     """Return the account's whitelisted voice, tone and answer-detail preferences."""
-    defaults = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced"}
+    defaults = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
     with _database(database_path) as connection:
         row = connection.execute(
-            "SELECT voice, tone, answer_detail FROM user_preferences WHERE user_id = ?",
+            "SELECT voice, tone, answer_detail, auto_save_memories FROM user_preferences WHERE user_id = ?",
             (user_id,),
         ).fetchone()
     if row is None:
@@ -632,6 +647,7 @@ def get_user_preferences(
         "voice": str(row["voice"]),
         "tone": str(row["tone"]),
         "answer_detail": str(row["answer_detail"]),
+        "auto_save_memories": bool(row["auto_save_memories"]),
     }
 
 
@@ -641,8 +657,9 @@ def update_user_preferences(
     voice: str,
     tone: str,
     answer_detail: str,
+    auto_save_memories: bool = True,
     database_path: Path = DEFAULT_DATABASE_PATH,
-) -> dict[str, str]:
+) -> dict[str, object]:
     """Persist only supported per-user response preferences."""
     allowed = {
         "voice": {"bright", "calm", "professional"},
@@ -650,6 +667,8 @@ def update_user_preferences(
         "answer_detail": {"concise", "balanced", "detailed"},
     }
     values = {"voice": voice, "tone": tone, "answer_detail": answer_detail}
+    if not isinstance(auto_save_memories, bool):
+        raise ValueError("Automatic memory saving preference must be true or false.")
     for field, choices in allowed.items():
         if values[field] not in choices:
             raise ValueError(f"Unsupported {field.replace('_', ' ')} preference.")
@@ -657,17 +676,18 @@ def update_user_preferences(
     with _database(database_path) as connection:
         connection.execute(
             """
-            INSERT INTO user_preferences (user_id, voice, tone, answer_detail, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO user_preferences (user_id, voice, tone, answer_detail, auto_save_memories, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 voice = excluded.voice,
                 tone = excluded.tone,
                 answer_detail = excluded.answer_detail,
+                auto_save_memories = excluded.auto_save_memories,
                 updated_at = excluded.updated_at
             """,
-            (user_id, voice, tone, answer_detail, now),
+            (user_id, voice, tone, answer_detail, int(auto_save_memories), now),
         )
-    return values
+    return {**values, "auto_save_memories": auto_save_memories}
 
 
 def get_assistant_persona(
