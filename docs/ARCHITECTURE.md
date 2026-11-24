@@ -22,7 +22,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 ## Custom interface direction
 
-The interface is being built specifically for Orinoco rather than embedding Open WebUI. The interface uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. It includes a responsive workspace layout, Orinoco greeting, service status, authenticated chat, saved conversations, account settings, personal memories, document libraries and the research workspace.
+The interface is being built specifically for Orinoco rather than embedding Open WebUI. The interface uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. Its visual identity uses an original Womble-inspired woodland helper mascot, woodland greens and warm brass accents, with UK-friendly copy and Europe/London defaults. It includes a responsive workspace layout, Orinoco greeting, service status, authenticated chat, saved conversations, account settings, personal memories, document libraries and the research workspace.
 
 The current interface supports authenticated chat, saved conversations, user preferences/password changes, personal memory controls and document uploads. More advanced settings, pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
 
@@ -104,7 +104,7 @@ The repository is organised by responsibility so that features can grow without 
 | `orinoco/backups.py` | Encrypted backup, restore and S3-compatible upload CLI |
 | `orinoco/updates.py` | Verified pre-update backup and backup-gated SQLite migration CLI |
 | `orinoco/db.py` | SQLite schema and account-scoped persistence operations |
-| `orinoco/static/` | Browser interface (HTML, CSS and JavaScript) |
+| `orinoco/static/` | Browser interface (HTML, CSS, JavaScript and original mascot SVG) |
 | `docker/` | Image definition, Pterodactyl entrypoint and supervised service startup |
 | `egg/` | Pterodactyl Egg definition and installation script |
 | `tests/` | Automated behaviour, isolation and runtime checks |
