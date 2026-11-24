@@ -32,6 +32,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Validate shell scripts
+        run: for script in docker/*.sh; do sh -n "$script"; done
+
       - name: Build image (do not publish)
         uses: docker/build-push-action@v6
         with:
