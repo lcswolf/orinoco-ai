@@ -120,6 +120,21 @@
         </form>
         <p class="settings-feedback" id="research-feedback" role="status" hidden></p>
         <div class="research-results" id="research-results" aria-live="polite"></div>
+        <div class="summary-divider"></div>
+        <h2 class="research-subheading">Summarise a website</h2>
+        <p class="settings-description">Paste a public webpage URL. Orinoco fetches the page safely and summarises it using your local AI model. Private and local network addresses are blocked.</p>
+        <form class="research-form" id="summary-form">
+          <input id="summary-url" type="url" maxlength="2048" placeholder="https://example.com/article" required>
+          <button class="login-submit" id="summary-submit" type="submit">Summarise</button>
+        </form>
+        <p class="settings-feedback" id="summary-feedback" role="status" hidden></p>
+        <article class="summary-result" id="summary-result" hidden>
+          <div class="summary-result-heading">
+            <h2 id="summary-title"></h2>
+            <a id="summary-source" target="_blank" rel="noopener noreferrer">Open source</a>
+          </div>
+          <div id="summary-text"></div>
+        </article>
       </section>
       <footer class="footer"><span>ORINOCO</span><span>Made to be yours.</span></footer>
     </main>
