@@ -104,6 +104,10 @@ The new pip-audit CI step found seven advisories affecting the resolved `cryptog
 
 A dedicated Supervisor-managed process runs one backup per local calendar day (03:00 by default in the configured timezone). It creates an encrypted local backup, optionally uploads and byte-verifies it to the configured S3-compatible bucket, and prunes expired local backups only after the complete backup cycle succeeds. The default local retention is 14 days and is configurable from 1 to 365. Failures are written to the Pterodactyl console and a private status JSON file. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding.
 
+### Backup-gated update migrations — implemented
+
+The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. The operator runbook explains how to run these commands as temporary Pterodactyl startup commands while the application is stopped. Automated image switching and a live upgrade/rollback drill remain outstanding.
+
 ### Chat recovery after memory-store failure — hardened
 
 A failure during automatic memory extraction or persistence is now logged but does not discard an otherwise successful assistant response. A regression test verifies that the conversation is still saved and returned.
@@ -128,6 +132,7 @@ The README, architecture, Egg and development guide now distinguish implemented 
 - [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
 - [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.
 - [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
+- [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
 - [ ] Finalise the Leaseweb VPS deployment plan: Caddy HTTPS, Tailscale Serve for private access (no Funnel), firewall exposure limited to required ports, and reverse-proxy request/rate limits.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
