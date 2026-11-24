@@ -6,7 +6,8 @@ import os
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
-from orinoco.auth.sessions import get_session_userfrom pydantic import BaseModel, Field, field_validator
+from orinoco.auth.sessions import get_session_user
+from pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import User, get_database_path, get_user_by_id, initialise_database
 from orinoco.research.searxng import SearchUnavailable, SearXNGClient
