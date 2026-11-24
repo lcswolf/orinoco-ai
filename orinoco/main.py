@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import httpx
@@ -21,7 +20,7 @@ from orinoco.chat.routes import router as chat_router
 from orinoco.auth.routes import router as auth_router
 from orinoco.auth.sessions import get_session_secret, secure_cookie_enabled
 
-OLLAMA_API_BASE = os.environ.get("ORINOCO_OLLAMA_API", "http://127.0.0.1:11434")
+OLLAMA_API_BASE = "http://127.0.0.1:11434"
 DEFAULT_MODEL = os.environ.get("AI_MODEL", "qwen2.5:1.5b")
 STATIC_DIR = Path(__file__).parent / "static"
 
