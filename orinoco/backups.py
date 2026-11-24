@@ -440,6 +440,8 @@ def main() -> int:
     commands.add_parser("create", help="create an encrypted backup")
     verify = commands.add_parser("verify", help="authenticate and inspect a backup")
     verify.add_argument("backup", type=Path)
+    upload = commands.add_parser("upload", help="upload an encrypted backup to private S3-compatible storage")
+    upload.add_argument("backup", type=Path)
     restore = commands.add_parser("restore", help="restore a backup while Orinoco is stopped")
     restore.add_argument("backup", type=Path)
     restore.add_argument("--confirm", action="store_true", help="confirm destructive restore")
@@ -452,6 +454,8 @@ def main() -> int:
             print(create_backup())
         elif args.command == "verify":
             print(json.dumps(verify_backup(args.backup), indent=2))
+        elif args.command == "upload":
+            print(json.dumps(upload_backup(args.backup), indent=2))
         elif args.command == "restore":
             print(json.dumps(restore_backup(args.backup, confirm=args.confirm), indent=2))
         return 0
