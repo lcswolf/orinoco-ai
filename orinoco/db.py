@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import stat
 from contextlib import contextmanager
 from dataclasses import dataclass
 from collections.abc import Iterator
@@ -58,44 +59,65 @@ class AccountError(ValueError):
 
 
 def _connect(database_path: Path) -> sqlite3.Connection:
-    """Open a SQLite connection with foreign-key enforcement and a bounded lock wait."""
+    """Open a private regular SQLite file and verify the path did not change."""
     database_path = Path(database_path)
     database_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    # The parent also contains private user data, so keep it inaccessible to
-    # other local accounts when the filesystem supports POSIX permissions.
+    production = os.environ.get("ORINOCO_ENV", "development").strip().lower() == "production"
     try:
         database_path.parent.chmod(0o700)
-    except OSError:
-        pass
+    except OSError as exc:
+        if production:
+            raise RuntimeError("Unable to restrict permissions on the database directory.") from exc
+
     if database_path.is_symlink():
         raise RuntimeError("The Orinoco database path must not be a symbolic link.")
 
-    # Create/check the file with restrictive permissions before SQLite opens it.
-    # O_NOFOLLOW rejects a link swapped in between the explicit check and open.
-    flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    flags = (
+        os.O_RDWR
+        | os.O_CREAT
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NONBLOCK", 0)
+    )
     try:
         descriptor = os.open(database_path, flags, 0o600)
     except OSError as exc:
         if database_path.is_symlink():
             raise RuntimeError("The Orinoco database path must not be a symbolic link.") from exc
         raise
+
     try:
+        opened_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(opened_stat.st_mode):
+            raise RuntimeError("The Orinoco database path must refer to a regular file.")
         try:
             os.fchmod(descriptor, 0o600)
-        except (AttributeError, OSError):
-            pass
+        except (AttributeError, OSError) as exc:
+            if production:
+                raise RuntimeError("Unable to restrict permissions on the database file.") from exc
+
+        # Keep this descriptor open while SQLite opens the path. Comparing the
+        # device and inode catches a path replacement between the two open calls.
+        connection = sqlite3.connect(database_path, timeout=10)
+        try:
+            current_stat = os.stat(database_path, follow_symlinks=False)
+        except OSError:
+            connection.close()
+            raise
+        if (
+            not stat.S_ISREG(current_stat.st_mode)
+            or (current_stat.st_dev, current_stat.st_ino)
+            != (opened_stat.st_dev, opened_stat.st_ino)
+        ):
+            connection.close()
+            raise RuntimeError("The database path changed while it was being opened.")
+
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("PRAGMA busy_timeout = 10000")
+        return connection
     finally:
         os.close(descriptor)
-
-    connection = sqlite3.connect(database_path, timeout=10)
-    try:
-        database_path.chmod(0o600)
-    except OSError:
-        pass
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute("PRAGMA busy_timeout = 10000")
-    return connection
 
 
 @contextmanager
