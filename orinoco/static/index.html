@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">o</span>
         <span class="brand-name">orinoco</span>
       </a>
-      <button class="new-chat" type="button" disabled title="Chat is coming in the next milestone">
+      <button class="new-chat" id="new-chat" type="button" disabled>
         <span aria-hidden="true">＋</span> New chat
       </button>
       <div class="side-label">WORKSPACE</div>
@@ -25,6 +25,8 @@
         <a class="nav-link unavailable" href="#memory" aria-disabled="true"><span class="nav-icon" aria-hidden="true">◇</span> My memories <small>soon</small></a>
         <a class="nav-link unavailable" href="#documents" aria-disabled="true"><span class="nav-icon" aria-hidden="true">▤</span> My documents <small>soon</small></a>
       </nav>
+      <div class="side-label recent-label">RECENT CHATS</div>
+      <div class="conversation-list" id="conversation-list" aria-label="Recent conversations"></div>
       <div class="sidebar-spacer"></div>
       <div class="privacy-note"><span class="privacy-dot"></span><span>Private by design<br><small>Local AI · Your own server</small></span></div>
       <div class="user-placeholder"><span class="avatar" id="user-avatar">?</span><span><strong id="user-name">Not signed in</strong><small id="user-role">Your private workspace</small></span></div>
@@ -54,14 +56,20 @@
           <span class="status-pill" id="model-pill">Checking</span>
         </div>
 
-        <div class="coming-soon">
-          <div class="coming-heading"><span>THE CONVERSATION SPACE</span><span class="coming-rule"></span></div>
-          <div class="composer-placeholder">
-            <span class="composer-plus" aria-hidden="true">＋</span>
-            <span>Chat will be ready here soon…</span>
-            <button type="button" disabled aria-label="Send message">↑</button>
+        <div class="coming-soon" id="conversation-space">
+          <div class="coming-heading"><span>YOUR CONVERSATION</span><span class="coming-rule"></span></div>
+          <div class="chat-thread" id="chat-thread" aria-live="polite">
+            <div class="chat-empty" id="chat-empty">
+              <span class="empty-spark" aria-hidden="true">✳</span>
+              <strong>Your next idea starts here.</strong>
+              <span>Ask Orinoco a question, or just say hello.</span>
+            </div>
           </div>
-          <p class="setup-note">We're putting the foundations in place first — especially account security and private chat history.</p>
+          <form class="chat-composer" id="chat-form">
+            <textarea id="chat-input" rows="1" maxlength="4000" placeholder="Sign in to start a private conversation…" disabled aria-label="Message Orinoco"></textarea>
+            <button id="send-message" type="submit" disabled aria-label="Send message">↑</button>
+          </form>
+          <p class="setup-note" id="chat-hint">Sign in to start a private conversation. Your chats are saved to your own account.</p>
         </div>
       </section>
       <footer class="footer"><span>ORINOCO</span><span>Made to be yours.</span></footer>
