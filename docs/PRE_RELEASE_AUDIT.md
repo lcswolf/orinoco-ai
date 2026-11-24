@@ -70,7 +70,7 @@ The database initializer now completes the known additive v1–v3 table/index up
 
 ### Local inference boundary — hardened
 
-The production Ollama client and readiness check now use the fixed loopback endpoint. Environment variables and explicit production client URLs cannot redirect prompts to an external inference service; only tests that inject a mock transport may use a non-loopback URL. This enforces the agreed local-inference-only architecture.
+The production Ollama client and readiness check now use the fixed loopback endpoint. Environment variables and explicit production client URLs cannot redirect prompts to an external inference service; HTTP proxy environment variables are also ignored for Ollama traffic. Only tests that inject a mock transport may use a non-loopback URL. This enforces the agreed local-inference-only architecture.
 
 ### Timezone and inactive Egg options — corrected
 
