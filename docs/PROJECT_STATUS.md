@@ -41,7 +41,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Configurable per-user personal-memory count cap (100 by default), with atomic quota enforcement and graceful automatic-extraction behaviour when full.
 - Network deployment design for Caddy public TLS, Nginx loopback edge limits, HTTPS public-IP access and private Tailscale Serve; Uvicorn forwarded-header trust is disabled by default.
 
-The latest GitHub Actions Python test run [#849](https://github.com/lcswolf/orinoco-ai/actions/runs/45499219403) passed on commit `53e22fa6`; dependency auditing and frontend JavaScript syntax checks also passed. It includes the backup, scheduler, PDF/document storage, trusted-proxy, offline password-recovery, Egg model-selection, accessible mobile-interface and SQLite permission/path regression tests. Container build/smoke run [#376](https://github.com/lcswolf/orinoco-ai/actions/runs/45499201048) is still in progress on runtime commit `7f95468f`; it will build without publishing. The image has not been published to GHCR or deployed to Pterodactyl.
+The latest GitHub Actions Python test run [#849](https://github.com/lcswolf/orinoco-ai/actions/runs/45499219403) passed on commit `53e22fa6`; dependency auditing and frontend JavaScript syntax checks also passed. It includes the backup, scheduler, PDF/document storage, trusted-proxy, offline password-recovery, Egg model-selection, accessible mobile-interface and SQLite permission/path regression tests. Container build/smoke run [#376](https://github.com/lcswolf/orinoco-ai/actions/runs/45499201048) also passed on runtime commit `7f95468f`. The image was built and smoke-tested without publishing; it has not been published to GHCR or deployed to Pterodactyl.
 
 ## Confirmed direction
 
