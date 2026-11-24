@@ -100,3 +100,16 @@ def test_browser_security_headers_are_applied_to_app_and_static_assets() -> None
         assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
         assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
         assert "script-src 'self'" in response.headers["content-security-policy"]
+
+
+
+def test_oversized_declared_request_body_is_rejected_before_parsing(monkeypatch) -> None:
+    """The app rejects an oversized request before a route attempts to parse it."""
+    monkeypatch.setenv("ORINOCO_MAX_REQUEST_BODY_BYTES", str(1024 * 1024))
+    response = client.post(
+        "/api/auth/logout",
+        headers={"Content-Length": str(2 * 1024 * 1024)},
+    )
+
+    assert response.status_code == 413
+    assert "size limit" in response.json()["detail"]
