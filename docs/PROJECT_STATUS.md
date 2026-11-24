@@ -8,6 +8,7 @@ This page separates confirmed project decisions from implementation work. A plan
 
 - Public project repository and project documentation.
 - Custom responsive Orinoco interface, served directly by FastAPI, with an original Womble-inspired woodland helper mascot, woodland-green/brass accents and UK-friendly copy.
+- Owner-only conversation deletion with CSRF protection and cascading message removal.
 - Sign-in, secure signed sessions, CSRF-protected authentication and password changes.
 - Administrator account management: create standard users, list users, suspend and reactivate accounts.
 - Authenticated chat with local Ollama, saved per-user conversations and conversation switching.
