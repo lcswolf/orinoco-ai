@@ -861,6 +861,7 @@ document.getElementById("research-form").addEventListener("submit", async (event
       showFeedback(feedback, "No results were returned for that search.", true);
       return;
     }
+    let displayedResults = 0;
     for (const result of payload.results) {
       const safeUrl = safeExternalUrl(result.url);
       if (!safeUrl) continue;
@@ -880,6 +881,10 @@ document.getElementById("research-form").addEventListener("submit", async (event
       url.textContent = safeUrl;
       card.append(heading, summary, url);
       results.append(card);
+      displayedResults += 1;
+    }
+    if (!displayedResults) {
+      showFeedback(feedback, "The search service returned no safe HTTP(S) links.", true);
     }
   } catch (error) {
     showFeedback(feedback, error.message || "Web search is unavailable.", true);
