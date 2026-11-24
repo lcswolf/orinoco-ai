@@ -738,12 +738,12 @@ def search_documents(
     ][:8]
     if not terms:
         return []
-    match_query = " OR ".join(f'"{term}"' for term in terms)
+    match_query = " AND ".join(f'"{term}"' for term in terms)
     with _database(database_path) as connection:
         rows = connection.execute(
             """
             SELECT d.id, d.original_name,
-                   snippet(documents_fts, 1, '[', ']', ' … ', 18) AS excerpt
+                   snippet(documents_fts, 1, '', '', ' … ', 18) AS excerpt
             FROM documents_fts
             JOIN documents d ON d.id = documents_fts.rowid
             WHERE documents_fts MATCH ?
