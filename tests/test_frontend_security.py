@@ -67,6 +67,7 @@ def test_mobile_navigation_is_keyboard_accessible_and_not_inert() -> None:
 
     assert 'id="sidebar"' in html
     assert 'aria-controls="sidebar"' in html
+    assert 'class="mobile-menu-icon"' in html
     assert 'aria-expanded="false"' in html
     assert 'id="sidebar-backdrop"' in html
     assert 'id="mobile-nav-close"' in html
