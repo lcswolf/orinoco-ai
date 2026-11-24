@@ -4,6 +4,7 @@ const modelTitle = document.getElementById("model-title");
 const modelDescription = document.getElementById("model-description");
 const modelPill = document.getElementById("model-pill");
 const accountAction = document.getElementById("account-action");
+const deleteChatButton = document.getElementById("delete-chat-action");
 const userName = document.getElementById("user-name");
 const userRole = document.getElementById("user-role");
 const userAvatar = document.getElementById("user-avatar");
@@ -34,6 +35,11 @@ const sharedDocumentTools = document.getElementById("shared-document-tools");
 let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
+
+// Keep destructive chat controls disabled unless an owned conversation is selected.
+function syncDeleteChatButton() {
+  deleteChatButton.disabled = !currentUser || !currentConversationId || sendingMessage;
+}
 
 // Search results are external data. Only create clickable links for absolute HTTP(S) URLs.
 function safeExternalUrl(value) {
@@ -109,6 +115,7 @@ function showAccount(user) {
     webSearchToggle.disabled = false;
     chatInput.placeholder = "Message Orinoco…";
     chatHint.textContent = "Your conversation is private and saved to your account.";
+    syncDeleteChatButton();
   } else {
     settingsButton.disabled = true;
     adminTools.hidden = true;
@@ -132,6 +139,7 @@ function showAccount(user) {
     chatInput.placeholder = "Sign in to start a private conversation…";
     chatHint.textContent = "Sign in to start a private conversation. Your chats are saved to your own account.";
     currentConversationId = null;
+    syncDeleteChatButton();
     showChatView();
     clearThread();
     conversationList.replaceChildren();
@@ -219,6 +227,7 @@ async function loadConversation(id) {
     if (!response.ok) throw new Error("Could not load that conversation.");
     const conversation = await response.json();
     currentConversationId = conversation.id;
+    syncDeleteChatButton();
     chatThread.replaceChildren();
     for (const message of conversation.messages) {
       appendMessage(message.role, message.content);
@@ -318,9 +327,35 @@ mobileConversations.addEventListener("change", () => {
   if (id > 0) loadConversation(id);
 });
 
+deleteChatButton.addEventListener("click", async () => {
+  if (!currentConversationId || !currentUser || sendingMessage) return;
+  if (!window.confirm("Delete this conversation and all its messages? This cannot be undone.")) return;
+  const conversationId = currentConversationId;
+  deleteChatButton.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/conversations/" + encodeURIComponent(conversationId), {
+      method: "DELETE",
+      headers: { "X-CSRF-Token": csrf, Accept: "application/json" },
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not delete this conversation.");
+    if (currentConversationId === conversationId) {
+      currentConversationId = null;
+      clearThread();
+    }
+    await refreshConversations();
+  } catch (error) {
+    appendMessage("assistant", error.message || "Could not delete this conversation.", "error");
+  } finally {
+    syncDeleteChatButton();
+  }
+});
+
 newChatButton.addEventListener("click", () => {
   showChatView();
   currentConversationId = null;
+  syncDeleteChatButton();
   clearThread();
   refreshConversations();
   chatInput.focus();
@@ -333,6 +368,7 @@ chatForm.addEventListener("submit", async (event) => {
   if (!message || sendingMessage || accountAction.dataset.authenticated !== "true") return;
 
   sendingMessage = true;
+  syncDeleteChatButton();
   sendButton.disabled = true;
   chatInput.disabled = true;
   appendMessage("user", message);
@@ -362,6 +398,7 @@ chatForm.addEventListener("submit", async (event) => {
     }
 
     currentConversationId = result.conversation_id;
+    syncDeleteChatButton();
     const sourceText = Array.isArray(result.web_sources) && result.web_sources.length
       ? "\n\nSources:\n" + result.web_sources.map((source, index) => "[" + (index + 1) + "] " + source.title + " — " + source.url).join("\n")
       : "";
@@ -375,6 +412,7 @@ chatForm.addEventListener("submit", async (event) => {
     appendMessage("assistant", error.message || "Something went wrong. Please try again.", "error");
   } finally {
     sendingMessage = false;
+    syncDeleteChatButton();
     chatInput.disabled = accountAction.dataset.authenticated !== "true";
     sendButton.disabled = chatInput.disabled;
     chatInput.focus();
