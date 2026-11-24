@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
+from orinoco.auth.sessions import get_session_user
 from orinoco.db import (
     User,
     delete_document,
@@ -20,19 +21,8 @@ router = APIRouter(prefix="/api/admin/shared-documents", tags=["administration"]
 
 
 def _require_admin(request: Request) -> User:
-    """Require an active administrator before accessing the shared library controls."""
-    user_id = request.session.get("user_id")
-    if not isinstance(user_id, int):
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    database_path = get_database_path()
-    initialise_database(database_path)
-    user = get_user_by_id(user_id, database_path=database_path)
-    if user is None or not user.active:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="Please sign in to continue.")
-    if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Administrator access is required.")
-    return user
+    """Require a signed-in administrator whose session has not been revoked."""
+    return get_session_user(request, require_admin=True)
 
 
 @router.get("")
