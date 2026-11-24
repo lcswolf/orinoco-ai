@@ -486,8 +486,8 @@ def upload_backup(backup_path: Path) -> dict[str, object]:
     """Upload one encrypted backup to a private S3-compatible object bucket.
 
     The endpoint must use HTTPS. The upload uses no public ACL, includes a
-    SHA-256 checksum as object metadata, and verifies the remote size and
-    checksum with a follow-up HEAD request before reporting success.
+    SHA-256 checksum as object metadata, checks the remote size and metadata,
+    then downloads and hashes the stored bytes before reporting success.
     """
     import boto3
 
