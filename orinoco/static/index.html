@@ -21,9 +21,9 @@
       </button>
       <div class="side-label">WORKSPACE</div>
       <nav class="nav-list">
-        <a class="nav-link active" href="/" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span> Chat</a>
+        <a class="nav-link active" id="chat-link" href="/" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span> Chat</a>
         <a class="nav-link" id="memories-link" href="#memories"><span class="nav-icon" aria-hidden="true">◇</span> My memories</a>
-        <a class="nav-link unavailable" href="#documents" aria-disabled="true"><span class="nav-icon" aria-hidden="true">▤</span> My documents <small>soon</small></a>
+        <a class="nav-link" id="documents-link" href="#documents"><span class="nav-icon" aria-hidden="true">▤</span> My documents</a>
       </nav>
       <div class="side-label recent-label">RECENT CHATS</div>
       <div class="conversation-list" id="conversation-list" aria-label="Recent conversations"></div>
@@ -72,6 +72,40 @@
           </form>
           <p class="setup-note" id="chat-hint">Sign in to start a private conversation. Your chats are saved to your own account.</p>
         </div>
+      </section>
+      <section class="documents-view" id="documents-view" aria-labelledby="documents-title" hidden>
+        <div class="documents-heading">
+          <div class="welcome-eyebrow"><span class="eyebrow-line"></span> YOUR PRIVATE LIBRARY</div>
+          <h1 id="documents-title">My documents</h1>
+          <p class="welcome-copy">Keep useful files close at hand. Orinoco can search your private documents and any shared library files you are allowed to access.</p>
+        </div>
+        <div class="document-upload-card">
+          <div>
+            <h2>Add a document</h2>
+            <p>TXT, Markdown, PDF, DOCX, XLSX and PPTX · up to 10 MiB each</p>
+          </div>
+          <form class="document-upload-form" id="private-document-form">
+            <label for="private-document-file">Choose a file</label>
+            <input id="private-document-file" name="file" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.pptx" required>
+            <button class="login-submit" id="private-document-submit" type="submit">Upload to my library</button>
+            <p class="settings-feedback" id="private-document-feedback" role="status" hidden></p>
+          </form>
+        </div>
+        <section class="document-library" aria-labelledby="private-documents-heading">
+          <div class="document-section-heading"><h2 id="private-documents-heading">My library</h2><button class="document-refresh" id="documents-refresh" type="button">Refresh</button></div>
+          <div class="document-list" id="private-document-list" aria-live="polite"><p class="conversation-empty">Sign in to view your documents.</p></div>
+        </section>
+        <section class="document-library" id="shared-document-tools" aria-labelledby="shared-documents-heading" hidden>
+          <div class="document-section-heading"><h2 id="shared-documents-heading">Shared library</h2></div>
+          <p class="settings-description">Files added here are available as read-only reference material to all authorised accounts.</p>
+          <form class="document-upload-form" id="shared-document-form">
+            <label for="shared-document-file">Add a shared document (administrator only)</label>
+            <input id="shared-document-file" name="file" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.pptx" required>
+            <button class="login-submit" id="shared-document-submit" type="submit">Add to shared library</button>
+            <p class="settings-feedback" id="shared-document-feedback" role="status" hidden></p>
+          </form>
+          <div class="document-list" id="shared-document-list" aria-live="polite"></div>
+        </section>
       </section>
       <footer class="footer"><span>ORINOCO</span><span>Made to be yours.</span></footer>
     </main>
