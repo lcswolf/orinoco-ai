@@ -152,3 +152,23 @@ def test_resource_limit_egg_defaults_are_conservative_and_admin_only() -> None:
     for name, default in expected.items():
         assert variables[name]["default_value"] == default
         assert variables[name]["user_editable"] is False
+
+
+
+def test_reverse_proxy_templates_keep_private_backends_and_edge_limits() -> None:
+    """Guard the deployment examples against accidental public backend exposure."""
+    caddy = (ROOT / "deploy" / "caddy" / "Caddyfile.example").read_text(encoding="utf-8")
+    nginx = (ROOT / "deploy" / "nginx" / "orinoco.conf.example").read_text(encoding="utf-8")
+
+    assert "default_sni {$ORINOCO_PUBLIC_IPV4}" in caddy
+    assert "profile shortlived" in caddy
+    assert "127.0.0.1:8081" in caddy
+    assert "header_up X-Forwarded-For {remote_host}" in caddy
+
+    assert "listen 127.0.0.1:8081;" in nginx
+    assert "server 127.0.0.1:28080;" in nginx
+    assert "set_real_ip_from 127.0.0.1;" in nginx
+    assert "client_max_body_size 12m;" in nginx
+    assert "client_max_body_size 11m;" in nginx
+    assert "limit_req_zone $binary_remote_addr zone=orinoco_login" in nginx
+    assert "limit_req_zone $binary_remote_addr zone=orinoco_chat" in nginx
