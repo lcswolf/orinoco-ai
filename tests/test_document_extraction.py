@@ -134,6 +134,7 @@ def test_pdf_text_accumulation_stops_at_global_extraction_limit(monkeypatch) -> 
 def test_pdf_decompression_filter_limits_are_lowered(monkeypatch) -> None:
     """Apply smaller decompression limits than pypdf's general-purpose defaults."""
     import pypdf
+    import pypdf.filters
 
     class FakeReader:
         is_encrypted = False
