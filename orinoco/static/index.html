@@ -152,6 +152,17 @@
           <p class="settings-feedback" id="user-feedback" role="status" hidden></p>
         </form>
         <div class="user-list" id="admin-user-list" aria-live="polite"></div>
+        <div class="shared-documents">
+          <h3>Shared knowledge library</h3>
+          <p class="settings-description">Files added here are readable by all authorised accounts.</p>
+          <form id="shared-document-form" class="settings-form">
+            <label for="shared-document-file">Upload shared document</label>
+            <input id="shared-document-file" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.pptx" required>
+            <p class="settings-feedback" id="shared-document-feedback" role="status" hidden></p>
+            <button class="login-submit" id="shared-document-submit" type="submit">Add to shared library</button>
+          </form>
+          <div class="user-list" id="shared-document-list" aria-live="polite"></div>
+        </div>
       </section>
       <section class="settings-section" id="personal-memories" aria-labelledby="memories-heading">
         <h3 id="memories-heading">My memories</h3>
