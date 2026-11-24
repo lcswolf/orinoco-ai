@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
@@ -77,6 +79,8 @@ async def summarise_website(
 ) -> dict[str, str]:
     _require_csrf(request)
     _current_user(request)
+    if os.environ.get("ENABLE_WEB_SEARCH", "false").lower() in {"0", "false", "no", "off"}:
+        raise HTTPException(status_code=503, detail="Web research is disabled by the administrator.")
     try:
         page = await fetch_public_page(payload.url)
     except SafeFetchError as exc:
