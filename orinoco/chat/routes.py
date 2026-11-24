@@ -78,7 +78,12 @@ def extract_memory_candidates(raw: str) -> list[str]:
             continue
         if any(term in lowered for term in _SENSITIVE_MEMORY_TERMS):
             continue
-        if _EMAIL_PATTERN.search(candidate) or _PHONE_PATTERN.search(candidate):
+        if (
+            _EMAIL_PATTERN.search(candidate)
+            or _PHONE_PATTERN.search(candidate)
+            or _ADDRESS_PATTERN.search(candidate)
+            or _UK_POSTCODE_PATTERN.search(candidate)
+        ):
             continue
         key = lowered.rstrip(".")
         if key not in seen:
