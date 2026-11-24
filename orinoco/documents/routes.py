@@ -114,6 +114,7 @@ async def upload_private_document(
     request: Request,
     file: UploadFile = File(...),
 ) -> dict[str, object]:
+    """Store a document privately under the authenticated user's account."""
     _require_csrf(request)
     user = _current_user(request)
     return {"document": await _store_upload(file, user_id=user.id, scope="private")}
