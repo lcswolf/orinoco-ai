@@ -131,10 +131,13 @@ def _resolve_client_ip(request: Request) -> str | None:
         if not item.strip():
             continue
         try:
-            trusted_networks.append(ipaddress.ip_network(item.strip(), strict=False))
+            network = ipaddress.ip_network(item.strip(), strict=False)
         except ValueError:
             # Invalid entries are ignored; a malformed allowlist never grants trust.
             continue
+        minimum_prefix = 24 if network.version == 4 else 64
+        if network.prefixlen >= minimum_prefix:
+            trusted_networks.append(network)
 
     if os.environ.get("ORINOCO_ENV", "development").lower() == "production" and not trusted_networks:
         return None
