@@ -1,30 +1,27 @@
 # Orinoco AI
 
-A self-hosted personal AI assistant with local inference, persistent memory, Discord integration and web research.
+A self-hosted personal AI assistant with local inference, persistent memory, private documents, web research and planned Discord integration.
 
-> **Project status: early implementation.** The custom interface, local model runtime, authentication, private chat and personal memory foundations are implemented; Orinoco is not yet a complete assistant.
+> **Project status: early implementation.** The custom interface, local model runtime, authentication, private chat, personal memory, document libraries and explicit SearXNG search workspace are implemented. Orinoco is not yet production-ready.
 
 ## Project goals
 
 Orinoco aims to provide a friendly, private assistant that can be hosted on a modest VPS and use locally-run language models.
 
-Planned capabilities include:
-
-- A custom Orinoco web interface, built for this project rather than based on Open WebUI.
-- Local model inference through Ollama, without relying on external AI inference APIs.
+- Custom Orinoco web interface rather than Open WebUI.
+- Local model inference through Ollama, without external AI inference APIs.
 - Private administrator and standard-user accounts.
-- Per-user chat history and personal memories, with controls to review, correct and delete memories.
+- Per-user chat history and personal memories, with review, correction and deletion controls.
 - Private user documents and an administrator-managed shared knowledge library.
-- Optional web research and summaries of user-provided URLs, with source links.
-- Optional Discord text integration, with per-channel participation settings.
-- Voice features that only listen when explicitly activated.
-- Backups, health monitoring and administrator-managed model updates.
+- Optional web search through a configured SearXNG instance.
+- Safe summaries of user-provided URLs (planned).
+- Optional Discord text integration and explicitly activated voice features (planned).
 
 ## Design principles
 
-- **Privacy by default:** user conversations, documents and memories must remain separated.
+- **Privacy by default:** user conversations, documents and memories remain separated.
 - **Local inference:** prompts are processed by a model hosted alongside Orinoco.
-- **Safe web access:** retrieved webpages are untrusted input and must not override system or user instructions.
+- **Safe retrieval:** webpages and documents are untrusted input and must not override system or user instructions.
 - **Small-server friendly:** resource usage and model choices should suit modest VPS hardware.
 - **Transparent operation:** distinguish verified information from uncertainty and provide source links where applicable.
 
@@ -34,15 +31,15 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 ## Repository status
 
-The repository includes a custom responsive interface, sign-in and account settings, CSRF-protected authentication, administrator user management, authenticated chat, per-user saved conversations, SQLite persistence, Argon2 password hashing and automatic personal-memory extraction. Users can review, edit and delete their own memories, and those memories are included only in their own future chats.
+The repository includes a custom responsive interface, secure authentication, administrator user management, authenticated local chat, private conversations and memories, private/shared document libraries, SQLite FTS5 retrieval and an explicit web-search workspace that uses an administrator-configured SearXNG service.
 
-Private document uploads, common-format text extraction, shared-library administration and keyword retrieval in chat are now implemented. Web research, Discord and voice are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
+Direct URL fetching/summarisation, Discord, voice, backups and production deployment are not implemented yet. The expanded Docker image has not yet been published to GHCR or deployed.
 
 See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
 ## Security
 
-Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. Ollama is configured for loopback-only access and cloud features are disabled. A hidden Pterodactyl variable is not a secure secret store. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. Ollama is configured for loopback-only access and cloud features are disabled. A hidden Egg variable is not a secure secret store. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## Contributing
 
