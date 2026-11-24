@@ -23,7 +23,7 @@ If a secret is accidentally committed, revoke or rotate it immediately. Removing
 
 ## Current authentication foundation
 
-The current development branch includes Argon2 password hashing, signed session cookies, CSRF tokens for state-changing authentication requests, secure-cookie defaults, conservative content-security and browser security headers, and a bounded in-process failed-login throttle. Session signing material is stored in the persistent data directory with restrictive file permissions when no explicit secret is configured.
+The current development branch includes Argon2 password hashing, signed session cookies, CSRF tokens for state-changing authentication requests, secure-cookie defaults, conservative content-security and browser security headers, and a bounded in-process failed-login throttle. Password changes and account suspension/reactivation revoke every older session through a per-account session version. Session signing material is stored in the persistent data directory with restrictive file permissions when no explicit secret is configured.
 
 These controls are a foundation, not a completed production security review. The login throttle is process-local and must be supplemented with reverse-proxy rate limits before public deployment. Session secrets and the SQLite database must remain on persistent, private storage. Never expose the data directory through the web server.
 
