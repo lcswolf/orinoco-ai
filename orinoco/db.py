@@ -591,8 +591,8 @@ def update_memory(
     *,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> bool:
-    cleaned = " ".join(content.split())
     """Edit a memory only when its ID and owner account both match."""
+    cleaned = " ".join(content.split())
     if not cleaned or len(cleaned) > 1000:
         raise ValueError("memory must contain 1–1000 characters")
     now = datetime.now(UTC).isoformat()
