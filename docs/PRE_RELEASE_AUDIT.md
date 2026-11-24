@@ -106,7 +106,7 @@ The users table now has a versioned session counter. New sign-ins store that ver
 
 ### Login throttle memory use — hardened
 
-The failed-login tracker now applies rolling windows per username and per observed client address, has fixed memory bounds for both maps, and reports the remaining Retry-After window. It remains process-local and deliberately ignores untrusted forwarded-IP headers, so reverse-proxy rate limits and trusted-proxy configuration are still required before public exposure.
+When a reliable client address is available, the failed-login tracker applies rolling windows per username/client pair and per client address, has fixed memory bounds for both maps, and reports the remaining Retry-After window. In production with no trusted-proxy allowlist, the app skips these client buckets rather than treating a shared proxy address as every visitor; Nginx per-client limits are mandatory. After measuring the Nginx peer inside the container, configure only that peer in `ORINOCO_TRUSTED_PROXY_IPS`. The trackers remain process-local, so edge limits must be shared across workers or replicas.
 
 ### Browser security headers — added
 
