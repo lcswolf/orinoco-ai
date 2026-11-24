@@ -195,16 +195,16 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add bounded per-client-address login throttling alongside per-username limits.
 - [x] Add owner-only SQLite file permissions and symbolic-link rejection.
 - [ ] Finish authentication/session review, including live trusted-proxy configuration and session-secret rotation rehearsal. The offline TTY-only password-reset CLI is implemented; application MFA remains an open decision for public multi-user access. Application-level declared-body limits and configurable per-user/shared document quotas are implemented; reverse-proxy limits (including chunked requests), multi-host shared-storage quota semantics and chat retention remain outstanding.
-- [x] Add regression coverage for known additive schema upgrades and refusal to downgrade a newer database.
-- [x] Review SQLite file creation permissions and reject symbolic-link database paths.
-- [ ] Continue reviewing database functions and schema evolution for safe upgrades from an existing installation.
+- [x] Add regression coverage for legacy v1/v5 additive schema upgrades and refusal of newer or negative schema versions.
+- [x] Harden SQLite persistence: private parent directory, owner-only regular database file, production fail-closed permissions, symlink/non-regular rejection and path-identity checks.
+- [ ] Rehearse database migration and rollback against a real Pterodactyl data volume; finish any remaining query/data-isolation edge cases.
 - [x] Add bounded Office ZIP expansion checks and regression coverage.
 - [x] Preserve retryable document records when file deletion fails and reject unsafe stored paths.
 - [ ] Finish review of private/shared document ownership, parser edge cases and cleanup paths. Configure an approximately 11 MiB reverse-proxy request-body limit for document upload routes (and global limits for other routes) so oversized and chunked multipart bodies are rejected before application parsing.
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
-- [ ] Confirm CI passes the latest backup database/archive/WAL/scheduler, PDF parser, document-cleanup and Egg regression tests; finish any remaining archive/key-handling edge cases.
+- [x] Confirm CI passes the latest backup database/archive/WAL/scheduler, PDF parser, document-cleanup, trusted-proxy, SQLite permission/path, mobile accessibility and Egg regression tests (Python run #849; container build/smoke #376).
 - [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.
 - [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
