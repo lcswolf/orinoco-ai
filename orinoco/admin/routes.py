@@ -22,15 +22,18 @@ router = APIRouter(prefix="/api/admin", tags=["administration"])
 
 
 class CreateUserRequest(BaseModel):
+    """Validated fields required to create a standard user account."""
     username: str = Field(min_length=3, max_length=32)
     password: str = Field(min_length=12, max_length=1024)
 
 
 class UserStatusRequest(BaseModel):
+    """Validated active/suspended state requested by an administrator."""
     active: bool
 
 
 def _require_csrf(request: Request) -> None:
+    """Reject state-changing browser requests without a valid session CSRF token."""
     expected = request.session.get("csrf_token")
     supplied = request.headers.get("x-csrf-token")
     if (
@@ -42,6 +45,7 @@ def _require_csrf(request: Request) -> None:
 
 
 def _require_admin(request: Request) -> User:
+    """Require an authenticated, active administrator for this operation."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         raise HTTPException(status_code=401, detail="Please sign in to continue.")
@@ -57,6 +61,7 @@ def _require_admin(request: Request) -> User:
 
 
 def _user_response(user: User) -> dict[str, object]:
+    """Convert an account into its safe public API representation."""
     return {
         "id": user.id,
         "username": user.username,
@@ -68,6 +73,7 @@ def _user_response(user: User) -> dict[str, object]:
 
 @router.get("/users")
 async def get_users(request: Request) -> dict[str, object]:
+    """Return account summaries to administrators only."""
     _require_admin(request)
     return {
         "users": [
@@ -79,6 +85,7 @@ async def get_users(request: Request) -> dict[str, object]:
 
 @router.post("/users", status_code=status.HTTP_201_CREATED)
 async def add_user(
+    """Create a standard account after administrator and CSRF checks."""
     payload: CreateUserRequest,
     request: Request,
 ) -> dict[str, object]:
@@ -98,6 +105,7 @@ async def add_user(
 
 @router.patch("/users/{user_id}")
 async def update_user_status(
+    """Suspend or reactivate another account without allowing self-lockout."""
     user_id: int,
     payload: UserStatusRequest,
     request: Request,
