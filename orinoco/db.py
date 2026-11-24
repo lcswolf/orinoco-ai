@@ -827,6 +827,37 @@ def delete_memory(
 
 
 
+
+def get_document_usage(
+    *,
+    owner_user_id: int | None,
+    scope: str,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> tuple[int, int]:
+    """Return stored document count and byte usage for one private or shared collection."""
+    if scope not in {"private", "shared"}:
+        raise ValueError("document scope must be private or shared")
+    if (scope == "private") != (owner_user_id is not None):
+        raise ValueError("private document usage requires an owner; shared usage does not")
+    with _database(database_path) as connection:
+        if scope == "private":
+            row = connection.execute(
+                """
+                SELECT COUNT(*) AS document_count, COALESCE(SUM(size_bytes), 0) AS total_bytes
+                FROM documents WHERE scope = 'private' AND owner_user_id = ?
+                """,
+                (owner_user_id,),
+            ).fetchone()
+        else:
+            row = connection.execute(
+                """
+                SELECT COUNT(*) AS document_count, COALESCE(SUM(size_bytes), 0) AS total_bytes
+                FROM documents WHERE scope = 'shared'
+                """
+            ).fetchone()
+    return int(row["document_count"]), int(row["total_bytes"])
+
+
 def create_document(
     *,
     owner_user_id: int | None,
