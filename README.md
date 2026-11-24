@@ -2,7 +2,7 @@
 
 A self-hosted personal AI assistant with local inference, persistent memory, Discord integration and web research.
 
-> **Project status: early planning / scaffolding.** Orinoco is not yet a working application. The repository is being prepared before implementation begins. Features described below are goals, not claims of existing functionality.
+> **Project status: early implementation / scaffolding.** Orinoco is not yet a working assistant. Features described below are goals, not claims of existing functionality.
 
 ## Project goals
 
@@ -29,19 +29,19 @@ Planned capabilities include:
 
 ## Planned deployment
 
-The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl used to manage the Orinoco service. The planned stack includes Ollama for local inference, a web application, and optional integrations such as SearXNG and Discord.
+The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 1.13.0 managing Orinoco through a custom Egg and Docker image. The planned stack includes Ollama for local inference, a web application, and optional integrations such as SearXNG and Discord.
 
 The exact implementation and resource requirements will be validated before deployment. No VPS purchase or production deployment is implied by this repository.
 
 ## Repository status
 
-The repository now includes an initial FastAPI application scaffold, a health endpoint, basic tests and a Pterodactyl-oriented Docker image foundation. It is **not yet a usable AI assistant**: authentication, chat, database, Ollama integration, Discord, search and the production Pterodactyl Egg are still to come.
+The repository includes an initial FastAPI application scaffold, a health endpoint, automated tests, a Pterodactyl-oriented Docker image foundation, and a **preview Pterodactyl 1.x Egg**. It is not yet a usable AI assistant: authentication, chat, database, Ollama integration, Discord and search are still to come. The Docker image has not yet been built or published, and the Egg has not yet been imported into a live Panel.
 
-See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md) and [Development](docs/DEVELOPMENT.md).
+See [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
 ## Security
 
-Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. A hidden Pterodactyl variable is not a secure secret store. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## Contributing
 
