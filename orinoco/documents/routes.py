@@ -10,7 +10,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
-from orinoco.auth.sessions import get_session_userfrom fastapi.responses import FileResponse
+from orinoco.auth.sessions import get_session_user
+from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
 from orinoco.db import (
