@@ -20,7 +20,7 @@ The planned image name is `ghcr.io/lcswolf/orinoco-ai:stable`. See [Updating and
 
 Supervisor runs Ollama on `127.0.0.1:11434`, first-run model initialisation and the Orinoco web app on the assigned Pterodactyl allocation. The Ollama API is not exposed as a public allocation. Model files, the SQLite database, session secret, uploaded documents and extracted document index live in persistent server storage under `/home/container/data`.
 
-The image pins Ollama 0.40.18, disables Ollama cloud features and limits model concurrency to one. The web app uses secure signed sessions, CSRF-protected authentication, per-user chat/memory/document isolation and administrator-managed accounts.
+The image pins Ollama 0.40.18, disables Ollama cloud features and limits model concurrency to one. The web app uses secure signed sessions, CSRF-protected authentication, per-user chat/memory/document isolation and administrator-managed accounts. First-admin creation and offline password resets require a real interactive terminal; from SSH, identify the container with `docker ps` and use `docker exec -it CONTAINER_ID python -m orinoco.admin create-admin` or `docker exec -it CONTAINER_ID python -m orinoco.admin reset-password USERNAME`. Do not run password prompts through a non-interactive Pterodactyl console or startup command.
 
 The initial chat queue admits one active generation plus up to eight additional in-flight chat requests by default. Excess requests receive HTTP 503 with a short retry hint instead of accumulating without bound. The administrator can adjust `ORINOCO_MAX_PENDING_GENERATIONS` from 0 to 32 in the Egg; this queue and the per-user chat rate limiter are process-local and assume one web worker.
 
