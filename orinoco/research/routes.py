@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/research", tags=["research"])
 
 
 def _current_user(request: Request) -> User:
+    """Resolve the active account for an authenticated research request."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         raise HTTPException(status_code=401, detail="Please sign in to continue.")
@@ -34,6 +35,7 @@ async def search_web(
     request: Request,
     q: str = Query(min_length=3, max_length=300),
 ) -> dict[str, object]:
+    """Run an explicit user-requested search against the configured SearXNG service."""
     _current_user(request)
     client: SearXNGClient | None = None
     try:
@@ -49,17 +51,20 @@ async def search_web(
 
 
 class SummariseRequest(BaseModel):
+    """Validated public webpage URL submitted for local summarisation."""
     url: str = Field(min_length=8, max_length=2048)
 
     @field_validator("url")
     @classmethod
     def url_must_not_be_blank(cls, value: str) -> str:
+        """Reject whitespace-only URL input before attempting a network request."""
         if not value.strip():
             raise ValueError("A website URL is required.")
         return value.strip()
 
 
 def _require_csrf(request: Request) -> None:
+    """Require a valid session CSRF token before a research mutation."""
     import hmac
 
     expected = request.session.get("csrf_token")
@@ -77,6 +82,7 @@ async def summarise_website(
     payload: SummariseRequest,
     request: Request,
 ) -> dict[str, str]:
+    """Fetch a public webpage safely and summarise it using the local model."""
     _require_csrf(request)
     _current_user(request)
     if os.environ.get("ENABLE_WEB_SEARCH", "false").lower() in {"0", "false", "no", "off"}:
