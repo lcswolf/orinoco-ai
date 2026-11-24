@@ -15,7 +15,7 @@ def _sign_in(client: TestClient, username: str, password: str) -> str:
         json={"username": username, "password": password},
     )
     assert response.status_code == 200
-    return token
+    return client.get("/api/auth/csrf").json()["csrf_token"]
 
 
 def test_preferences_api_is_authenticated_csrf_protected_and_per_user(tmp_path, monkeypatch) -> None:
