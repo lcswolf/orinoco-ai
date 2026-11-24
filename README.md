@@ -34,7 +34,7 @@ The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pt
 
 The repository includes a custom responsive interface, secure authentication, administrator user management, authenticated local chat, private conversations and memories, private/shared document libraries, SQLite FTS5 retrieval and an explicit web-search workspace that uses an administrator-configured SearXNG service.
 
-Encrypted local backups, verified S3-compatible off-site uploads, a supervised daily scheduler and configurable local retention are implemented. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding. Discord, voice and production deployment are not implemented yet. The expanded Docker image is being validated and has not been published to GHCR or deployed.
+Encrypted local backups, verified S3-compatible off-site uploads, a supervised daily scheduler and configurable local retention are implemented. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding. The container build and smoke test pass in CI, but the image has not been published to GHCR or deployed. Discord, voice and production deployment are not implemented yet.
 
 See [Network Deployment](docs/NETWORK_DEPLOYMENT.md), [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md), [Updating and Rollback](docs/UPDATING.md), [Pre-release Audit](docs/PRE_RELEASE_AUDIT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
