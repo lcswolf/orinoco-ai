@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import mimetypes
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from orinoco.documents.extract import MAX_UPLOAD_BYTES, extract_text
 from orinoco.documents.storage import remove_document_file, resolve_document_path, store_document
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
+logger = logging.getLogger(__name__)
 
 
 def _require_csrf(request: Request) -> None:
@@ -90,7 +92,10 @@ async def _store_upload(file: UploadFile, *, user_id: int, scope: str) -> dict[s
             database_path=database_path,
         )
     except Exception:
-        remove_document_file(stored_path)
+        try:
+            remove_document_file(stored_path)
+        except (OSError, ValueError):
+            logger.exception("Could not clean up an unregistered document upload.")
         raise
     return {
         "id": document_id,
@@ -159,13 +164,22 @@ async def remove_private_document(document_id: int, request: Request) -> dict[st
     )
     if document is None or document["scope"] != "private":
         raise HTTPException(status_code=404, detail="Document not found.")
-    stored_path = delete_document(
+    stored_path = str(document["stored_path"])
+    try:
+        # Remove the original first. If storage cleanup fails, keep the DB row
+        # visible so the owner can retry instead of silently orphaning private data.
+        remove_document_file(stored_path)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="The document could not be removed from storage; it remains listed so you can retry.",
+        ) from exc
+    deleted_path = delete_document(
         user.id,
         document_id,
         allow_shared=False,
         database_path=get_database_path(),
     )
-    if stored_path is None:
+    if deleted_path is None:
         raise HTTPException(status_code=404, detail="Document not found.")
-    remove_document_file(stored_path)
     return {"deleted": True}
