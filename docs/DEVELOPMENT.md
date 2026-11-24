@@ -131,10 +131,9 @@ The image uses a non-root `container` account and the `/home/container` working 
 
 ## Current limitations
 
-- Search results automatically included in chat answers.
 - Conversation editing/deletion, pagination and streaming.
 - OCR and advanced semantic document search.
 - Discord and voice integrations.
-- Automatic off-site backup scheduling and retention; production deployment.
+- Automatic off-site backup scheduling and retention; safe application updates and rollback; production deployment.
 
 Do not expose this development scaffold as a public assistant service.
