@@ -15,7 +15,6 @@ from orinoco import __version__
 from orinoco.admin.routes import router as admin_router
 from orinoco.memories.routes import router as memories_router
 from orinoco.chat.routes import router as chat_router
-from orinoco.memory.routes import router as memory_router
 from orinoco.auth.routes import router as auth_router
 from orinoco.auth.sessions import get_session_secret, secure_cookie_enabled
 
@@ -40,7 +39,6 @@ app.add_middleware(
 )
 app.include_router(auth_router)
 app.include_router(chat_router)
-app.include_router(memory_router)
 app.include_router(admin_router)
 app.include_router(memories_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
