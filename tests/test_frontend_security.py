@@ -27,3 +27,16 @@ def test_external_links_are_restricted_to_credential_free_http_urls() -> None:
     assert "link.href = safeUrl" in script
     assert "source.href = safeSourceUrl" in script
     assert "link.href = result.url" not in script
+
+
+def test_conversation_delete_control_is_explicit_and_csrf_protected() -> None:
+    """The UI asks for confirmation and uses the authenticated DELETE endpoint."""
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "orinoco" / "static" / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="delete-chat-action"' in html
+    assert 'aria-label="Delete current conversation"' in html
+    assert "window.confirm(" in script
+    assert 'method: "DELETE"' in script
+    assert 'headers: { "X-CSRF-Token": csrf, Accept: "application/json" }' in script
+    assert '"/api/conversations/" + encodeURIComponent(conversationId)' in script
