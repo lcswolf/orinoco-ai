@@ -14,6 +14,7 @@ if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
 fi
 
 echo "Starting Orinoco web application on 0.0.0.0:$PORT"
-# Do not trust forwarded headers until the host proxy address has been measured and explicitly allow-listed.
-# The edge proxy enforces per-client IP limits; application throttles remain per account.
+# Uvicorn never trusts forwarded headers. Orinoco's login throttle uses X-Forwarded-For only
+# when the connecting peer matches the administrator-configured ORINOCO_TRUSTED_PROXY_IPS allowlist.
+# Until that peer is measured and configured, the edge proxy's per-client limits are primary.
 exec python -m uvicorn orinoco.main:app --host 0.0.0.0 --port "$PORT" --no-proxy-headers
