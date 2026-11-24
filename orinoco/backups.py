@@ -320,8 +320,10 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
             # Use SQLite online backup so committed WAL data is preserved too.
             _copy_database_snapshot(database_backup)
         secret_existed = secret_path.exists()
-        secret_backup = root / "session_secret.pre-restore"
+        secret_backup = secret_path.with_suffix(secret_path.suffix + ".pre-restore")
         if secret_existed:
+            if secret_backup.exists():
+                raise BackupError(f"Recovery file already exists: {secret_backup}")
             shutil.copy2(secret_path, secret_backup)
         old_documents = document_root.with_name(document_root.name + ".pre-restore")
         if old_documents.exists():
@@ -347,7 +349,7 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
                 os.replace(database_backup, database_path)
             elif not database_existed:
                 database_path.unlink(missing_ok=True)
-            if secret_backup.exists():
+            if secret_existed and secret_backup.exists():
                 secret_path.parent.mkdir(parents=True, exist_ok=True)
                 os.replace(secret_backup, secret_path)
             elif not secret_existed:
