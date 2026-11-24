@@ -271,3 +271,32 @@ def test_failed_private_file_cleanup_keeps_document_record(tmp_path, monkeypatch
 
     assert deletion.status_code == 500
     assert any(item["id"] == document_id for item in listing)
+
+
+def test_database_registration_failure_removes_unregistered_upload(tmp_path, monkeypatch) -> None:
+    """A failed DB insert must clean up the newly written file instead of orphaning it."""
+    from orinoco.documents import routes as document_routes
+
+    database = tmp_path / "orinoco.sqlite3"
+    storage = tmp_path / "documents"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(storage))
+    initialise_database(database)
+    create_user("cleanupuser", "a-long-test-password-123", database_path=database)
+
+    def fail_registration(**_kwargs):
+        raise RuntimeError("simulated database write failure")
+
+    monkeypatch.setattr(document_routes, "create_document", fail_registration)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "cleanupuser", "a-long-test-password-123")
+        response = client.post(
+            "/api/documents",
+            headers={"X-CSRF-Token": csrf(client)},
+            files={"file": ("notes.txt", b"Temporary upload must be removed.", "text/plain")},
+        )
+
+    assert response.status_code == 500
+    assert not list(storage.rglob("*.txt"))
+    assert not list(storage.rglob("*.tmp"))
