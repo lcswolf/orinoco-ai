@@ -108,7 +108,7 @@ def test_failed_model_request_does_not_save_message(tmp_path, monkeypatch) -> No
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
     initialise_database(database)
     create_user("nugget", "a-long-test-password-123", database_path=database)
-    monkeypatch.setattr(chat, "OllamaClient", FailingOllamaClient)
+    monkeypatch.setattr(chat_routes, "OllamaClient", FailingOllamaClient)
 
     with TestClient(app, base_url="https://testserver") as client:
         sign_in(client, "nugget", "a-long-test-password-123")
