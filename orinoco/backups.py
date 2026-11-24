@@ -33,6 +33,9 @@ MAGIC = b"ORINOCO-BACKUP-1\n"
 CHUNK_SIZE = 1024 * 1024
 MAX_ARCHIVE_FILES = 100_000
 MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
+MAX_MANIFEST_BYTES = 1024 * 1024
+MAX_SESSION_SECRET_BYTES = 4 * 1024
+MAX_DOCUMENT_FILE_BYTES = 10 * 1024 * 1024
 DEFAULT_BACKUP_ROOT = Path("/home/container/data/backups")
 DEFAULT_SECRET_PATH = Path("/home/container/data/.session_secret")
 ALLOWED_FILES = {"database.sqlite3", "manifest.json", "session_secret"}
@@ -66,20 +69,33 @@ def generate_key() -> str:
 
 
 def _encrypt_file(source: Path, destination: Path, key: bytes) -> None:
-    """Encrypt a file incrementally with authenticated AES-256-GCM."""
+    """Encrypt a file incrementally with authenticated AES-256-GCM.
+
+    The destination is created with owner-only permissions and removed if
+    encryption fails, so partial backup files are never mistaken for complete
+    backups on a later run.
+    """
     nonce = secrets.token_bytes(12)
     encryptor = Cipher(algorithms.AES(key), modes.GCM(nonce)).encryptor()
-    with source.open("rb") as input_file, destination.open("xb") as output_file:
-        output_file.write(MAGIC)
-        output_file.write(nonce)
-        while chunk := input_file.read(CHUNK_SIZE):
-            output_file.write(encryptor.update(chunk))
-        output_file.write(encryptor.finalize())
-        output_file.write(encryptor.tag)
-        output_file.flush()
-        os.fsync(output_file.fileno())
+    descriptor = os.open(
+        destination,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+        0o600,
+    )
+    try:
+        with source.open("rb") as input_file, os.fdopen(descriptor, "wb") as output_file:
+            output_file.write(MAGIC)
+            output_file.write(nonce)
+            while chunk := input_file.read(CHUNK_SIZE):
+                output_file.write(encryptor.update(chunk))
+            output_file.write(encryptor.finalize())
+            output_file.write(encryptor.tag)
+            output_file.flush()
+            os.fsync(output_file.fileno())
+    except Exception:
+        destination.unlink(missing_ok=True)
+        raise
     destination.chmod(0o600)
-
 
 def _decrypt_file(source: Path, destination: Path, key: bytes) -> None:
     """Authenticate and decrypt a backup incrementally before it can be restored."""
@@ -87,6 +103,7 @@ def _decrypt_file(source: Path, destination: Path, key: bytes) -> None:
     header_size = len(MAGIC) + 12
     if size < header_size + 16:
         raise BackupError("Backup file is too small or incomplete.")
+    created = False
     with source.open("rb") as input_file:
         if input_file.read(len(MAGIC)) != MAGIC:
             raise BackupError("This is not a supported Orinoco backup file.")
@@ -97,7 +114,13 @@ def _decrypt_file(source: Path, destination: Path, key: bytes) -> None:
         remaining = size - header_size - 16
         decryptor = Cipher(algorithms.AES(key), modes.GCM(nonce, tag)).decryptor()
         try:
-            with destination.open("xb") as output_file:
+            descriptor = os.open(
+                destination,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            created = True
+            with os.fdopen(descriptor, "wb") as output_file:
                 while remaining:
                     chunk = input_file.read(min(CHUNK_SIZE, remaining))
                     if not chunk:
@@ -108,12 +131,28 @@ def _decrypt_file(source: Path, destination: Path, key: bytes) -> None:
                 output_file.flush()
                 os.fsync(output_file.fileno())
         except InvalidTag as exc:
-            destination.unlink(missing_ok=True)
+            if created:
+                destination.unlink(missing_ok=True)
             raise BackupError("Backup authentication failed: wrong key or damaged file.") from exc
         except Exception:
-            destination.unlink(missing_ok=True)
+            # Do not delete a pre-existing destination if O_EXCL failed.
+            if created:
+                destination.unlink(missing_ok=True)
             raise
     destination.chmod(0o600)
+
+def _validate_backup_source(backup_path: Path) -> Path:
+    """Require an existing regular encrypted backup file and reject symlinks."""
+    path = Path(backup_path).expanduser()
+    if path.is_symlink():
+        raise BackupError("Backup source must be a regular file, not a symbolic link.")
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise BackupError("Backup source does not exist or cannot be resolved safely.") from exc
+    if not resolved.is_file() or resolved.suffix != ".oribak":
+        raise BackupError("Backup source must be an existing encrypted .oribak file.")
+    return resolved
 
 
 def _session_secret_path() -> Path:
