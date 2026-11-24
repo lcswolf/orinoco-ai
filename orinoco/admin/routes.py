@@ -89,6 +89,7 @@ async def add_user(
     payload: CreateUserRequest,
     request: Request,
 ) -> dict[str, object]:
+    """Create a standard account after administrator and CSRF checks."""
     _require_csrf(request)
     _require_admin(request)
     try:
@@ -110,6 +111,7 @@ async def update_user_status(
     payload: UserStatusRequest,
     request: Request,
 ) -> dict[str, bool]:
+    """Suspend or reactivate another account without allowing self-lockout."""
     _require_csrf(request)
     admin = _require_admin(request)
     if user_id == admin.id:
