@@ -7,9 +7,9 @@
   --text: #edf4f1;
   --muted: #9aadb0;
   --soft: #71878d;
-  --mint: #77d8bd;
-  --mint-dark: #173e3b;
-  --amber: #f1c78b;
+  --mint: #a0c78b;
+  --mint-dark: #334b35;
+  --amber: #d8a05e;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 * { box-sizing: border-box; }
@@ -18,7 +18,7 @@ button, a { font: inherit; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 258px; flex: 0 0 258px; display: flex; flex-direction: column; padding: 27px 18px 18px; background: #0d171f; border-right: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 11px; margin: 0 8px 34px; color: var(--text); text-decoration: none; }
-.brand-mark { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 12px 12px 12px 4px; background: linear-gradient(145deg, #8ce4c8, #4eaa9c); color: #102a2a; font-family: Georgia, serif; font-size: 27px; font-weight: 700; line-height: 1; }
+.brand-mark { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 12px 12px 12px 4px; background: linear-gradient(145deg, #c2d49a, #789b67); color: #203024; font-family: Georgia, serif; font-size: 27px; font-weight: 700; line-height: 1; }
 .brand-name { font-size: 21px; font-weight: 650; letter-spacing: -.8px; }
 .new-chat { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border: 1px solid rgba(119,216,189,.2); border-radius: 10px; background: rgba(119,216,189,.07); color: #a9dccc; text-align: left; }
 .new-chat span { font-size: 19px; }
@@ -49,9 +49,8 @@ button:disabled { cursor: default; opacity: .8; }
 .welcome { width: min(720px, calc(100% - 48px)); margin: auto; padding: 58px 0 42px; text-align: center; }
 .welcome-eyebrow { display: flex; align-items: center; justify-content: center; gap: 11px; color: #80bda9; font-size: 9px; font-weight: 700; letter-spacing: 2px; }
 .eyebrow-line { width: 22px; height: 1px; background: #568e7d; }
-.welcome-mark { position: relative; display: grid; place-items: center; width: 74px; height: 74px; margin: 28px auto 22px; border: 1px solid rgba(119,216,189,.35); border-radius: 26px 26px 26px 8px; background: linear-gradient(145deg, rgba(119,216,189,.16), rgba(54,113,104,.08)); box-shadow: 0 12px 50px rgba(34,116,97,.12); }
-.welcome-mark span { color: #91e4c9; font-family: Georgia, serif; font-size: 55px; line-height: 1; transform: translateY(-3px); }
-.welcome-mark i { position: absolute; right: 15px; bottom: 14px; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px rgba(241,199,139,.7); }
+.welcome-mark { position: relative; display: grid; place-items: center; width: 148px; height: 148px; margin: 18px auto 18px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.welcome-mascot { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(0,0,0,.22)); }
 h1 { margin: 0; color: #f1f5f1; font-size: clamp(27px, 4vw, 39px); font-weight: 540; letter-spacing: -1.5px; line-height: 1.28; }
 h1 em { color: #8bd9bd; font-style: normal; }
 .welcome-copy { margin: 16px 0 30px; color: #91a5a7; font-size: 13px; line-height: 1.7; }
@@ -84,8 +83,7 @@ h1 em { color: #8bd9bd; font-style: normal; }
   .account-action { margin-left: 8px; padding: 7px 8px; font-size: 10px; }
   .mobile-brand strong { display: none; }
   .welcome { width: min(100% - 36px, 600px); padding: 55px 0 35px; }
-  .welcome-mark { width: 65px; height: 65px; margin-top: 25px; }
-  .welcome-mark span { font-size: 49px; }
+  .welcome-mark { width: 126px; height: 126px; margin-top: 22px; }
   .welcome-copy { max-width: 370px; margin-right: auto; margin-left: auto; font-size: 12px; }
   .status-card { margin-bottom: 38px; }
   .footer { padding: 16px 18px; }
