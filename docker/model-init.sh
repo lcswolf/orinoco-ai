@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# First-run model setup is separate from the long-running Ollama service.
+# Models are stored on the persistent Pterodactyl data volume.
+
 export OLLAMA_HOST="127.0.0.1:11434"
 export OLLAMA_MODELS="${OLLAMA_MODELS:-/home/container/data/models}"
 
@@ -10,6 +13,7 @@ if [ "${AUTO_DOWNLOAD_MODEL:-true}" != "true" ]; then
 fi
 
 MODEL="${AI_MODEL:-qwen2.5:1.5b}"
+# Only curated model tags are accepted; arbitrary tags are not pulled at startup.
 case "$MODEL" in
     qwen2.5:0.5b|qwen2.5:1.5b|qwen2.5:3b) ;;
     *)
