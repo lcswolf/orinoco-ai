@@ -45,6 +45,7 @@ button:disabled { cursor: default; opacity: .8; }
 .connection.error .status-dot { background: #e58d7f; box-shadow: none; }
 .icon-button { width: 35px; height: 35px; margin-left: 22px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--muted); }
 .mobile-brand { display: none; }
+.mobile-conversations { display: none; }
 .welcome { width: min(720px, calc(100% - 48px)); margin: auto; padding: 58px 0 42px; text-align: center; }
 .welcome-eyebrow { display: flex; align-items: center; justify-content: center; gap: 11px; color: #80bda9; font-size: 9px; font-weight: 700; letter-spacing: 2px; }
 .eyebrow-line { width: 22px; height: 1px; background: #568e7d; }
@@ -76,7 +77,12 @@ h1 em { color: #8bd9bd; font-style: normal; }
   .topbar { height: 60px; padding: 0 18px; }
   .mobile-brand { display: flex; align-items: center; gap: 9px; border: 0; background: none; color: var(--text); font-size: 16px; }
   .mobile-brand .brand-mark { width: 29px; height: 29px; border-radius: 10px 10px 10px 4px; font-size: 23px; }
-  .icon-button { margin-left: 14px; }
+  .icon-button { margin-left: 8px; }
+  .mobile-conversations { display: block; width: 94px; min-width: 0; margin-left: 8px; padding: 7px 4px; border: 1px solid var(--line); border-radius: 8px; background: #14232e; color: #a9c0b9; font-size: 10px; }
+  .connection { gap: 5px; font-size: 9px; }
+  .connection .status-dot { flex: 0 0 6px; }
+  .account-action { margin-left: 8px; padding: 7px 8px; font-size: 10px; }
+  .mobile-brand strong { display: none; }
   .welcome { width: min(100% - 36px, 600px); padding: 55px 0 35px; }
   .welcome-mark { width: 65px; height: 65px; margin-top: 25px; }
   .welcome-mark span { font-size: 49px; }
