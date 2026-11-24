@@ -80,3 +80,13 @@ def test_backup_detects_tampered_ciphertext(tmp_path, monkeypatch) -> None:
     backup.write_bytes(data)
     with pytest.raises(Exception):
         backups.verify_backup(backup)
+
+
+
+def test_backup_refuses_document_symlinks(tmp_path, monkeypatch) -> None:
+    _, documents, _ = configure_backup_paths(monkeypatch, tmp_path)
+    outside = tmp_path / "outside.txt"
+    outside.write_text("must never be included", encoding="utf-8")
+    (documents / "private" / "outside-link.txt").symlink_to(outside)
+    with pytest.raises(backups.BackupError, match="symbolic link"):
+        backups.create_backup()
