@@ -789,22 +789,22 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
-function addDocumentRow(list, document, canDelete) {
+function addDocumentRow(list, fileRecord, canDelete) {
   const item = document.createElement("div");
   item.className = "admin-user document-item";
   const copy = document.createElement("div");
   copy.className = "admin-user-copy";
   const name = document.createElement("strong");
-  name.textContent = document.original_name;
+  name.textContent = fileRecord.original_name;
   const detail = document.createElement("span");
-  detail.textContent = document.scope + " · " + document.file_type.toUpperCase() +
-    " · " + formatFileSize(document.size_bytes);
+  detail.textContent = fileRecord.scope + " · " + fileRecord.file_type.toUpperCase() +
+    " · " + formatFileSize(fileRecord.size_bytes);
   copy.append(name, detail);
 
   const download = document.createElement("a");
-  download.href = "/api/documents/" + document.id + "/download";
+  download.href = "/api/documents/" + fileRecord.id + "/download";
   download.textContent = "Download";
-  download.setAttribute("aria-label", "Download " + document.original_name);
+  download.setAttribute("aria-label", "Download " + fileRecord.original_name);
   item.append(copy, download);
 
   if (canDelete) {
@@ -813,10 +813,10 @@ function addDocumentRow(list, document, canDelete) {
     remove.textContent = "Delete";
     remove.className = "suspend";
     remove.addEventListener("click", async () => {
-      if (!window.confirm("Delete " + document.original_name + "?")) return;
+      if (!window.confirm("Delete " + fileRecord.original_name + "?")) return;
       try {
         const csrf = await getCsrfToken();
-        const response = await fetch("/api/documents/" + document.id, {
+        const response = await fetch("/api/documents/" + fileRecord.id, {
           method: "DELETE",
           headers: { "X-CSRF-Token": csrf },
         });
