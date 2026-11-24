@@ -2,6 +2,14 @@ const connection = document.getElementById("connection-status");
 const modelTitle = document.getElementById("model-title");
 const modelDescription = document.getElementById("model-description");
 const modelPill = document.getElementById("model-pill");
+const accountAction = document.getElementById("account-action");
+const userName = document.getElementById("user-name");
+const userRole = document.getElementById("user-role");
+const userAvatar = document.getElementById("user-avatar");
+const loginDialog = document.getElementById("login-dialog");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const loginSubmit = document.getElementById("login-submit");
 
 async function refreshStatus() {
   try {
@@ -39,4 +47,100 @@ async function refreshStatus() {
   }
 }
 
+function showAccount(user) {
+  if (user) {
+    userName.textContent = user.username;
+    userRole.textContent = user.role === "admin" ? "Administrator" : "Standard account";
+    userAvatar.textContent = user.username.charAt(0).toUpperCase();
+    accountAction.textContent = "Sign out";
+    accountAction.dataset.authenticated = "true";
+  } else {
+    userName.textContent = "Not signed in";
+    userRole.textContent = "Your private workspace";
+    userAvatar.textContent = "?";
+    accountAction.textContent = "Sign in";
+    delete accountAction.dataset.authenticated;
+  }
+}
+
+async function refreshAccount() {
+  try {
+    const response = await fetch("/api/auth/me", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    showAccount(result.authenticated ? result.user : null);
+  } catch {
+    showAccount(null);
+  }
+}
+
+async function getCsrfToken() {
+  const response = await fetch("/api/auth/csrf", { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error("Could not start a secure sign-in session.");
+  const result = await response.json();
+  return result.csrf_token;
+}
+
+accountAction.addEventListener("click", async () => {
+  if (accountAction.dataset.authenticated === "true") {
+    try {
+      const csrf = await getCsrfToken();
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrf },
+      });
+      if (!response.ok) throw new Error("Sign-out failed");
+      showAccount(null);
+    } catch {
+      window.alert("Orinoco could not sign you out. Please refresh and try again.");
+    }
+    return;
+  }
+
+  loginError.hidden = true;
+  loginError.textContent = "";
+  loginForm.reset();
+  loginDialog.showModal();
+  document.getElementById("login-username").focus();
+});
+
+document.getElementById("login-cancel").addEventListener("click", () => loginDialog.close());
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginError.hidden = true;
+  loginSubmit.disabled = true;
+  loginSubmit.textContent = "Signing in…";
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf,
+      },
+      body: JSON.stringify({
+        username: document.getElementById("login-username").value,
+        password: document.getElementById("login-password").value,
+      }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.detail || "Sign-in failed. Please try again.");
+    }
+
+    showAccount(result.user);
+    loginForm.reset();
+    loginDialog.close();
+  } catch (error) {
+    loginError.textContent = error.message || "Sign-in failed. Please try again.";
+    loginError.hidden = false;
+  } finally {
+    loginSubmit.disabled = false;
+    loginSubmit.textContent = "Sign in";
+  }
+});
+
 refreshStatus();
+refreshAccount();
