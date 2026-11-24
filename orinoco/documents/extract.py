@@ -8,6 +8,9 @@ from zipfile import BadZipFile, ZipFile
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_EXTRACTED_CHARS = 200_000
+MAX_PDF_STREAM_BYTES = 8 * 1024 * 1024
+MAX_PDF_PAGE_CONTENT_BYTES = 32 * 1024 * 1024
+MAX_PDF_CONTENT_STREAMS_PER_PAGE = 4
 MAX_OFFICE_ARCHIVE_BYTES = 25 * 1024 * 1024
 MAX_OFFICE_ARCHIVE_ENTRIES = 2_000
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".xlsx", ".pptx"}
@@ -80,8 +83,24 @@ def _validate_office_archive(data: bytes) -> None:
 
 
 def _extract_pdf(data: bytes) -> str:
-    """Extract text from a non-encrypted PDF within the page limit."""
-    from pypdf import PdfReader
+    """Extract bounded text from a non-encrypted PDF within stream and page limits."""
+    from pypdf import PdfReader, filters
+
+    # pypdf's default filter limits are generous for general-purpose tools.
+    # Lower them for untrusted uploads so a compressed stream cannot expand
+    # into hundreds of megabytes while running inside a small VPS container.
+    for setting in (
+        "MAX_DECLARED_STREAM_LENGTH",
+        "MAX_ARRAY_BASED_STREAM_OUTPUT_LENGTH",
+        "JBIG2_MAX_OUTPUT_LENGTH",
+        "LZW_MAX_OUTPUT_LENGTH",
+        "RUN_LENGTH_MAX_OUTPUT_LENGTH",
+        "ZLIB_MAX_OUTPUT_LENGTH",
+        "FLATE_MAX_BUFFER_SIZE",
+    ):
+        current = getattr(filters, setting, None)
+        if isinstance(current, int):
+            setattr(filters, setting, min(current, MAX_PDF_STREAM_BYTES))
 
     try:
         reader = PdfReader(BytesIO(data), strict=False)
@@ -89,11 +108,36 @@ def _extract_pdf(data: bytes) -> str:
             raise ValueError("Password-protected PDFs are not supported.")
         if len(reader.pages) > 100:
             raise ValueError("PDFs are limited to 100 pages.")
-        return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+        parts: list[str] = []
+        remaining_chars = MAX_EXTRACTED_CHARS
+        for page in reader.pages:
+            # Pages may store content in an array of separate streams. Bound
+            # both the stream count and combined decoded content before parsing.
+            raw_contents = page.get("/Contents")
+            if raw_contents is not None and hasattr(raw_contents, "get_object"):
+                raw_contents = raw_contents.get_object()
+            if isinstance(raw_contents, (list, tuple)) and len(raw_contents) > MAX_PDF_CONTENT_STREAMS_PER_PAGE:
+                raise ValueError("PDF pages contain too many content streams.")
+            content_stream = page.get_contents()
+            if content_stream is not None and len(content_stream.get_data()) > MAX_PDF_PAGE_CONTENT_BYTES:
+                raise ValueError("PDF page content exceeds the 32 MiB safety limit.")
+
+            page_text = page.extract_text() or ""
+            if page_text and remaining_chars > 0:
+                if parts:
+                    parts.append("\n")
+                    remaining_chars -= 1
+                excerpt = page_text[:remaining_chars]
+                parts.append(excerpt)
+                remaining_chars -= len(excerpt)
+            if remaining_chars <= 0:
+                break
+        return "".join(parts)
     except ValueError:
         raise
     except Exception as exc:
-        raise ValueError("Could not read this PDF file.") from exc
+        raise ValueError("Could not read this PDF file within the parsing safety limits.") from exc
 
 
 def _extract_docx(data: bytes) -> str:
