@@ -1,6 +1,7 @@
 """Static checks for the document library interface."""
 
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,3 +35,14 @@ def test_document_library_is_not_available_before_sign_in() -> None:
     assert 'id="documents-view"' in html
     assert 'id="shared-document-tools" aria-labelledby="shared-documents-heading" hidden' in html
     assert 'id="documents-link"' in html
+
+
+
+def test_document_interface_has_unique_ids_and_single_controller() -> None:
+    html = (ROOT / "orinoco/static/index.html").read_text(encoding="utf-8")
+    script = (ROOT / "orinoco/static/app.js").read_text(encoding="utf-8")
+    ids = re.findall(r'\\bid="([^"]+)"', html)
+    assert len(ids) == len(set(ids))
+    assert script.count('const documentsLink =') == 1
+    assert "function loadSharedDocuments" not in script
+    assert 'document.getElementById("document-list")' not in script
