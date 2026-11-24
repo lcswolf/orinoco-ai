@@ -150,7 +150,7 @@ The new pip-audit CI step found seven advisories affecting the resolved `cryptog
 
 ### Daily encrypted backup scheduling — implemented
 
-A dedicated Supervisor-managed process runs one backup per local calendar day (03:00 by default in the configured timezone). It creates an encrypted local backup, optionally uploads and byte-verifies it to the configured S3-compatible bucket, and prunes expired local backups only after the complete backup cycle succeeds. The default local retention is 14 days and is configurable from 1 to 365. Failures are written to the Pterodactyl console and a private status JSON file. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding.
+A dedicated Supervisor-managed process completes at most one successful backup cycle per local calendar day (03:00 by default in the configured timezone). It creates an encrypted local backup, optionally uploads and byte-verifies it to the configured S3-compatible bucket, and prunes expired local backups only after the complete backup cycle succeeds. Failed or interrupted attempts remain retryable and are retried after a 15-minute backoff; a day is not marked complete until the cycle succeeds. The default local retention is 14 days and is configurable from 1 to 365. Failures are written to the Pterodactyl console and a private status JSON file. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding.
 
 ### Backup-gated update migrations — implemented
 
