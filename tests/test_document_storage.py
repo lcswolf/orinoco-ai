@@ -74,3 +74,41 @@ def test_failed_document_atomic_rename_removes_temporary_file(tmp_path, monkeypa
         storage.store_document(b"temporary content", user_id=42, scope="private", extension=".txt")
 
     assert list((root / "private" / "42").iterdir()) == []
+
+
+def test_store_document_rejects_symlinked_user_directory(tmp_path, monkeypatch) -> None:
+    """A per-user directory symlink must not redirect an uploaded file elsewhere."""
+    import pytest
+
+    root = tmp_path / "documents"
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (root / "private").mkdir(parents=True)
+    (root / "private" / "42").symlink_to(outside, target_is_directory=True)
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(root))
+
+    with pytest.raises(ValueError, match="symbolic links"):
+        storage.store_document(
+            b"must stay inside the document root",
+            user_id=42,
+            scope="private",
+            extension=".txt",
+        )
+
+    assert list(outside.iterdir()) == []
+
+
+def test_resolver_rejects_symlinked_parent_even_when_target_stays_inside_root(
+    tmp_path, monkeypatch
+) -> None:
+    """Do not allow document paths to traverse any symlinked directory component."""
+    import pytest
+
+    root = tmp_path / "documents"
+    (root / "shared").mkdir(parents=True)
+    (root / "private").symlink_to(root / "shared", target_is_directory=True)
+    (root / "shared" / "note.txt").write_text("inside root", encoding="utf-8")
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(root))
+
+    with pytest.raises(ValueError, match="symbolic links"):
+        storage.resolve_document_path("private/note.txt")
