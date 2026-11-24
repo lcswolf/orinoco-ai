@@ -1,5 +1,7 @@
 """Regression tests for the first-administrator bootstrap command."""
 
+from types import SimpleNamespace
+
 from orinoco.admin.cli import main
 from orinoco.db import authenticate_user
 
@@ -13,7 +15,7 @@ def test_admin_bootstrap_uses_configured_database_path(tmp_path, monkeypatch) ->
     passwords = iter(["a-very-long-admin-password-123", "a-very-long-admin-password-123"])
     monkeypatch.setattr("orinoco.admin.cli.getpass.getpass", lambda prompt: next(passwords))
     monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "create-admin"])
-    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr("sys.stdin", SimpleNamespace(isatty=lambda: True))
 
     assert main() == 0
     assert database.is_file()
@@ -115,7 +117,7 @@ def test_admin_password_reset_refuses_noninteractive_password_input(tmp_path, mo
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
     initialise_database(database)
     create_user("recoveradmin", "an-old-long-password-123", role="admin", database_path=database)
-    monkeypatch.setattr("sys.stdin", __import__("types").SimpleNamespace(isatty=lambda: False))
+    monkeypatch.setattr("sys.stdin", SimpleNamespace(isatty=lambda: False))
     monkeypatch.setattr("builtins.input", lambda prompt: (_ for _ in ()).throw(AssertionError("must not prompt")))
     monkeypatch.setattr(
         "orinoco.admin.cli.getpass.getpass",
