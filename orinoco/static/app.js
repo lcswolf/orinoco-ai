@@ -18,6 +18,10 @@ const chatInput = document.getElementById("chat-input");
 const chatForm = document.getElementById("chat-form");
 const sendButton = document.getElementById("send-message");
 const chatHint = document.getElementById("chat-hint");
+const settingsButton = document.getElementById("settings-button");
+const settingsDialog = document.getElementById("settings-dialog");
+const adminTools = document.getElementById("admin-tools");
+let currentUser = null;
 let currentConversationId = null;
 let sendingMessage = false;
 
@@ -58,7 +62,10 @@ async function refreshStatus() {
 }
 
 function showAccount(user) {
+  currentUser = user;
   if (user) {
+    settingsButton.disabled = false;
+    adminTools.hidden = user.role !== "admin";
     userName.textContent = user.username;
     userRole.textContent = user.role === "admin" ? "Administrator" : "Standard account";
     userAvatar.textContent = user.username.charAt(0).toUpperCase();
@@ -70,6 +77,8 @@ function showAccount(user) {
     chatInput.placeholder = "Message Orinoco…";
     chatHint.textContent = "Your conversation is private and saved to your account.";
   } else {
+    settingsButton.disabled = true;
+    adminTools.hidden = true;
     userName.textContent = "Not signed in";
     userRole.textContent = "Your private workspace";
     userAvatar.textContent = "?";
@@ -325,3 +334,137 @@ chatInput.addEventListener("keydown", (event) => {
 clearThread();
 refreshStatus();
 refreshAccount();
+
+
+function showFeedback(element, message, isError = false) {
+  element.textContent = message;
+  element.className = "settings-feedback" + (isError ? " error" : "");
+  element.hidden = false;
+}
+
+async function loadAdminUsers() {
+  const list = document.getElementById("admin-user-list");
+  list.replaceChildren();
+  try {
+    const response = await fetch("/api/admin/users", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not load accounts.");
+
+    for (const user of result.users) {
+      const item = document.createElement("div");
+      item.className = "admin-user";
+      const copy = document.createElement("div");
+      copy.className = "admin-user-copy";
+      const name = document.createElement("strong");
+      name.textContent = user.username + (currentUser && user.id === currentUser.id ? " (you)" : "");
+      const detail = document.createElement("span");
+      detail.textContent = user.role + " · " + (user.active ? "Active" : "Suspended");
+      copy.append(name, detail);
+      item.append(copy);
+
+      if (!currentUser || user.id !== currentUser.id) {
+        const action = document.createElement("button");
+        action.type = "button";
+        action.textContent = user.active ? "Suspend" : "Reactivate";
+        if (user.active) action.classList.add("suspend");
+        action.addEventListener("click", async () => {
+          action.disabled = true;
+          try {
+            const csrf = await getCsrfToken();
+            const update = await fetch("/api/admin/users/" + user.id, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": csrf,
+              },
+              body: JSON.stringify({ active: !user.active }),
+            });
+            const payload = await update.json();
+            if (!update.ok) throw new Error(payload.detail || "Could not update account.");
+            await loadAdminUsers();
+          } catch (error) {
+            window.alert(error.message || "Could not update account.");
+            action.disabled = false;
+          }
+        });
+        item.append(action);
+      }
+      list.append(item);
+    }
+  } catch (error) {
+    const message = document.createElement("p");
+    message.className = "settings-feedback error";
+    message.textContent = error.message || "Could not load accounts.";
+    list.append(message);
+  }
+}
+
+settingsButton.addEventListener("click", async () => {
+  if (!currentUser) return;
+  document.getElementById("password-feedback").hidden = true;
+  document.getElementById("user-feedback").hidden = true;
+  document.getElementById("password-form").reset();
+  document.getElementById("create-user-form").reset();
+  settingsDialog.showModal();
+  if (currentUser.role === "admin") await loadAdminUsers();
+});
+
+document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
+
+document.getElementById("password-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const feedback = document.getElementById("password-feedback");
+  const currentPassword = document.getElementById("current-password").value;
+  const newPassword = document.getElementById("new-password").value;
+  const confirmation = document.getElementById("confirm-password").value;
+  if (newPassword !== confirmation) {
+    showFeedback(feedback, "The new passwords do not match.", true);
+    return;
+  }
+
+  const button = document.getElementById("password-submit");
+  button.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/auth/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not update password.");
+    document.getElementById("password-form").reset();
+    showFeedback(feedback, "Your password has been updated.");
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not update password.", true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("create-user-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const feedback = document.getElementById("user-feedback");
+  const button = document.getElementById("create-user-submit");
+  button.disabled = true;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({
+        username: document.getElementById("new-username").value,
+        password: document.getElementById("new-user-password").value,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not create account.");
+    document.getElementById("create-user-form").reset();
+    showFeedback(feedback, "Account created. Share the temporary password securely.");
+    await loadAdminUsers();
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not create account.", true);
+  } finally {
+    button.disabled = false;
+  }
+});
