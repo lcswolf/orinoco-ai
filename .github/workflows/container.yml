@@ -50,7 +50,7 @@ jobs:
             --env ORINOCO_DOMAIN=orinoco.example.net \
             --env ORINOCO_PUBLIC_IPV4=203.0.113.10 \
             --volume "$PWD/deploy/caddy/Caddyfile.example:/etc/caddy/Caddyfile:ro" \
-            caddy:2.11.0-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+            caddy:2.11.0-alpine validate --config /etc/caddy/Caddyfile --adapter caddyfile
           docker run --rm \
             --volume "$PWD/deploy/nginx/orinoco.conf.example:/etc/nginx/conf.d/orinoco.conf:ro" \
             nginx:1.28-alpine nginx -t
