@@ -121,3 +121,21 @@ def test_v5_database_upgrades_to_current_schema_without_losing_accounts(tmp_path
     ) is not None
     assert get_user_preferences(user.id, database_path=database)["voice"] == "bright"
     assert get_assistant_persona(database_path=database)["humour_level"] == 65
+
+
+def test_negative_database_schema_version_is_rejected_without_modification(tmp_path) -> None:
+    """A corrupt negative user_version must not be treated as a legacy database."""
+    database = tmp_path / "negative.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA user_version = -1")
+
+    with pytest.raises(RuntimeError, match="cannot be negative"):
+        initialise_database(database)
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == -1
+        tables = connection.execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table'"
+        ).fetchone()[0]
+
+    assert tables == 0
