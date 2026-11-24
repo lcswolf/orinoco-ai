@@ -105,13 +105,27 @@ def _check_login_bucket(
         )
 
 
+def _login_identity_key(username: str, remote_ip: str | None) -> str:
+    """Scope a username failure bucket to the observed client to avoid account lockout DoS."""
+    # A global username-only bucket would let anyone lock a victim out by
+    # submitting five bad passwords. Pairing username and client address keeps
+    # targeted throttling while the separate address bucket limits rotation.
+    return f"{username}\\x1f{remote_ip}" if remote_ip else username
+
+
 def _check_login_rate(username: str, remote_ip: str | None = None) -> None:
-    """Throttle repeated failures per username and per observed client address.
+    """Throttle repeated failures per username/client pair and per client address.
 
     The address is request.client.host only; untrusted forwarded headers are
     deliberately ignored. A reverse proxy should apply its own IP-level limit.
     """
-    _check_login_bucket(username, _login_failures_for(username), MAX_LOGIN_FAILURES, _login_failures)
+    identity_key = _login_identity_key(username, remote_ip)
+    _check_login_bucket(
+        identity_key,
+        _login_failures_for(identity_key),
+        MAX_LOGIN_FAILURES,
+        _login_failures,
+    )
     if remote_ip:
         _check_login_bucket(
             remote_ip,
