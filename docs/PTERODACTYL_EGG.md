@@ -28,14 +28,14 @@ The image pins Ollama 0.40.18, disables Ollama cloud features and limits model c
 - Argon2 accounts, administrator user management and password changes.
 - Per-user automatic memories with review/edit/delete controls.
 - Private and shared document libraries for TXT, Markdown, PDF, DOCX, XLSX and PPTX, with bounded extraction and FTS5 keyword retrieval.
-- Explicit web-search workspace using a configured SearXNG service.
+- Explicit web-search workspace and per-message opt-in chat search using a configured SearXNG service.
 - Liveness endpoint `/healthz` and model readiness endpoint `/readyz`.
 
-User-triggered public webpage fetching and local summarisation are implemented with DNS-pinned public-IP resolution and redirect checks. Discord and voice are still under development. The SearXNG feature requires the administrator to configure `SEARXNG_URL` and enable `ENABLE_WEB_SEARCH`. Search queries are sent to that configured service and its upstream providers.
+User-triggered public webpage fetching and local summarisation are implemented with DNS-pinned public-IP resolution and redirect checks. Discord and voice are still under development. The SearXNG feature requires the administrator to configure `SEARXNG_URL` and enable `ENABLE_WEB_SEARCH`. Search queries are sent to that configured service and its upstream providers. The chat search toggle is off by default for each message.
 
 ## Egg variables and security
 
-The Egg includes curated model selection, automatic model download, model context, single-request concurrency, automatic memory saving, database path and optional integration settings.
+The Egg includes curated model selection, automatic model download, model context, single-request concurrency, automatic memory saving, database path, optional integration settings and an admin-only backup encryption key variable. The backup key must be generated and stored securely outside the VPS.
 
 Keep the Discord token blank until its integration and secret-handling design are complete. A hidden Egg variable is not a secret store; processes inside the container can read environment variables. Never commit tokens or private data.
 
