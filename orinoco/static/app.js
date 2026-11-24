@@ -50,6 +50,7 @@ function syncMobileNavigation() {
   const open = mobile && sidebar.classList.contains("mobile-open");
   sidebar.inert = mobile && !open;
   mainPanel.inert = open;
+  document.body.classList.toggle("mobile-nav-open", open);
   if (mobile) {
     sidebar.setAttribute("aria-hidden", String(!open));
     mainPanel.setAttribute("aria-hidden", String(open));
