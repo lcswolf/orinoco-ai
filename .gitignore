@@ -18,6 +18,7 @@ documents/
 memories/
 conversations/
 backups/
+*.oribak
 *.db
 *.sqlite
 *.sqlite3
