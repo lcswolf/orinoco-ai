@@ -215,6 +215,51 @@
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|integer|min:1|max:365"
+    },
+    {
+      "name": "ORINOCO_USER_DOCUMENT_QUOTA_BYTES",
+      "description": "Maximum combined size of private documents per user (default 50 MiB). Each individual upload remains limited to 10 MiB.",
+      "env_variable": "ORINOCO_USER_DOCUMENT_QUOTA_BYTES",
+      "default_value": "52428800",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1"
+    },
+    {
+      "name": "ORINOCO_USER_DOCUMENT_QUOTA_FILES",
+      "description": "Maximum number of private documents per user.",
+      "env_variable": "ORINOCO_USER_DOCUMENT_QUOTA_FILES",
+      "default_value": "20",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1"
+    },
+    {
+      "name": "ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES",
+      "description": "Maximum combined size of the administrator-managed shared document library (default 200 MiB).",
+      "env_variable": "ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES",
+      "default_value": "209715200",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1"
+    },
+    {
+      "name": "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES",
+      "description": "Maximum number of documents in the administrator-managed shared library.",
+      "env_variable": "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES",
+      "default_value": "50",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1"
+    },
+    {
+      "name": "ORINOCO_MAX_REQUEST_BODY_BYTES",
+      "description": "Maximum declared HTTP request body size (default 12 MiB). Configure the reverse proxy to reject oversized and chunked request bodies too.",
+      "env_variable": "ORINOCO_MAX_REQUEST_BODY_BYTES",
+      "default_value": "12582912",
+      "user_viewable": true,
+      "user_editable": false,
+      "rules": "required|integer|min:1"
     }
   ]
 }
