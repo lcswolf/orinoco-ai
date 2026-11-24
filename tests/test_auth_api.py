@@ -92,3 +92,19 @@ def test_login_throttles_repeated_failures(tmp_path, monkeypatch) -> None:
 
     assert [response.status_code for response in responses[:5]] == [401] * 5
     assert responses[5].status_code == 429
+
+
+def test_login_failure_tracker_has_a_hard_memory_bound(monkeypatch) -> None:
+    """Rotating usernames must not grow the in-process throttle without limit."""
+    from collections import OrderedDict
+    import time
+
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setattr(auth_routes, "_login_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "MAX_TRACKED_LOGIN_IDENTITIES", 2)
+    for username in ("first-user", "second-user", "third-user"):
+        auth_routes._login_failures_for(username).append(time.monotonic())
+
+    assert len(auth_routes._login_failures) == 2
+    assert "first-user" not in auth_routes._login_failures
