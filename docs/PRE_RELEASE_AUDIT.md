@@ -170,8 +170,7 @@ minute, configurable in the Egg. Private document libraries default to 20 files 
 checks run under the document storage lock, and regression coverage verifies
 that one user's quota does not affect another account. The reverse proxy must
 still enforce request-body limits for chunked requests and apply an
-approximately 11 MiB upload-route limit. The current quota lock is process-local;
-a multi-worker deployment needs atomic database quota reservations.
+approximately 11 MiB upload-route limit. The document quota lock is an OS-level file lock and serialises processes sharing the same filesystem; multi-host replicas still require verified shared-lock semantics or atomic database quota reservations.
 
 ### Personal memory storage — bounded
 
