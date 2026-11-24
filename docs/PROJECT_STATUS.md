@@ -39,7 +39,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0 and an install script that prepares persistent data folders.
 - GitHub Actions workflows for Python tests and Docker image build validation.
 
-The Python test suite and container smoke test are running against the latest document-library interface changes. Earlier backend document API tests passed. The custom interface JavaScript syntax check is part of CI. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest GitHub Actions Python test run passed all 62 tests, including document extraction, private/shared access controls and retrieval. The custom interface JavaScript syntax check also passes. The expanded container build and runtime smoke test are still being validated; the image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -60,7 +60,7 @@ The Python test suite and container smoke test are running against the latest do
 ## Not implemented yet
 
 - Conversation deletion/editing, pagination and streaming responses.
-- Document search improvements beyond the initial bounded keyword retrieval.
+- Improved document ranking, pagination and large-library indexing beyond the initial bounded keyword retrieval.l.
 - Web search and safe URL fetching.
 - Discord integration and voice features.
 - Production-ready Orinoco runtime image, published GHCR package and automated image release pipeline.
