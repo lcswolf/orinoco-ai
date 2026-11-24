@@ -52,6 +52,50 @@ SEARXNG_URL=https://your-searxng.example
 
 Search queries are sent to that SearXNG instance and any upstream search providers it uses. Do not include private information in a web search. Users can also paste a public URL into the Research page for local summarisation. The fetcher pins DNS resolutions to public IP addresses, blocks private/local networks and non-standard ports, validates redirects, and limits downloaded content. Only public HTTP/HTTPS pages are supported.
 
+## Encrypted backups and recovery
+
+The backup CLI creates an AES-256-GCM encrypted `.oribak` file. It includes a
+SQLite online-backup snapshot (including committed WAL data), uploaded documents,
+the persistent session-signing file when it is file-based, and a manifest with
+the selected model name. Large Ollama model weights are excluded so routine
+backups remain practical; they can be downloaded again.
+
+Generate the encryption key once:
+
+```bash
+python -m orinoco.backups generate-key
+```
+
+Store that key in a password manager or other secure location **outside the
+VPS**. Set it as `ORINOCO_BACKUP_KEY` for each backup, verification and restore
+operation. Losing this key makes encrypted backups unrecoverable. Never put
+the key in GitHub, a public Egg file or the same backup destination.
+
+Create and verify a backup:
+
+```bash
+python -m orinoco.backups create
+python -m orinoco.backups verify /home/container/backups/orinoco-YYYYMMDDTHHMMSSZ.oribak
+```
+
+Copy the encrypted backup to an independent off-server destination. The CLI
+currently creates and verifies local encrypted files; off-site transfer and
+automatic scheduling are separate operational steps and are not yet built in.
+
+For recovery, stop Orinoco first, preserve the current server data, then run:
+
+```bash
+python -m orinoco.backups verify /path/to/backup.oribak
+python -m orinoco.backups restore /path/to/backup.oribak --confirm
+```
+
+Restore refuses to run without `--confirm`, validates the encrypted archive
+and SQLite database before replacing data, and leaves a `.pre-restore`
+database/document recovery copy. Keep the process stopped throughout restore.
+If `ORINOCO_SECRET_KEY` is supplied through the environment, preserve that
+secret separately; the backup cannot read it back from the process environment.
+After restore, check `/healthz`, `/readyz`, sign-in, conversations and documents.
+
 ## Run tests
 
 ```bash
