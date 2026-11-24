@@ -12,10 +12,12 @@ DEFAULT_DOCUMENT_ROOT = Path(
 
 
 def get_document_root() -> Path:
+    """Return the configured root directory for private and shared document files."""
     return Path(os.environ.get("ORINOCO_DOCUMENTS_PATH", str(DEFAULT_DOCUMENT_ROOT)))
 
 
 def store_document(data: bytes, *, user_id: int | None, scope: str, extension: str) -> str:
+    """Write an uploaded document under a random name with restrictive directory and file permissions."""
     if scope not in {"private", "shared"}:
         raise ValueError("document scope must be private or shared")
     if scope == "private" and user_id is None:
@@ -48,6 +50,7 @@ def store_document(data: bytes, *, user_id: int | None, scope: str, extension: s
 
 
 def resolve_document_path(relative_path: str) -> Path:
+    """Resolve a stored relative path and reject traversal outside the document root."""
     root = get_document_root().resolve()
     candidate = (root / relative_path).resolve()
     try:
@@ -58,6 +61,7 @@ def resolve_document_path(relative_path: str) -> Path:
 
 
 def remove_document_file(relative_path: str) -> None:
+    """Remove a stored file without exposing internal paths when storage cleanup fails."""
     try:
         resolve_document_path(relative_path).unlink(missing_ok=True)
     except (OSError, ValueError):
