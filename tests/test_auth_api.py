@@ -388,3 +388,14 @@ def test_login_rejects_forwarded_header_chains_from_trusted_proxy(monkeypatch) -
     request = _request_with_peer("127.0.0.1", "8.8.8.8, 1.1.1.1")
 
     assert auth_routes._resolve_client_ip(request) is None
+
+
+def test_login_proxy_allowlist_rejects_overly_broad_networks(monkeypatch) -> None:
+    """A wildcard-like proxy range must never authorise arbitrary forwarded headers."""
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    monkeypatch.setenv("ORINOCO_TRUSTED_PROXY_IPS", "0.0.0.0/0,::/0")
+    request = _request_with_peer("127.0.0.1", "8.8.8.8")
+
+    assert auth_routes._resolve_client_ip(request) is None
