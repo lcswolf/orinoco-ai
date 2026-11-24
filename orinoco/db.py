@@ -24,7 +24,7 @@ def get_database_path() -> Path:
 
 
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
-CURRENT_SCHEMA_VERSION = 5
+CURRENT_SCHEMA_VERSION = 6
 
 
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 f"Database schema version {schema_version} is newer than this Orinoco build "
                 f"(supports up to {CURRENT_SCHEMA_VERSION}). Refusing to modify it."
             )
-        # Schema upgrades through v5 are additive: create missing tables/indexes,
+        # Schema upgrades through v6 are additive: create missing tables/indexes,
         # then add the session version column if an earlier users table lacks it.
         connection.execute(
             """
@@ -198,6 +198,41 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
         connection.execute(
             "CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts "
             "USING fts5(original_name, extracted_text, tokenize='unicode61')"
+        )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                voice TEXT NOT NULL DEFAULT 'bright'
+                    CHECK (voice IN ('bright', 'calm', 'professional')),
+                tone TEXT NOT NULL DEFAULT 'friendly'
+                    CHECK (tone IN ('friendly', 'direct', 'playful')),
+                answer_detail TEXT NOT NULL DEFAULT 'balanced'
+                    CHECK (answer_detail IN ('concise', 'balanced', 'detailed')),
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS assistant_persona (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                core_persona TEXT NOT NULL,
+                humour_level INTEGER NOT NULL DEFAULT 65
+                    CHECK (humour_level BETWEEN 0 AND 100),
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO assistant_persona
+                (id, core_persona, humour_level, updated_at)
+            VALUES
+                (1, 'Be friendly, practical, curious and encouraging. Use British English spelling and UK-friendly examples when relevant.', 65, ?)
+            """,
+            (datetime.now(UTC).isoformat(),),
         )
         if schema_version < CURRENT_SCHEMA_VERSION:
             connection.execute(f"PRAGMA user_version = {CURRENT_SCHEMA_VERSION}")
@@ -576,6 +611,111 @@ def add_conversation_message(
         )
         return int(cursor.lastrowid)
 
+
+
+
+def get_user_preferences(
+    user_id: int,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> dict[str, str]:
+    """Return the account's whitelisted voice, tone and answer-detail preferences."""
+    defaults = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced"}
+    with _database(database_path) as connection:
+        row = connection.execute(
+            "SELECT voice, tone, answer_detail FROM user_preferences WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+    if row is None:
+        return defaults
+    return {
+        "voice": str(row["voice"]),
+        "tone": str(row["tone"]),
+        "answer_detail": str(row["answer_detail"]),
+    }
+
+
+def update_user_preferences(
+    user_id: int,
+    *,
+    voice: str,
+    tone: str,
+    answer_detail: str,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> dict[str, str]:
+    """Persist only supported per-user response preferences."""
+    allowed = {
+        "voice": {"bright", "calm", "professional"},
+        "tone": {"friendly", "direct", "playful"},
+        "answer_detail": {"concise", "balanced", "detailed"},
+    }
+    values = {"voice": voice, "tone": tone, "answer_detail": answer_detail}
+    for field, choices in allowed.items():
+        if values[field] not in choices:
+            raise ValueError(f"Unsupported {field.replace('_', ' ')} preference.")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO user_preferences (user_id, voice, tone, answer_detail, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                voice = excluded.voice,
+                tone = excluded.tone,
+                answer_detail = excluded.answer_detail,
+                updated_at = excluded.updated_at
+            """,
+            (user_id, voice, tone, answer_detail, now),
+        )
+    return values
+
+
+def get_assistant_persona(
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> dict[str, object]:
+    """Return the administrator-managed core persona and humour setting."""
+    with _database(database_path) as connection:
+        row = connection.execute(
+            "SELECT core_persona, humour_level FROM assistant_persona WHERE id = 1"
+        ).fetchone()
+    if row is None:
+        return {
+            "core_persona": "Be friendly, practical, curious and encouraging. Use British English spelling and UK-friendly examples when relevant.",
+            "humour_level": 65,
+        }
+    return {
+        "core_persona": str(row["core_persona"]),
+        "humour_level": int(row["humour_level"]),
+    }
+
+
+def update_assistant_persona(
+    *,
+    core_persona: str,
+    humour_level: int,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> dict[str, object]:
+    """Update the global persona after validating its size and humour range."""
+    cleaned = " ".join(core_persona.split())
+    if not cleaned or len(cleaned) > 2000:
+        raise ValueError("Core persona must contain 1–2000 characters.")
+    if not isinstance(humour_level, int) or not 0 <= humour_level <= 100:
+        raise ValueError("Humour level must be a whole number between 0 and 100.")
+    now = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO assistant_persona (id, core_persona, humour_level, updated_at)
+            VALUES (1, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                core_persona = excluded.core_persona,
+                humour_level = excluded.humour_level,
+                updated_at = excluded.updated_at
+            """,
+            (cleaned, humour_level, now),
+        )
+    return {"core_persona": cleaned, "humour_level": humour_level}
 
 
 def create_memory(
