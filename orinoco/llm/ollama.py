@@ -30,9 +30,10 @@ class OllamaClient:
             if context_length is not None
             else int(os.environ.get("MODEL_CONTEXT", "2048"))
         )
-        resolved_url = base_url or os.environ.get(
-            "ORINOCO_OLLAMA_API", "http://127.0.0.1:11434"
-        )
+        # Production inference is intentionally local-only. Tests may inject an
+        # explicit mock base_url, but environment variables cannot redirect user
+        # prompts to an external inference provider.
+        resolved_url = base_url or "http://127.0.0.1:11434"
 
         if not 1024 <= resolved_context <= 8192:
             raise ValueError("context_length must be between 1024 and 8192")
