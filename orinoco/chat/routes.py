@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from orinoco.db import (
     User,
+    MemoryLimitExceeded,
     create_conversation,
     create_memory,
     delete_conversation,
@@ -221,12 +222,17 @@ async def _save_automatic_memories(
     for candidate in candidates:
         if candidate.lower().rstrip(".") in existing:
             continue
-        create_memory(
-            user_id,
-            candidate,
-            source="automatic",
-            database_path=database_path,
-        )
+        try:
+            create_memory(
+                user_id,
+                candidate,
+                source="automatic",
+                database_path=database_path,
+            )
+        except MemoryLimitExceeded:
+            # Keep existing user memories intact; a full collection is not a chat failure.
+            logger.info("Automatic memory limit reached for user ID %s.", user_id)
+            break
         saved.append(candidate)
     return saved
 
