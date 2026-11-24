@@ -74,7 +74,7 @@ Several prompt-context separators had been double-escaped, causing the model to 
 
 ### Automatic memory sensitive-data filtering — strengthened
 
-The model-generated memory filter now uses word-boundary matching and covers additional common medical, financial, religious, political, sexual-orientation and criminal-history terms. This is a conservative keyword filter, not a guarantee that every sensitive fact can be recognised; the prompt, user review controls and privacy review remain important.
+The model-generated memory filter now uses word-boundary matching and covers additional common medical, financial, religious, political, sexual-orientation/gender-identity and criminal-history terms. It also rejects common prompt-injection candidates that attempt to override system/developer instructions, reveal hidden prompts or bypass safeguards. Regression tests cover these cases. This remains a conservative keyword filter, not a guarantee that every sensitive fact or paraphrase can be recognised; the prompt, user review controls and privacy review remain important.
 
 ### Static injection-pattern review — checked
 
