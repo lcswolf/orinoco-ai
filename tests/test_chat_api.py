@@ -269,6 +269,8 @@ def test_chat_receives_only_authorised_document_excerpts(tmp_path, monkeypatch) 
     assert "my-notes.txt" in reference_context
     assert "Blue Finch" in reference_context
     assert "untrusted reference data" in reference_context
+    assert "\n" in reference_context
+    assert "\\n" not in reference_context
 
 
 
