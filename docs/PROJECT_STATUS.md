@@ -1,88 +1,69 @@
 # Project Status
 
-**Overall status: early implementation — custom interface, local model runtime, authentication, private chat and personal memory milestones committed.**
+**Overall status: early implementation — custom interface, local model runtime, authentication, private chat, personal memory and document-library milestones committed.**
 
 This page separates confirmed project decisions from implementation work. A planned feature is not considered implemented until code, tests and documentation exist.
 
 ## Implemented in the repository
 
 - Public project repository and project documentation.
-- Custom responsive Orinoco interface shell, served directly by FastAPI.
-- Orinoco's requested greeting and an initial local-model status display.
-- Custom sign-in dialog connected to the authentication API.
-- Account settings dialog with password changes and an administrator-only user-management screen.
-- Admin API to create standard accounts, list accounts and suspend/reactivate users; the last active administrator cannot be suspended.
-- Working authenticated chat composer with saved conversation list, conversation switching and a mobile recent-chat selector.
-- Private document uploads with per-account storage, supported-format text extraction, download and delete controls.
-- Administrator-managed shared document library, visible as read-only reference material to standard users.
-- Chat retrieval of relevant excerpts from the current user's private documents and the authorised shared library.
-- Responsive document-library workspace in the custom interface, including upload, list, download, delete and administrator shared-library controls.
-- Local Ollama chat orchestration with one generation at a time, bounded response length and a short conversation context window.
-- Atomic saving of user/assistant message pairs and server-side conversation ownership checks.
-- Per-user personal memories with add, list, edit and delete controls.
-- Automatic extraction of a small number of durable, non-sensitive personal memories after chat turns, with an Egg setting to disable it.
-- Saved memories are included only in that account's future chat context; memory content is treated as reference data, not instructions.
-- Conservative automatic-memory filters for passwords, secrets, contact details, precise addresses, postcodes and selected sensitive categories.
-- Signed session cookies with secure, HTTP-only and SameSite=Lax settings.
-- CSRF tokens for login and logout, plus session rotation after successful login.
-- SQLite account, conversation and memory storage; Argon2 password hashing; username validation; local first-admin bootstrap command.
-- A basic in-process throttle for repeated failed login attempts.
-- /healthz liveness endpoint and /readyz readiness endpoint.
-- Readiness check for the local Ollama API and selected model.
-- Automated tests for the API, custom interface, authentication, account storage, chat, memory isolation and extraction, Egg definition and runtime layout.
-- Python dependency manifests for runtime and development.
-- Pterodactyl-compatible Docker image foundation using a non-root container user and /home/container working directory.
-- Pterodactyl startup entrypoint that expands simple uppercase {{VARIABLE}} placeholders without evaluating shell commands.
-- Supervisor configuration for the web app, Ollama and first-run model initialisation.
-- Pinned Ollama CPU runtime installation, loopback-only API binding and model concurrency limits.
-- First-run model download into persistent Pterodactyl server storage.
-- Preview Pterodactyl 1.x Egg definition for Panel 1.13.0 and an install script that prepares persistent data folders.
-- GitHub Actions workflows for Python tests and Docker image build validation.
+- Custom responsive Orinoco interface, served directly by FastAPI.
+- Sign-in, secure signed sessions, CSRF-protected authentication and password changes.
+- Administrator account management: create standard users, list users, suspend and reactivate accounts.
+- Authenticated chat with local Ollama, saved per-user conversations and conversation switching.
+- Single-generation queue, bounded model output and a short conversation context window.
+- Per-user personal memories with automatic extraction, review, correction and deletion.
+- Memory and document reference context is supplied separately from system instructions and treated as untrusted data.
+- Private document uploads with per-account storage, bounded text extraction, download and deletion.
+- Administrator-managed shared document library, read-only to standard users.
+- Supported document formats: TXT, Markdown, PDF, DOCX, XLSX and PPTX, up to 10 MiB per file.
+- SQLite FTS5 keyword retrieval from the current user's private documents and authorised shared documents.
+- Explicit authenticated web-search workspace and SearXNG client, when an administrator configures and enables SearXNG.
+- Liveness endpoint /healthz and local-model readiness endpoint /readyz.
+- Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
+- Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
+- Automated Python tests and frontend JavaScript syntax validation.
 
-The latest GitHub Actions Python test run passed all 62 tests, including document extraction, private/shared access controls and retrieval. The custom interface JavaScript syntax check also passes. The expanded container build and runtime smoke test are still being validated; the image has not yet been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed all 62 tests before the new SearXNG route tests were added. The container image build and runtime smoke test are still being validated. The image has not yet been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
 - Self-hosted assistant named Orinoco.
 - Fully custom Orinoco web interface; Open WebUI will not be used as the main frontend.
 - Local model inference; no external AI inference API is intended.
-- Ollama is the inference runtime, currently pinned to stable version 0.40.18 in the image.
+- Ollama is the inference runtime, currently pinned to version 0.40.18 in the image.
 - Initial target is a modest Ubuntu 24.04 LTS VPS.
-- Pterodactyl Panel 1.13.0 is the target deployment manager, using a custom Egg and image.
+- Pterodactyl Panel 1.13.0 is the target deployment manager.
 - Stable releases are preferred for updates.
 - Curated model list: Qwen 2.5 0.5B, 1.5B and 3B; 1.5B is the default.
 - Initial context target is 2048 tokens and one model request at a time.
 - Discord text integration is planned; voice listening must require explicit activation.
-- User memories, chats and private documents must be isolated per account.
+- Private chats, memories and documents must be isolated per account.
 - Public registration should be disabled by default.
-- Web research and user-provided URL summaries are planned optional features.
 
 ## Not implemented yet
 
+- Safe user-provided URL fetching and webpage summarisation.
+- Search results automatically incorporated into chat answers.
 - Conversation deletion/editing, pagination and streaming responses.
-- Improved document ranking, pagination and large-library indexing beyond the initial bounded keyword retrieval.l.
-- Web search and safe URL fetching.
+- Advanced semantic/vector document search and OCR for scanned PDFs.
 - Discord integration and voice features.
-- Production-ready Orinoco runtime image, published GHCR package and automated image release pipeline.
-- Live import and test of the Egg against the user's Panel/Wings installation.
+- Production-ready image publication, live Egg import and Pterodactyl node deployment.
 - Backup, restore, update and rollback tooling.
-- Production security review, MFA and account recovery.
-- Server-side session revocation across all devices after password changes.
+- Production security review, MFA, account recovery and server-side session revocation across all devices.
 
-## Suggested implementation sequence
+## Next implementation sequence
 
-1. Finish frontend and container smoke tests.
-2. Complete the document-library interface and verify upload, isolation, retrieval and container behaviour.
-3. Add optional web research and safe URL summaries.
-4. Add administrator settings, backups, restore and update/rollback procedures.
+1. Finish the container image build and runtime smoke test.
+2. Add safe URL opening and summarisation, with strict SSRF protections.
+3. Add optional search-result context to chat.
+4. Add backups, restore and update/rollback tooling.
 5. Add Discord text integration; consider voice only after the core is stable.
-6. Publish the stable image and import/test the finished Egg on the user's Panel before production deployment.
+6. Publish the stable image and import/test the finished Egg on the user's Panel.
 
 ## Resource assumptions
 
-The previously discussed target VPS has 4 vCPU and 6 GiB RAM. The proposed initial container allowance is approximately 4 GiB RAM, with one model generation at a time. These are planning values, not validated minimum requirements. The 3B model is experimental on this hardware; measure actual RAM use and response speed before making it a default.
-
-Automatic memory extraction uses a second local model request after a chat reply, so it increases response time. It can be disabled with AUTO_SAVE_MEMORIES=false. Users can review, correct and delete saved memories from their account settings.
+The previously discussed target VPS has 4 vCPU and 6 GiB RAM. The proposed initial container allowance is approximately 4 GiB RAM, with one model generation at a time. These are planning values, not validated minimum requirements. Automatic memory extraction uses a second local model request after a chat reply, so it increases response time and can be disabled with AUTO_SAVE_MEMORIES=false.
 
 ## Release policy
 
