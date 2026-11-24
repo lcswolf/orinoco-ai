@@ -24,6 +24,8 @@ The image pins Ollama 0.40.18, disables Ollama cloud features and limits model c
 
 The initial chat queue admits one active generation plus up to eight additional in-flight chat requests by default. Excess requests receive HTTP 503 with a short retry hint instead of accumulating without bound. The administrator can adjust `ORINOCO_MAX_PENDING_GENERATIONS` from 0 to 32 in the Egg; this queue and the per-user chat rate limiter are process-local and assume one web worker.
 
+Personal memories are capped at 100 per account by default. The administrator can adjust `ORINOCO_MAX_MEMORIES_PER_USER` from 1 to 1000 in the Egg; manual and automatically extracted memories share this allowance.
+
 ## Current capabilities
 
 - Custom responsive Orinoco interface and sign-in.
