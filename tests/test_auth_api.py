@@ -243,3 +243,55 @@ def test_existing_session_secret_permissions_are_restricted(tmp_path, monkeypatc
 
     assert get_session_secret() == "existing-session-secret-value-long-enough"
     assert os.stat(secret).st_mode & 0o777 == 0o600
+
+
+def test_login_throttles_many_distinct_usernames_from_one_client_ip(tmp_path, monkeypatch) -> None:
+    """An attacker cannot bypass login throttling simply by rotating usernames."""
+    from collections import OrderedDict
+
+    from orinoco.auth import routes as auth_routes
+
+    database = tmp_path / "ip-throttle.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    monkeypatch.setattr(auth_routes, "_login_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "_login_ip_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "MAX_LOGIN_FAILURES_PER_IP", 2)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        first = client.post(
+            "/api/auth/login",
+            headers={"X-CSRF-Token": csrf},
+            json={"username": "unknown-one", "password": "incorrect-password"},
+        )
+        second = client.post(
+            "/api/auth/login",
+            headers={"X-CSRF-Token": csrf},
+            json={"username": "unknown-two", "password": "incorrect-password"},
+        )
+        third = client.post(
+            "/api/auth/login",
+            headers={"X-CSRF-Token": csrf},
+            json={"username": "unknown-three", "password": "incorrect-password"},
+        )
+
+    assert first.status_code == 401
+    assert second.status_code == 401
+    assert third.status_code == 429
+
+
+def test_login_ip_failure_tracker_has_a_hard_memory_bound(monkeypatch) -> None:
+    """Rotating client addresses must not grow the IP throttle without limit."""
+    from collections import OrderedDict
+    import time
+
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setattr(auth_routes, "_login_ip_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "MAX_TRACKED_LOGIN_IDENTITIES", 2)
+    for remote_ip in ("192.0.2.1", "192.0.2.2", "192.0.2.3"):
+        auth_routes._login_ip_failures_for(remote_ip).append(time.monotonic())
+
+    assert len(auth_routes._login_ip_failures) == 2
+    assert "192.0.2.1" not in auth_routes._login_ip_failures
