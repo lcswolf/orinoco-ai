@@ -862,11 +862,13 @@ document.getElementById("research-form").addEventListener("submit", async (event
       return;
     }
     for (const result of payload.results) {
+      const safeUrl = safeExternalUrl(result.url);
+      if (!safeUrl) continue;
       const card = document.createElement("article");
       card.className = "research-result";
       const heading = document.createElement("h2");
       const link = document.createElement("a");
-      link.href = result.url;
+      link.href = safeUrl;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.textContent = result.title;
