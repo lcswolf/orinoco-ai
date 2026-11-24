@@ -157,6 +157,10 @@ still enforce request-body limits for chunked requests and apply an
 approximately 11 MiB upload-route limit. The current quota lock is process-local;
 a multi-worker deployment needs atomic database quota reservations.
 
+### Reverse-proxy design — documented, not yet deployed
+
+The network plan now documents Caddy public TLS, Nginx loopback-only request/body/rate/connection limits, the public HTTPS subdomain, short-lived IP certificate access on port 8443, and tailnet-only Tailscale Serve on port 8444 without Funnel. Uvicorn is explicitly started with forwarded-header processing disabled until the real proxy peer address can be measured and allow-listed. The live Leaseweb/Pterodactyl host, Docker published-port firewall path, certificate issuance/renewal, actual client IP handling and all three access paths still require verification. See `docs/NETWORK_DEPLOYMENT.md`.
+
 ## Remaining review work
 
 - [x] Add administrator-managed core persona and humour controls plus private per-user response voice, tone and answer-detail preferences, including persistence, API authorisation and prompt integration.
@@ -178,7 +182,7 @@ a multi-worker deployment needs atomic database quota reservations.
 - [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
 - [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
-- [ ] Finalise the Leaseweb VPS deployment plan: Caddy HTTPS, Tailscale Serve for private access (no Funnel), firewall exposure limited to required ports, and reverse-proxy request/rate limits.
+- [ ] Apply and live-test the Caddy/Nginx/Tailscale design in [Network Deployment](NETWORK_DEPLOYMENT.md): public HTTPS subdomain, HTTPS IP:8443, private Tailscale Serve :8444 (no Funnel), Docker/Wings firewall restrictions, edge body/rate/connection limits and certificate renewal.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [x] Validate external links and render untrusted search/document/chat text without HTML parsing.
