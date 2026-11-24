@@ -14,6 +14,107 @@ class OllamaError(RuntimeError):
     """Raised when the local Ollama service cannot complete a chat request."""
 
 
+class OllamaContextError(OllamaError):
+    """Raised when the current request cannot fit inside the configured model context."""
+
+
+_OUTPUT_TOKEN_RESERVE = 512
+_CONTEXT_OVERHEAD_TOKENS = 64
+_ESTIMATED_BYTES_PER_TOKEN = 3.5
+_REFERENCE_CONTEXT_SHARE = 0.35
+_MIN_PARTIAL_HISTORY_BYTES = 256
+
+
+def _truncate_utf8(value: str, maximum_bytes: int, *, keep_end: bool = False) -> str:
+    """Trim UTF-8 text without returning a broken multi-byte character."""
+    if maximum_bytes <= 0:
+        return ""
+    encoded = value.encode("utf-8")
+    if len(encoded) <= maximum_bytes:
+        return value
+    selected = encoded[-maximum_bytes:] if keep_end else encoded[:maximum_bytes]
+    return selected.decode("utf-8", errors="ignore")
+
+
+def _fit_messages_to_context(
+    messages: list[dict[str, str]],
+    context_length: int,
+) -> list[dict[str, str]]:
+    """Keep system/latest messages and trim older history/reference data to a safe budget."""
+    prompt_budget = int(
+        (context_length - _OUTPUT_TOKEN_RESERVE - _CONTEXT_OVERHEAD_TOKENS)
+        * _ESTIMATED_BYTES_PER_TOKEN
+    )
+    if len(messages) == 1 and messages[0]["role"] == "system":
+        if len(messages[0]["content"].encode("utf-8")) > prompt_budget:
+            raise OllamaContextError(
+                "Orinoco's system instructions exceed the configured model context. "
+                "Increase MODEL_CONTEXT."
+            )
+        return messages
+
+    system_messages = messages[:1] if messages and messages[0]["role"] == "system" else []
+    latest_message = messages[-1:]
+    middle_messages = messages[len(system_messages):-1]
+    base_bytes = sum(len(item["content"].encode("utf-8")) for item in system_messages + latest_message)
+    if base_bytes > prompt_budget:
+        raise OllamaContextError(
+            "Your current message is too long for the configured model context. "
+            "Shorten it or increase MODEL_CONTEXT."
+        )
+
+    remaining = prompt_budget - base_bytes
+    reference_messages = [
+        item for item in middle_messages
+        if item["role"] == "user" and item["content"].startswith("[ORINOCO REFERENCE CONTEXT")
+    ]
+    history_messages = [item for item in middle_messages if item not in reference_messages]
+
+    # References are useful, but reserve at least half of the remaining budget
+    # for recent conversation history.
+    reference_budget = min(remaining // 2, int(prompt_budget * _REFERENCE_CONTEXT_SHARE))
+    selected_references: list[dict[str, str]] = []
+    truncation_marker = "\n[Reference context shortened to fit the model context.]"
+    for item in reference_messages:
+        if reference_budget < 128:
+            break
+        content_bytes = len(item["content"].encode("utf-8"))
+        if content_bytes <= reference_budget:
+            selected_references.append(item)
+            reference_budget -= content_bytes
+            remaining -= content_bytes
+            continue
+        content_budget = reference_budget - len(truncation_marker.encode("utf-8"))
+        shortened = _truncate_utf8(item["content"], content_budget)
+        if shortened:
+            selected_references.append(
+                {"role": item["role"], "content": shortened + truncation_marker}
+            )
+            used = len(selected_references[-1]["content"].encode("utf-8"))
+            remaining -= used
+        break
+
+    selected_history: list[dict[str, str]] = []
+    history_marker = "[Earlier conversation context shortened]\n"
+    for item in reversed(history_messages):
+        content_bytes = len(item["content"].encode("utf-8"))
+        if content_bytes <= remaining:
+            selected_history.append(item)
+            remaining -= content_bytes
+            continue
+        if remaining >= _MIN_PARTIAL_HISTORY_BYTES:
+            content_budget = remaining - len(history_marker.encode("utf-8"))
+            shortened = _truncate_utf8(item["content"], content_budget, keep_end=True)
+            if shortened:
+                selected_history.append(
+                    {"role": item["role"], "content": history_marker + shortened}
+                )
+        break
+
+    selected_history.reverse()
+    return system_messages + selected_history + selected_references + latest_message
+
+
 class OllamaClient:
     """Send validated chat messages to the local Ollama service; no external inference provider is used."""
     def __init__(
@@ -81,12 +182,13 @@ class OllamaClient:
                 raise ValueError("message content exceeds the 16000-character limit")
             safe_messages.append({"role": role, "content": content})
 
+        fitted_messages = _fit_messages_to_context(safe_messages, self.context_length)
         try:
             response = await self._client.post(
                 "/api/chat",
                 json={
                     "model": self.model,
-                    "messages": safe_messages,
+                    "messages": fitted_messages,
                     "stream": False,
                     "options": {"num_ctx": self.context_length, "num_predict": 512},
                 },
