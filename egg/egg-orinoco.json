@@ -272,7 +272,7 @@
     },
     {
       "name": "Maximum Pending Chat Requests",
-      "description": "Maximum number of chat requests allowed to wait behind the single local model generation. Defaults to 8; set 0 to disable waiting and reject requests while a generation is active.",
+      "description": "Maximum additional chat requests admitted while the single local model generation slot is occupied or a request is preparing context. Defaults to 8; set 0 to allow only one in-flight chat request.",
       "env_variable": "ORINOCO_MAX_PENDING_GENERATIONS",
       "default_value": "8",
       "user_viewable": true,
