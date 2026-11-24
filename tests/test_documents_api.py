@@ -54,6 +54,44 @@ def test_private_document_upload_download_and_delete(tmp_path, monkeypatch) -> N
         assert client.get("/api/documents").json()["documents"] == []
 
 
+def test_private_document_count_quota_is_per_user(tmp_path, monkeypatch) -> None:
+    """A full private library is blocked without consuming another account's allowance."""
+    database = tmp_path / "document-quota.sqlite3"
+    storage = tmp_path / "documents"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_DOCUMENTS_PATH", str(storage))
+    monkeypatch.setenv("ORINOCO_USER_DOCUMENT_QUOTA_FILES", "1")
+    initialise_database(database)
+    create_user("quotaowner", "a-long-owner-password-123", database_path=database)
+    create_user("otherquota", "a-long-other-password-456", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "quotaowner", "a-long-owner-password-123")
+        first = client.post(
+            "/api/documents",
+            headers={"X-CSRF-Token": csrf(client)},
+            files={"file": ("first.txt", b"First private file.", "text/plain")},
+        )
+        second = client.post(
+            "/api/documents",
+            headers={"X-CSRF-Token": csrf(client)},
+            files={"file": ("second.txt", b"Second private file.", "text/plain")},
+        )
+        assert first.status_code == 201
+        assert second.status_code == 413
+        assert len(client.get("/api/documents").json()["documents"]) == 1
+
+        client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf(client)})
+        sign_in(client, "otherquota", "a-long-other-password-456")
+        other_user_upload = client.post(
+            "/api/documents",
+            headers={"X-CSRF-Token": csrf(client)},
+            files={"file": ("other.txt", b"Another user's file.", "text/plain")},
+        )
+
+    assert other_user_upload.status_code == 201
+
+
 def test_private_documents_are_isolated_between_users(tmp_path, monkeypatch) -> None:
     database = tmp_path / "orinoco.sqlite3"
     storage = tmp_path / "documents"
