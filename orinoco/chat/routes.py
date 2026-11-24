@@ -98,6 +98,7 @@ def extract_memory_candidates(raw: str) -> list[str]:
 
 
 async def _save_automatic_memories(
+    """Save eligible memory candidates against the current user's account only."""
     client: OllamaClient,
     user_id: int,
     history: list[dict[str, str]],
@@ -137,22 +138,26 @@ async def _save_automatic_memories(
 
 
 class NewConversationRequest(BaseModel):
+    """Request fields used when creating a new conversation."""
     title: str = Field(default="New conversation", min_length=1, max_length=80)
 
 
 class ChatRequest(BaseModel):
+    """Validated chat input and optional conversation identifier."""
     message: str = Field(min_length=1, max_length=4000)
     conversation_id: int | None = Field(default=None, ge=1)
 
     @field_validator("message")
     @classmethod
     def message_must_not_be_blank(cls, value: str) -> str:
+        """Reject empty chat messages after trimming whitespace."""
         if not value.strip():
             raise ValueError("message must not be blank")
         return value
 
 
 def _require_csrf(request: Request) -> None:
+    """Require a valid CSRF token before accepting a chat mutation."""
     expected = request.session.get("csrf_token")
     supplied = request.headers.get("x-csrf-token")
     if (
@@ -167,6 +172,7 @@ def _require_csrf(request: Request) -> None:
 
 
 def _current_user(request: Request) -> User:
+    """Resolve the active account from the signed request session."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         raise HTTPException(status_code=401, detail="Please sign in to continue.")
@@ -181,6 +187,7 @@ def _current_user(request: Request) -> User:
 
 @router.get("/conversations")
 async def conversations(request: Request) -> dict[str, object]:
+    """List only conversations belonging to the signed-in account."""
     user = _current_user(request)
     return {
         "conversations": list_conversations(
@@ -192,6 +199,7 @@ async def conversations(request: Request) -> dict[str, object]:
 
 @router.post("/conversations")
 async def new_conversation(
+    """Create a conversation owned by the signed-in account."""
     payload: NewConversationRequest,
     request: Request,
 ) -> dict[str, object]:
@@ -207,6 +215,7 @@ async def new_conversation(
 
 @router.get("/conversations/{conversation_id}")
 async def conversation_detail(
+    """Return a conversation only when it belongs to the signed-in account."""
     conversation_id: int,
     request: Request,
 ) -> dict[str, object]:
@@ -223,6 +232,7 @@ async def conversation_detail(
 
 @router.post("/chat")
 async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
+    """Build account-scoped context, call local inference, and persist the exchange."""
     _require_csrf(request)
     user = _current_user(request)
     database_path = get_database_path()
