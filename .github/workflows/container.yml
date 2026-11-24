@@ -94,8 +94,8 @@ jobs:
           docker exec orinoco-smoke python -c \
             "from zoneinfo import ZoneInfo; ZoneInfo('Europe/London')"
           docker exec orinoco-smoke python -m orinoco.backups --help >/dev/null
-          docker exec orinoco-smoke python -c \\
-            "from pathlib import Path; import sys; sys.exit(0 if any(b\x27-m\\x00orinoco.backup_scheduler\\x00\x27 in p.read_bytes() for p in Path(\x27/proc\x27).glob(\x27[0-9]*/cmdline\x27)) else 1)"
+          docker exec orinoco-smoke python -c \
+            "from pathlib import Path; import sys; sys.exit(0 if any(b'-m\\x00orinoco.backup_scheduler\\x00' in p.read_bytes() for p in Path('/proc').glob('[0-9]*/cmdline')) else 1)"
 
           ready_code=$(curl --silent --output /tmp/orinoco-ready.json --write-out "%{http_code}" http://127.0.0.1:8080/readyz)
           test "$ready_code" = "503"
