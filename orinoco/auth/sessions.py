@@ -6,7 +6,9 @@ import os
 import secrets
 from pathlib import Path
 
-from orinoco.db import get_database_path
+from fastapi import HTTPException, Request
+
+from orinoco.db import User, get_database_path, get_user_by_id, initialise_database
 
 
 def get_session_secret() -> str:
@@ -62,3 +64,30 @@ def secure_cookie_enabled() -> bool:
     """Return whether session cookies must be marked Secure for HTTPS deployments."""
     value = os.environ.get("ORINOCO_COOKIE_SECURE", "true").strip().lower()
     return value not in {"0", "false", "no", "off"}
+
+
+
+def get_session_user(request: Request, *, require_admin: bool = False) -> User:
+    """Resolve a signed-in account and reject stale sessions after password or access changes."""
+    user_id = request.session.get("user_id")
+    session_version = request.session.get("session_version")
+    if not isinstance(user_id, int) or not isinstance(session_version, int):
+        request.session.clear()
+        raise HTTPException(status_code=401, detail="Please sign in to continue.")
+
+    database_path = get_database_path()
+    initialise_database(database_path)
+    user = get_user_by_id(user_id, database_path=database_path)
+    if (
+        user is None
+        or not user.active
+        or user.session_version != session_version
+    ):
+        # A password change, suspension/reactivation or other revocation makes
+        # every older signed cookie invalid, even if the account is active again.
+        request.session.clear()
+        raise HTTPException(status_code=401, detail="Please sign in to continue.")
+
+    if require_admin and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Administrator access is required.")
+    return user
