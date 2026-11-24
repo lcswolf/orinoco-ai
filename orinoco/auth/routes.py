@@ -26,16 +26,19 @@ _login_failures: dict[str, deque[float]] = defaultdict(deque)
 
 
 class LoginRequest(BaseModel):
+    """Validated username and password supplied to the login endpoint."""
     username: str = Field(min_length=3, max_length=32)
     password: str = Field(min_length=1, max_length=1024)
 
 
 class PasswordChangeRequest(BaseModel):
+    """Validated current and replacement password fields."""
     current_password: str = Field(min_length=1, max_length=1024)
     new_password: str = Field(min_length=12, max_length=1024)
 
 
 def _require_csrf(request: Request) -> None:
+    """Reject browser mutations that do not carry the session's CSRF token."""
     expected = request.session.get("csrf_token")
     supplied = request.headers.get("x-csrf-token")
     if (
@@ -50,6 +53,7 @@ def _require_csrf(request: Request) -> None:
 
 
 def _check_login_rate(username: str) -> None:
+    """Apply a short in-process delay after repeated failed login attempts."""
     now = time.monotonic()
     failures = _login_failures[username]
     while failures and now - failures[0] > LOGIN_WINDOW_SECONDS:
@@ -63,6 +67,7 @@ def _check_login_rate(username: str) -> None:
 
 
 def _public_user(user: User) -> dict[str, object]:
+    """Return account details without exposing credential or session data."""
     return {
         "id": user.id,
         "username": user.username,
@@ -72,6 +77,7 @@ def _public_user(user: User) -> dict[str, object]:
 
 @router.get("/csrf")
 async def csrf_token(request: Request) -> dict[str, str]:
+    """Create or return the CSRF token associated with the current session."""
     token = request.session.get("csrf_token")
     if not isinstance(token, str):
         token = secrets.token_urlsafe(32)
@@ -81,6 +87,7 @@ async def csrf_token(request: Request) -> dict[str, str]:
 
 @router.post("/login")
 async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
+    """Authenticate an active account and establish its signed browser session."""
     _require_csrf(request)
     username = payload.username.strip().lower()
     _check_login_rate(username)
@@ -107,6 +114,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
 
 @router.get("/me")
 async def current_account(request: Request) -> dict[str, object]:
+    """Return the currently authenticated account, if the session is valid."""
     user_id = request.session.get("user_id")
     if not isinstance(user_id, int):
         return {"authenticated": False}
@@ -122,6 +130,7 @@ async def current_account(request: Request) -> dict[str, object]:
 
 @router.post("/logout")
 async def logout(request: Request) -> dict[str, bool]:
+    """Invalidate the current browser session and clear its cookie."""
     _require_csrf(request)
     request.session.clear()
     return {"authenticated": False}
@@ -130,6 +139,7 @@ async def logout(request: Request) -> dict[str, bool]:
 
 @router.post("/password")
 async def change_password(
+    """Verify the current password and update the authenticated account's hash."""
     payload: PasswordChangeRequest,
     request: Request,
 ) -> dict[str, bool]:
