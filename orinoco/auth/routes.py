@@ -5,7 +5,7 @@ from __future__ import annotations
 import hmac
 import secrets
 import time
-from collections import defaultdict, deque
+from collections import OrderedDict, deque
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -22,7 +22,8 @@ from orinoco.db import (
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 MAX_LOGIN_FAILURES = 5
 LOGIN_WINDOW_SECONDS = 15 * 60
-_login_failures: dict[str, deque[float]] = defaultdict(deque)
+MAX_TRACKED_LOGIN_IDENTITIES = 10_000
+_login_failures: OrderedDict[str, deque[float]] = OrderedDict()
 
 
 class LoginRequest(BaseModel):
@@ -52,17 +53,34 @@ def _require_csrf(request: Request) -> None:
         )
 
 
+def _login_failures_for(username: str) -> deque[float]:
+    """Return a bounded failure queue, evicting the least-recently-used identity if needed."""
+    failures = _login_failures.get(username)
+    if failures is None:
+        if len(_login_failures) >= MAX_TRACKED_LOGIN_IDENTITIES:
+            _login_failures.popitem(last=False)
+        failures = deque()
+        _login_failures[username] = failures
+    else:
+        _login_failures.move_to_end(username)
+    return failures
+
+
 def _check_login_rate(username: str) -> None:
     """Apply a short in-process delay after repeated failed login attempts."""
     now = time.monotonic()
-    failures = _login_failures[username]
+    failures = _login_failures_for(username)
     while failures and now - failures[0] > LOGIN_WINDOW_SECONDS:
         failures.popleft()
+    if not failures:
+        _login_failures.pop(username, None)
+        return
     if len(failures) >= MAX_LOGIN_FAILURES:
+        retry_after = max(1, int(LOGIN_WINDOW_SECONDS - (now - failures[0])))
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many unsuccessful sign-in attempts. Please wait and try again.",
-            headers={"Retry-After": str(LOGIN_WINDOW_SECONDS)},
+            headers={"Retry-After": str(retry_after)},
         )
 
 
@@ -98,7 +116,7 @@ async def login(payload: LoginRequest, request: Request) -> dict[str, object]:
         database_path=get_database_path(),
     )
     if user is None:
-        _login_failures[username].append(time.monotonic())
+        _login_failures_for(username).append(time.monotonic())
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The username or password was not recognised.",
