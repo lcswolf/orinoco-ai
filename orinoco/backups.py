@@ -344,6 +344,94 @@ def restore_backup(backup_path: Path, *, confirm: bool = False) -> dict[str, obj
     return manifest
 
 
+
+def _s3_settings() -> dict[str, str]:
+    """Validate the S3-compatible destination without exposing its credentials."""
+    from urllib.parse import urlsplit
+
+    endpoint = os.environ.get("ORINOCO_BACKUP_S3_ENDPOINT", "").strip()
+    bucket = os.environ.get("ORINOCO_BACKUP_S3_BUCKET", "").strip()
+    access_key = os.environ.get("ORINOCO_BACKUP_S3_ACCESS_KEY_ID", "").strip()
+    secret_key = os.environ.get("ORINOCO_BACKUP_S3_SECRET_ACCESS_KEY", "").strip()
+    region = os.environ.get("ORINOCO_BACKUP_S3_REGION", "us-east-1").strip()
+    prefix = os.environ.get("ORINOCO_BACKUP_S3_PREFIX", "orinoco").strip().strip("/")
+
+    parsed = urlsplit(endpoint)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise BackupError("The S3 endpoint must be a valid HTTPS URL without embedded credentials or query parameters.")
+    if not bucket or not access_key or not secret_key:
+        raise BackupError("S3 bucket, access key ID and secret access key must all be configured.")
+    if any(part in {".", ".."} for part in PurePosixPath(prefix).parts):
+        raise BackupError("The S3 object prefix contains an unsafe path component.")
+    if not region:
+        raise BackupError("The S3 region must not be blank.")
+    return {
+        "endpoint": endpoint.rstrip("/"),
+        "bucket": bucket,
+        "access_key": access_key,
+        "secret_key": secret_key,
+        "region": region,
+        "prefix": prefix,
+    }
+
+
+def upload_backup(backup_path: Path) -> dict[str, object]:
+    """Upload one encrypted backup to a private S3-compatible object bucket.
+
+    The endpoint must use HTTPS. The upload uses no public ACL, includes a
+    SHA-256 checksum as object metadata, and verifies the remote size and
+    checksum with a follow-up HEAD request before reporting success.
+    """
+    import boto3
+
+    settings = _s3_settings()
+    backup_path = backup_path.expanduser().resolve()
+    if not backup_path.is_file() or backup_path.is_symlink():
+        raise BackupError("The backup to upload must be an existing regular file.")
+    if backup_path.suffix != ".oribak":
+        raise BackupError("Only encrypted .oribak backup files can be uploaded.")
+
+    digest = hashlib.sha256()
+    with backup_path.open("rb") as backup_file:
+        for chunk in iter(lambda: backup_file.read(CHUNK_SIZE), b""):
+            digest.update(chunk)
+    checksum = digest.hexdigest()
+    object_key = "/".join(
+        part for part in (settings["prefix"], backup_path.name) if part
+    )
+
+    # Credentials are supplied only to the SDK client; never log or return them.
+    client = boto3.client(
+        "s3",
+        endpoint_url=settings["endpoint"],
+        aws_access_key_id=settings["access_key"],
+        aws_secret_access_key=settings["secret_key"],
+        region_name=settings["region"],
+    )
+    with backup_path.open("rb") as backup_file:
+        client.put_object(
+            Bucket=settings["bucket"],
+            Key=object_key,
+            Body=backup_file,
+            ContentLength=backup_path.stat().st_size,
+            ContentType="application/octet-stream",
+            Metadata={"sha256": checksum},
+        )
+
+    remote = client.head_object(Bucket=settings["bucket"], Key=object_key)
+    remote_checksum = (remote.get("Metadata") or {}).get("sha256", "")
+    if remote.get("ContentLength") != backup_path.stat().st_size or remote_checksum != checksum:
+        raise BackupError("Remote backup verification failed: size or SHA-256 metadata did not match.")
+
+    return {
+        "bucket": settings["bucket"],
+        "key": object_key,
+        "size_bytes": backup_path.stat().st_size,
+        "sha256": checksum,
+        "verified": True,
+    }
+
+
 def main() -> int:
     """Run the backup CLI: generate-key, create, verify or confirmed restore."""
     parser = argparse.ArgumentParser(description="Encrypted Orinoco backup and recovery tools")
