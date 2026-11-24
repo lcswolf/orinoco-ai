@@ -480,3 +480,27 @@ def test_chat_prompt_uses_admin_persona_and_private_response_preferences(tmp_pat
     assert "direct and straightforward" in system
     assert "thorough explanations" in system
     assert "Never claim access to another user's chats" in system
+
+
+
+def test_chat_rate_limit_is_scoped_to_each_user(monkeypatch) -> None:
+    """One account cannot exhaust another account's local inference allowance."""
+    from collections import OrderedDict
+    from fastapi import HTTPException
+
+    from orinoco.chat import routes as chat_routes
+
+    monkeypatch.setattr(chat_routes, "_chat_request_failures", OrderedDict())
+    for _ in range(chat_routes.MAX_CHAT_REQUESTS_PER_MINUTE):
+        chat_routes._check_chat_rate(101)
+
+    try:
+        chat_routes._check_chat_rate(101)
+    except HTTPException as exc:
+        assert exc.status_code == 429
+        assert int(exc.headers["Retry-After"]) >= 1
+    else:
+        raise AssertionError("expected the first account to be rate limited")
+
+    # A separate account retains its own allowance.
+    chat_routes._check_chat_rate(202)
