@@ -43,7 +43,7 @@ The command asks for a username and password interactively. Use a password of at
 
 ## Personal memories
 
-Orinoco can extract durable, non-sensitive personal facts after a chat turn. Users can review, edit and delete their own memories. Automatic extraction uses an additional local model request and can be disabled with `AUTO_SAVE_MEMORIES=false`. Per-user response preferences (bright/calm/professional voice, friendly/direct/playful tone and concise/balanced/detailed answers) are stored in SQLite and applied only to that account's chat prompt. Administrators can edit the shared core persona and humour level; safety and privacy guardrails are appended after custom style guidance.
+Orinoco can extract durable, non-sensitive personal facts after a chat turn. Users can review, edit and delete their own memories. Automatic extraction uses an additional local model request. It can be disabled globally with `AUTO_SAVE_MEMORIES=false` or independently by each user in Settings; the per-user choice takes precedence by skipping extraction for that account. Per-user response preferences (bright/calm/professional voice, friendly/direct/playful tone and concise/balanced/detailed answers) and the automatic-memory choice are stored in SQLite and applied only to that account. Administrators can edit the shared core persona and humour level; safety and privacy guardrails are appended after custom style guidance.
 
 ## Document libraries
 
