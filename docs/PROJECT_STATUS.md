@@ -19,6 +19,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Supported document formats: TXT, Markdown, PDF, DOCX, XLSX and PPTX, up to 10 MiB per file.
 - SQLite FTS5 keyword retrieval from the current user's private documents and authorised shared documents.
 - Explicit authenticated web-search workspace and SearXNG client, when an administrator configures and enables SearXNG.
+- User-triggered public webpage summarisation using local Ollama, with DNS-pinned public-IP resolution, blocked private/local addresses, redirect validation and bounded response sizes.
 - Liveness endpoint /healthz and local-model readiness endpoint /readyz.
 - Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
@@ -43,7 +44,6 @@ The latest completed GitHub Actions Python test run passed all 62 tests before t
 
 ## Not implemented yet
 
-- Safe user-provided URL fetching and webpage summarisation.
 - Search results automatically incorporated into chat answers.
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
