@@ -360,6 +360,8 @@ def _validate_database_snapshot(database_path: Path) -> None:
                 raise BackupError("Backup database failed SQLite integrity check.")
 
             schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+            if schema_version < 0:
+                raise BackupError("Backup database has an invalid negative schema version.")
             if schema_version > CURRENT_SCHEMA_VERSION:
                 raise BackupError(
                     f"Backup database schema version {schema_version} is newer than "
