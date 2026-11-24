@@ -70,6 +70,12 @@ other routes. The proxy limit is essential for chunked requests that omit
 `Content-Length`; the application middleware is defence in depth, not a
 replacement for edge enforcement.
 
+Chat submissions are limited to 10 per user per rolling minute by default; set
+`ORINOCO_CHAT_REQUESTS_PER_MINUTE` between 1 and 120 in the Egg to adjust this
+limit. The initial local inference queue remains serial. This in-process throttle
+must be supplemented with reverse-proxy request and connection limits and a
+shared limiter if multiple web workers or replicas are introduced.
+
 Individual document uploads are limited to 10 MiB. Private libraries default
 to 20 files and 50 MiB combined per account. The administrator-managed shared
 library defaults to 50 files and 200 MiB combined. The Egg exposes these
