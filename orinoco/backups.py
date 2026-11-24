@@ -374,12 +374,26 @@ def _validate_database_snapshot(database_path: Path) -> None:
                     "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
                 )
             }
+            # Preferences and the shared persona were introduced in v6.
+            # Older supported snapshots are upgraded additively on first start.
+            if schema_version >= 6:
+                required_tables.update({"user_preferences", "assistant_persona"})
             missing_tables = required_tables - tables
             if missing_tables:
                 missing = ", ".join(sorted(missing_tables))
                 raise BackupError(
                     f"Backup database is missing required Orinoco tables: {missing}."
                 )
+
+            if schema_version >= 7:
+                preference_columns = {
+                    str(row[1])
+                    for row in connection.execute("PRAGMA table_info(user_preferences)")
+                }
+                if "auto_save_memories" not in preference_columns:
+                    raise BackupError(
+                        "Backup database schema v7 is missing the automatic-memory preference column."
+                    )
 
             foreign_key_issue = connection.execute("PRAGMA foreign_key_check").fetchone()
             if foreign_key_issue:
