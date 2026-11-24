@@ -409,6 +409,25 @@ def change_user_password(
         return True
 
 
+def reset_user_password(
+    user_id: int,
+    new_password: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> bool:
+    """Replace a password from an offline operator command and revoke all existing sessions."""
+    try:
+        new_hash = hash_password(new_password)
+    except ValueError as exc:
+        raise AccountError(str(exc)) from exc
+    with _database(database_path) as connection:
+        cursor = connection.execute(
+            "UPDATE users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?",
+            (new_hash, user_id),
+        )
+        return cursor.rowcount == 1
+
+
 def get_user_by_username(
     username: str, *, database_path: Path = DEFAULT_DATABASE_PATH
 ) -> User | None:
