@@ -8,7 +8,10 @@ This page separates confirmed project decisions from implementation work. A plan
 
 - Public project repository and project documentation.
 - Custom responsive Orinoco interface, served directly by FastAPI, with an original Womble-inspired woodland helper mascot, woodland-green/brass accents and UK-friendly copy.
-- Owner-only conversation deletion with CSRF protection and cascading message removal.
+- Owner-only conversation deletion with CSRF protection, explicit confirmation and cascading message removal.
+- Bounded login throttling per username and observed client address; forwarded-IP headers are not trusted.
+- SQLite database files use owner-only permissions and symbolic-link paths are rejected.
+- External search links are revalidated in the browser and filtered server-side to exclude obvious local/private destinations.
 - Sign-in, secure signed sessions, CSRF-protected authentication and password changes.
 - Administrator account management: create standard users, list users, suspend and reactivate accounts.
 - Authenticated chat with local Ollama, saved per-user conversations and conversation switching.
@@ -32,7 +35,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing; backup-verified update preparation and explicit SQLite migration CLI.
 - Automated Python tests, frontend JavaScript syntax validation and dependency vulnerability audit.
 
-The latest completed GitHub Actions Python test run passed 145 tests, with one non-failing Starlette/httpx TestClient deprecation warning. Coverage includes first-admin bootstrap, login throttling, account-wide session revocation, sensitive-memory filtering, loopback-only inference, Office archive expansion limits, SSRF redirect/response-size protections, encrypted backup upload/restore, document cleanup and storage-path protection, browser security headers, timezone configuration, SQLite schema upgrades, daily backup scheduling/retention, Egg wiring, chat recovery when memory persistence fails, and mascot/accessibility checks. The audit-hardened custom image has built successfully in CI; the expanded smoke test is being updated to confirm the daily scheduler process is running. No image has been published to GHCR or tested on a live Pterodactyl node.
+The latest completed GitHub Actions Python test run passed 154 tests, with one non-failing Starlette/httpx TestClient deprecation warning. Coverage includes first-admin bootstrap, login throttling, account-wide session revocation, sensitive-memory filtering, loopback-only inference, Office archive expansion limits, SSRF redirect/response-size protections, encrypted backup upload/restore, document cleanup and storage-path protection, browser security headers, timezone configuration, SQLite schema upgrades, daily backup scheduling/retention, Egg wiring, chat recovery when memory persistence fails, owner-scoped conversation deletion, login IP throttling, database file protections, external-link safety and mascot/accessibility checks. The audit-hardened custom image has built successfully in CI; the expanded smoke test is being updated to confirm the daily scheduler process is running. No image has been published to GHCR or tested on a live Pterodactyl node.
 
 ## Confirmed direction
 
@@ -51,20 +54,20 @@ The latest completed GitHub Actions Python test run passed 145 tests, with one n
 
 ## Not implemented yet
 
-- Remote bucket lifecycle retention and restore-from-remote convenience; automated application update/migration/rollback tooling (a manual operator runbook is documented).
-- Conversation deletion/editing, pagination and streaming responses.
+- Remote bucket lifecycle retention and restore-from-remote convenience; automated image switching and a live update/rollback drill (a manual operator runbook and backup-gated migration CLI are implemented).
+- Conversation editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Administrator-editable core personality and per-user voice, tone and answer-detail preferences.
 - Discord integration and voice features.
 - Production-ready image publication, live Egg import and Pterodactyl node deployment.
-- Production security review, MFA/account recovery, reverse-proxy/IP rate limits and resource quotas.
+- Production security review, MFA/account recovery, reverse-proxy-level rate limits, trusted-proxy configuration and resource quotas.
 
 ## Next implementation sequence
 
-1. Finish the repository-wide pre-release audit, dependency audit and final container smoke test.
-2. Validate the manual update/rollback runbook on a disposable Pterodactyl server, then add automated migration/update safeguards.
-3. Complete the agreed per-user persona settings and final accessibility/mobile polish.
-4. Validate the Egg on a disposable server in the user's Panel and perform a real backup/restore drill.
+1. Finish the repository-wide pre-release audit and final scheduler/mascot/conversation-deletion container smoke test.
+2. Complete the agreed per-user persona settings and final accessibility/mobile polish.
+3. Validate the update/rollback runbook on a disposable Pterodactyl server and perform a real backup/restore drill.
+4. Validate the Egg on a disposable server in the user's Panel.
 5. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
 
 ## Resource assumptions
