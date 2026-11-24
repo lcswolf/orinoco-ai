@@ -84,3 +84,21 @@ def test_message_content_and_role_are_validated(tmp_path) -> None:
         assert "message" in str(exc)
     else:
         raise AssertionError("empty message was accepted")
+
+
+def test_conversation_deletion_is_owner_scoped_and_cascades_messages(tmp_path) -> None:
+    """Deleting a conversation removes its messages but cannot affect another account's data."""
+    from orinoco.db import delete_conversation
+
+    database = tmp_path / "orinoco.sqlite3"
+    initialise_database(database)
+    owner = create_user("chatowner", "a-long-test-password-123", database_path=database)
+    other = create_user("chatother", "another-long-password-456", database_path=database)
+    conversation_id = create_conversation(owner.id, database_path=database)
+    add_conversation_message(owner.id, conversation_id, "user", "private message", database_path=database)
+
+    assert delete_conversation(other.id, conversation_id, database_path=database) is False
+    assert get_conversation(owner.id, conversation_id, database_path=database) is not None
+    assert delete_conversation(owner.id, conversation_id, database_path=database) is True
+    assert get_conversation(owner.id, conversation_id, database_path=database) is None
+    assert list_conversations(owner.id, database_path=database) == []
