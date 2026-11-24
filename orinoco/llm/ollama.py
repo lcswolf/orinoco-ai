@@ -71,7 +71,7 @@ class OllamaClient:
                     "model": self.model,
                     "messages": safe_messages,
                     "stream": False,
-                    "options": {"num_ctx": self.context_length},
+                    "options": {"num_ctx": self.context_length, "num_predict": 512},
                 },
             )
             response.raise_for_status()
