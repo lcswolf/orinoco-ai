@@ -225,3 +225,18 @@ h1 em { color: #8bd9bd; font-style: normal; }
 .document-item button { flex: 0 0 auto; }
 .settings-form input[type="file"] { min-height: 44px; padding: 8px; color: #9ab0ad; font-size: 10px; }
 .settings-form input[type="file"]::file-selector-button { margin-right: 9px; padding: 6px 9px; border: 0; border-radius: 6px; background: #28483f; color: #bfe7d8; font-size: 10px; }
+
+
+.research-view { width: min(720px, 100%); margin: 0 auto; padding: 40px 34px 70px; }
+.research-form { display: flex; gap: 10px; margin: 25px 0 12px; padding: 9px; border: 1px solid var(--line); border-radius: 12px; background: rgba(20,35,46,.9); }
+.research-form input { flex: 1; min-width: 0; padding: 10px; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; }
+.research-form input::placeholder { color: #72898d; }
+.research-form button { flex: 0 0 auto; min-width: 90px; padding: 0 14px; margin: 0; }
+.research-results { display: grid; gap: 12px; margin-top: 20px; }
+.research-result { padding: 16px 17px; border: 1px solid var(--line); border-radius: 11px; background: rgba(20,35,46,.64); }
+.research-result h2 { margin: 0 0 7px; font-size: 14px; font-weight: 600; line-height: 1.45; }
+.research-result h2 a { color: #cce7dd; text-decoration: none; }
+.research-result h2 a:hover { color: var(--mint); }
+.research-result p { margin: 0 0 8px; color: #91a6a6; font-size: 11px; line-height: 1.65; }
+.research-result .result-url { overflow-wrap: anywhere; color: #6d9b8c; font-size: 9px; }
+@media (max-width: 720px) { .research-view { padding: 26px 20px 55px; } .research-form { gap: 6px; } .research-form button { min-width: 72px; padding: 0 9px; } }
