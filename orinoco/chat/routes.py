@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import hmac
 import json
 import os
@@ -26,9 +25,9 @@ from orinoco.db import (
     search_documents,
 )
 from orinoco.llm.ollama import OllamaClient, OllamaError
+from orinoco.llm.runtime import generation_lock
 
 router = APIRouter(prefix="/api", tags=["chat"])
-_generation_lock = asyncio.Semaphore(1)
 SYSTEM_PROMPT = """You are Orinoco, a friendly and helpful personal AI assistant.
 Use a warm, natural conversational style with balanced detail and a little humour
 when it fits. Be clear, practical and honest about uncertainty. Never claim to
@@ -297,7 +296,7 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
     messages.append({"role": "user", "content": payload.message})
 
 
-    async with _generation_lock:
+    async with generation_lock:
         client = OllamaClient()
         try:
             answer = await client.chat(messages)
