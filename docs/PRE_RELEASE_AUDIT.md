@@ -147,9 +147,10 @@ The README, architecture, Egg and development guide now distinguish implemented 
 ### Request and storage resource limits — application controls implemented
 
 The application now rejects oversized declared request bodies (12 MiB default)
-before FastAPI parses them. Private document libraries default to 20 files /
+before FastAPI parses them. Chat submissions default to 10 per user per rolling
+minute, configurable in the Egg. Private document libraries default to 20 files /
 50 MiB per account; the administrator-managed shared library defaults to
-50 files / 200 MiB. All five settings are configurable in the Egg. Upload quota
+50 files / 200 MiB. All resource settings are configurable in the Egg. Upload quota
 checks run under the document storage lock, and regression coverage verifies
 that one user's quota does not affect another account. The reverse proxy must
 still enforce request-body limits for chunked requests and apply an
