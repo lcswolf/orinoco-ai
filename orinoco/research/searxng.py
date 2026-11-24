@@ -13,12 +13,14 @@ class SearchUnavailable(RuntimeError):
 
 
 class SearXNGClient:
+    """Query an administrator-configured SearXNG instance without external inference."""
     def __init__(
         self,
         *,
         base_url: str | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
+        """Validate the configured endpoint and create a bounded async HTTP client."""
         self.base_url = (base_url or os.environ.get("SEARXNG_URL", "")).strip().rstrip("/")
         if os.environ.get("ENABLE_WEB_SEARCH", "false").lower() in {"0", "false", "no", "off"}:
             raise SearchUnavailable("Web search is disabled by the administrator.")
@@ -37,6 +39,7 @@ class SearXNGClient:
         )
 
     async def search(self, query: str, *, limit: int = 5) -> list[dict[str, str]]:
+        """Return a small, validated set of public HTTP(S) search results."""
         clean_query = " ".join(query.split())
         if len(clean_query) < 3 or len(clean_query) > 300:
             raise ValueError("Search queries must be between 3 and 300 characters.")
@@ -76,4 +79,5 @@ class SearXNGClient:
         return results
 
     async def aclose(self) -> None:
+        """Release the underlying HTTP connection pool."""
         await self._client.aclose()
