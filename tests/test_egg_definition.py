@@ -42,6 +42,7 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "ORINOCO_SHARED_DOCUMENT_QUOTA_BYTES",
         "ORINOCO_SHARED_DOCUMENT_QUOTA_FILES",
         "ORINOCO_MAX_REQUEST_BODY_BYTES",
+        "ORINOCO_TRUSTED_PROXY_IPS",
         "ORINOCO_CHAT_REQUESTS_PER_MINUTE",
         "ORINOCO_MAX_PENDING_GENERATIONS",
         "ORINOCO_MAX_MEMORIES_PER_USER",
@@ -188,4 +189,13 @@ def test_searxng_endpoint_is_admin_only_and_hidden() -> None:
 
     assert endpoint["user_viewable"] is False
     assert endpoint["user_editable"] is False
+
+def test_trusted_proxy_allowlist_is_hidden_and_admin_only() -> None:
+    """Client-IP trust can only be configured by the Panel administrator."""
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variable = next(v for v in egg["variables"] if v["env_variable"] == "ORINOCO_TRUSTED_PROXY_IPS")
+
+    assert variable["default_value"] == ""
+    assert variable["user_viewable"] is False
+    assert variable["user_editable"] is False
 
