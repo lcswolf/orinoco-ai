@@ -204,7 +204,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [ ] Review the complete chat flow, memory extraction filters, prompt boundaries, queue handling and failure recovery.
 - [x] Complete SSRF and redirect tests for public webpage fetching; review SearXNG endpoint configuration and returned links.
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
-- [ ] Confirm CI passes the new backup database and encrypted-archive regression tests; finish any remaining archive/key-handling edge cases.
+- [ ] Confirm CI passes the latest backup database/archive/WAL/scheduler, PDF parser, document-cleanup and Egg regression tests; finish any remaining archive/key-handling edge cases.
 - [x] Implement and test automatic daily encrypted backups, local retention and failure reporting.
 - [ ] Configure remote bucket lifecycle retention and convenient restore-from-remote.
 - [x] Add backup-verified pre-update and explicit database migration commands plus a Pterodactyl operator runbook.
