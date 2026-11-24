@@ -28,7 +28,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - User-triggered public webpage summarisation using local Ollama, with DNS-pinned public-IP resolution, blocked private/local addresses, redirect validation and bounded response sizes.
 - Liveness endpoint /healthz and local-model readiness endpoint /readyz.
 - Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
-- Preview Pterodactyl 1.x Egg definition for Panel 1.13.0.
+- Preview PTDL_v1 Egg definition; Panel 2.x import compatibility is not yet validated.
 - Encrypted local backup creation, verification and confirmed restore CLI using AES-256-GCM.
 - S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification; restore keeps pre-restore database, document and session-secret recovery copies.
 - Supervised daily encrypted backup scheduler (03:00 in the configured timezone by default), optional verified S3 upload, configurable 1–365 day local retention and persistent failure status.
@@ -50,7 +50,7 @@ The latest completed GitHub Actions Python test run passed **183 tests** with on
 - Local model inference; no external AI inference API is intended.
 - Ollama is the inference runtime, currently pinned to version 0.40.18 in the image.
 - Initial target is a modest Ubuntu 24.04 LTS VPS.
-- Pterodactyl Panel 1.13.0 is the target deployment manager.
+- Pterodactyl Panel 2.x (latest stable) is the target deployment manager.
 - Stable releases are preferred for updates.
 - Curated model list: Qwen 2.5 0.5B, 1.5B and 3B; 1.5B is the default.
 - Initial context target is 2048 tokens and one model request at a time.
