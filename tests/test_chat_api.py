@@ -269,3 +269,56 @@ def test_chat_receives_only_authorised_document_excerpts(tmp_path, monkeypatch) 
     assert "my-notes.txt" in reference_context
     assert "Blue Finch" in reference_context
     assert "untrusted reference data" in reference_context
+
+
+
+def test_chat_can_include_opt_in_web_search_context(tmp_path, monkeypatch) -> None:
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("AUTO_SAVE_MEMORIES", "false")
+    initialise_database(database)
+    create_user("webchat", "a-long-test-password-123", database_path=database)
+    captured: list[dict[str, str]] = []
+
+    class CapturingOllamaClient:
+        async def chat(self, messages: list[dict[str, str]]) -> str:
+            captured.extend(messages)
+            return "The latest guide says to use a stable release."
+
+        async def aclose(self) -> None:
+            return None
+
+    class FakeSearchClient:
+        async def search(self, query: str, *, limit: int = 5) -> list[dict[str, str]]:
+            assert query == "What is the latest Orinoco guide?"
+            assert limit == 5
+            return [{
+                "title": "Orinoco guide",
+                "url": "https://example.com/guide",
+                "content": "Use a stable release.",
+                "engine": "SearXNG",
+            }]
+
+        async def aclose(self) -> None:
+            return None
+
+    monkeypatch.setattr(chat_routes, "OllamaClient", CapturingOllamaClient)
+    monkeypatch.setattr(chat_routes, "SearXNGClient", FakeSearchClient)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "webchat", "a-long-test-password-123")
+        response = client.post(
+            "/api/chat",
+            headers={"X-CSRF-Token": csrf(client)},
+            json={"message": "What is the latest Orinoco guide?", "web_search": True},
+        )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["web_sources"][0]["url"] == "https://example.com/guide"
+    reference_context = next(
+        item["content"] for item in captured
+        if "Web search results" in item["content"]
+    )
+    assert "untrusted reference data" in reference_context
+    assert "Use a stable release." in reference_context
