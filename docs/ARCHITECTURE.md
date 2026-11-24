@@ -8,12 +8,12 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 ## High-level components
 
-- **Custom web interface:** lightweight HTML, CSS and JavaScript served by FastAPI. The first responsive interface shell is committed; chat, accounts, settings and admin screens will be added as their secure backend features are implemented.
+- **Custom web interface:** lightweight HTML, CSS and JavaScript served by FastAPI. It now includes sign-in, authenticated chat, conversation history, account settings, memory controls and private/shared document-library screens.
 - **Web application:** Python/FastAPI. It serves the interface, liveness/readiness endpoints and future authenticated application APIs.
 - **Local inference:** Ollama, running in the same Pterodactyl container under Supervisor. Its API binds only to 127.0.0.1:11434; it is not exposed as a public allocation.
 - **Model storage:** persistent /home/container/data/models directory. The first-run initialiser downloads the configured curated model when automatic download is enabled.
-- **Application database:** planned for accounts, settings, conversations, memory metadata and document records.
-- **Retrieval layer:** planned to index authorised documents and retrieve relevant passages for a user's request.
+- **Application database:** SQLite stores accounts, settings, conversations, personal memories and document metadata/extracted text. Access is scoped server-side to the owning user or the authorised shared library.
+- **Retrieval layer:** SQLite FTS5 indexes extracted document text and retrieves bounded keyword excerpts from the current user's private documents and the shared library. This is a lightweight keyword system, not vector/semantic search.
 - **Web research adapter:** optional search and URL retrieval. External webpages are untrusted input.
 - **Discord adapter:** optional text integration, with per-channel participation settings.
 - **Voice components:** future, opt-in speech recognition and speech output. Listening must start only after an explicit user action.
@@ -23,7 +23,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 The interface is being built specifically for Orinoco rather than embedding Open WebUI. The first page uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. It includes a responsive workspace layout, Orinoco greeting, service status and clear placeholders for future chat and account features.
 
-The initial chat composer is intentionally not active yet. Authentication, per-user conversation storage and server-side authorisation must be implemented before an unrestricted chat endpoint is exposed. The design should grow in stages: authenticated chat first, then chat history, user preferences, memory/document areas and administrator settings.
+The current interface supports authenticated chat, saved conversations, user preferences/password changes, personal memory controls and document uploads. More advanced settings, pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
 
 ## Deployment proposal
 
@@ -57,6 +57,12 @@ Every private record must be associated with an authenticated user or an explici
 - Memory review, correction and deletion must be available to the owning user.
 
 Authorisation must be enforced server-side for every data access; hiding controls in the interface is not sufficient.
+
+## Document handling
+
+Users can upload private TXT, Markdown, PDF, DOCX, XLSX and PPTX files, with a 10 MiB per-file limit. Administrators can add files to a shared read-only library. Extracted text is stored in SQLite and indexed with FTS5; original files live in a private persistent data directory with generated storage names. Scanned PDFs without embedded text are not OCR-processed.
+
+Relevant excerpts are selected from the signed-in user's own private documents plus shared documents. Retrieved content is untrusted reference material and must never be treated as instructions. Upload parsing is bounded by file size, page/slide/cell limits and extracted-text limits.
 
 ## Model and prompt handling
 
