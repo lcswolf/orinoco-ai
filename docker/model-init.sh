@@ -29,7 +29,7 @@ until /usr/local/bin/ollama list >/dev/null 2>&1; do
     sleep 2
 done
 
-if /usr/local/bin/ollama list | grep -Fq "$MODEL"; then
+if /usr/local/bin/ollama show "$MODEL" >/dev/null 2>&1; then
     echo "Model $MODEL is already present; no download needed."
 else
     echo "Downloading model $MODEL into persistent storage. This may take a while."
