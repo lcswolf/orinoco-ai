@@ -99,7 +99,7 @@ The README and development guide now distinguish implemented encrypted backup op
 - [x] Strengthen restore rollback for the database, WAL state and file-based session secret.
 - [ ] Finish review of encrypted archive edge cases, key handling and remote transfer failure behaviour.
 - [ ] Implement and test automatic daily backups, retention and clear failure reporting.
-- [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.
+- [ ] Validate the Egg against the target Panel 1.13.0 format and confirm every environment variable matches the runtime.\n- [ ] Finalise the Leaseweb VPS deployment plan: Caddy HTTPS, Tailscale Serve for private access (no Funnel), firewall exposure limited to required ports, and reverse-proxy request/rate limits.
 - [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [ ] Finish frontend accessibility, keyboard navigation, mobile layout and API error-state review.
