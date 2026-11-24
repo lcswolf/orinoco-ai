@@ -68,7 +68,7 @@ def test_backup_restore_recovers_database_documents_and_session_secret(tmp_path,
 def test_restore_requires_explicit_confirmation(tmp_path, monkeypatch) -> None:
     configure_backup_paths(monkeypatch, tmp_path)
     backup = backups.create_backup()
-    with pytest.raises(backups.BackupError, match="stopped Orinoco"):
+    with pytest.raises(backups.BackupError, match="after stopping Orinoco"):
         backups.restore_backup(backup)
 
 
