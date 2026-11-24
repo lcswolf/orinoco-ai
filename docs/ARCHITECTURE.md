@@ -13,6 +13,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 - **Local inference:** Ollama, running in the same Pterodactyl container under Supervisor. Its API binds only to 127.0.0.1:11434; it is not exposed as a public allocation.
 - **Model storage:** persistent /home/container/data/models directory. The first-run initialiser downloads the configured curated model when automatic download is enabled.
 - **Application database:** SQLite stores accounts, settings, conversations, personal memories and document metadata/extracted text. Access is scoped server-side to the owning user or the authorised shared library.
+  Schema upgrades are versioned and additive; an older image refuses a database with a newer schema. Application rollback must therefore restore the pre-update database backup before starting the older image.
 - **Retrieval layer:** SQLite FTS5 indexes extracted document text and retrieves bounded keyword excerpts from the current user's private documents and the shared library. This is a lightweight keyword system, not vector/semantic search.
 - **Web research adapter:** optional search and URL retrieval. External webpages are untrusted input.
 - **Discord adapter:** optional text integration, with per-channel participation settings.
