@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest completed Python CI baseline (#715) on commit `cf90f2b9`: 183 tests passed, with one non-failing Starlette/httpx TestClient deprecation warning. The dependency audit reported no known vulnerabilities. Container build/smoke run #333 passed on runtime commit `e37af30e`. Subsequent changes include backup/database/archive hardening, scheduler retries, PDF and document-storage limits, trusted-proxy login handling, offline TTY-only admin password recovery and Egg configuration hardening; the new changes still need a fresh Python test run and container smoke test. The image has not been published to GHCR or deployed. A live Pterodactyl import, deployment and recovery drill remain outstanding.
+Latest GitHub Actions Python test run [#799](https://github.com/lcswolf/orinoco-ai/actions/runs/45496332313) passed on commit `37440ad8`; the dependency audit and frontend JavaScript syntax checks also passed. This run includes the backup/database/archive hardening, scheduler retries, PDF and document-storage limits, trusted-proxy login handling, offline TTY-only admin password recovery and Egg configuration changes. Matching container build/smoke run [#353](https://github.com/lcswolf/orinoco-ai/actions/runs/45496332216) is still in progress and does not publish the image. The image has not been published to GHCR or deployed. A live Pterodactyl import, deployment and recovery drill remain outstanding.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -218,8 +218,8 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm the historical baseline of 183 passing tests, a clean pip-audit scan and a successful container smoke test for the bounded generation/memory runtime (Python test run #715; container build #333).
-- [ ] Rerun the full Python suite, dependency audit and container smoke test after the latest backup-validation and Egg changes; record passing results against the same commit.
+- [x] Confirm the latest Python test suite, dependency audit and frontend JavaScript syntax checks passed on commit `37440ad8` (run #799).
+- [ ] Confirm the matching container build and smoke test passes on the same commit (run #353).
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
 
