@@ -144,11 +144,12 @@ def test_login_rate_limit_retry_after_reflects_oldest_failure(monkeypatch) -> No
     from orinoco.auth import routes as auth_routes
 
     now = time.monotonic()
-    monkeypatch.setattr(auth_routes, "_login_failures", OrderedDict({"locked-user": deque([now - 890] * 5)}))
+    identity = auth_routes._login_identity_key("locked-user", "192.0.2.10")
+    monkeypatch.setattr(auth_routes, "_login_failures", OrderedDict({identity: deque([now - 890] * 5)}))
     monkeypatch.setattr(auth_routes.time, "monotonic", lambda: now)
 
     try:
-        auth_routes._check_login_rate("locked-user")
+        auth_routes._check_login_rate("locked-user", "192.0.2.10")
     except HTTPException as exc:
         assert exc.status_code == 429
         assert exc.headers["Retry-After"] == "10"
@@ -320,3 +321,70 @@ def test_login_ip_failure_tracker_has_a_hard_memory_bound(monkeypatch) -> None:
 
     assert len(auth_routes._login_ip_failures) == 2
     assert "192.0.2.1" not in auth_routes._login_ip_failures
+
+
+def _request_with_peer(peer: str, forwarded_for: str | None = None):
+    """Build a minimal Starlette request with an explicit proxy peer and header."""
+    from starlette.requests import Request
+
+    headers = []
+    if forwarded_for is not None:
+        headers.append((b"x-forwarded-for", forwarded_for.encode("ascii")))
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": "/",
+        "raw_path": b"/",
+        "query_string": b"",
+        "headers": headers,
+        "client": (peer, 12345),
+        "server": ("testserver", 80),
+    }
+    return Request(scope)
+
+
+def test_production_does_not_treat_shared_proxy_as_client_without_allowlist(monkeypatch) -> None:
+    """Until the real proxy peer is measured, avoid a shared username lockout bucket."""
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    monkeypatch.delenv("ORINOCO_TRUSTED_PROXY_IPS", raising=False)
+    request = _request_with_peer("127.0.0.1", "8.8.8.8")
+
+    assert auth_routes._resolve_client_ip(request) is None
+
+
+def test_login_uses_forwarded_ip_only_from_an_allowlisted_proxy(monkeypatch) -> None:
+    """A trusted Nginx peer may supply one overwritten client address."""
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    monkeypatch.setenv("ORINOCO_TRUSTED_PROXY_IPS", "127.0.0.1")
+    request = _request_with_peer("127.0.0.1", "8.8.8.8")
+
+    assert auth_routes._resolve_client_ip(request) == "8.8.8.8"
+
+
+def test_login_ignores_forwarded_header_from_untrusted_peer(monkeypatch) -> None:
+    """A caller cannot spoof its identity with an untrusted forwarding header."""
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    monkeypatch.setenv("ORINOCO_TRUSTED_PROXY_IPS", "127.0.0.1")
+    request = _request_with_peer("8.8.4.4", "1.1.1.1")
+
+    assert auth_routes._resolve_client_ip(request) == "8.8.4.4"
+
+
+def test_login_rejects_forwarded_header_chains_from_trusted_proxy(monkeypatch) -> None:
+    """Only the single client address overwritten by Nginx is accepted."""
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setenv("ORINOCO_ENV", "production")
+    monkeypatch.setenv("ORINOCO_TRUSTED_PROXY_IPS", "127.0.0.1")
+    request = _request_with_peer("127.0.0.1", "8.8.8.8, 1.1.1.1")
+
+    assert auth_routes._resolve_client_ip(request) is None
