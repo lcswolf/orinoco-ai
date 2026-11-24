@@ -61,6 +61,7 @@ def test_web_process_uses_pterodactyl_allocation() -> None:
     assert 'SERVER_PORT' in script
     assert '--host 0.0.0.0' in script
     assert 'exec python -m uvicorn' in script
+    assert '--no-proxy-headers' in script
 
 
 def test_ollama_is_loopback_only_and_models_are_persistent() -> None:
