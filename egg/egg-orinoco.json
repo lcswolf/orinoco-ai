@@ -142,7 +142,7 @@
       "default_value": "",
       "user_viewable": false,
       "user_editable": false,
-      "rules": "nullable|string|max:128"
+      "rules": "required|string|max:128"
     },
     {
       "name": "S3 Backup Endpoint",
