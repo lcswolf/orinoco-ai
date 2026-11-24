@@ -129,3 +129,36 @@ def test_login_rate_limit_retry_after_reflects_oldest_failure(monkeypatch) -> No
         assert exc.headers["Retry-After"] == "10"
     else:
         raise AssertionError("expected rate limit response")
+
+
+def test_password_change_revokes_other_signed_in_sessions(tmp_path, monkeypatch) -> None:
+    """Changing a password invalidates every other browser session for that account."""
+    database = tmp_path / "accounts.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("sessionuser", "a-long-test-password-123", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as first, TestClient(app, base_url="https://testserver") as second:
+        for client in (first, second):
+            token = client.get("/api/auth/csrf").json()["csrf_token"]
+            response = client.post(
+                "/api/auth/login",
+                headers={"X-CSRF-Token": token},
+                json={"username": "sessionuser", "password": "a-long-test-password-123"},
+            )
+            assert response.status_code == 200
+
+        token = first.get("/api/auth/csrf").json()["csrf_token"]
+        changed = first.post(
+            "/api/auth/password",
+            headers={"X-CSRF-Token": token},
+            json={
+                "current_password": "a-long-test-password-123",
+                "new_password": "another-long-password-456",
+            },
+        )
+
+        assert changed.status_code == 200
+        assert first.get("/api/auth/me").json()["authenticated"] is True
+        assert second.get("/api/auth/me").json()["authenticated"] is False
+        assert second.get("/api/chat/conversations").status_code == 401
