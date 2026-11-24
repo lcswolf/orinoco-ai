@@ -11,7 +11,8 @@ Orinoco aims to provide a friendly, private assistant that can be hosted on a mo
 - Custom Orinoco web interface rather than Open WebUI, with an original Womble-inspired woodland helper mascot and UK-friendly woodland palette.
 - Local model inference through Ollama, without external AI inference APIs.
 - Private administrator and standard-user accounts.
-- Per-user chat history and personal memories, with review, correction and deletion controls.
+- Per-user chat history with owner-only deletion, personal memories with review/correction/deletion controls, and private response voice/tone/detail preferences.
+- Administrator-managed core personality and humour controls.
 - Private user documents and an administrator-managed shared knowledge library.
 - Optional web search through a configured SearXNG instance.
 - User-triggered summaries of public webpages, fetched with SSRF protections and summarised by the local model.
