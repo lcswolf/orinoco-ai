@@ -63,3 +63,12 @@ def test_model_downloader_only_allows_curated_models() -> None:
 
     assert 'qwen2.5:0.5b|qwen2.5:1.5b|qwen2.5:3b' in script
     assert 'ollama pull "$MODEL"' in script
+
+
+def test_dockerignore_keeps_application_feature_packages() -> None:
+    ignored = (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
+
+    assert "documents" not in ignored
+    assert "memories" not in ignored
+    assert "conversations" not in ignored
+    assert "/data" in ignored
