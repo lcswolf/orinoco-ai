@@ -28,6 +28,7 @@ RUN chmod 755 /usr/local/bin/orinoco-entrypoint \
 
 ENV USER=container \
     HOME=/home/container \
+    PYTHONPATH=/opt/orinoco \
     TZ=Europe/London
 
 WORKDIR /home/container
