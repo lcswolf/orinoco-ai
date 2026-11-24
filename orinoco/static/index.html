@@ -119,7 +119,7 @@
           <p class="welcome-copy">Search results come from your configured SearXNG service. Search queries are sent to that service and the search providers it uses, so avoid including private information.</p>
         </div>
         <form class="research-form" id="research-form">
-          <input id="research-query" type="search" minlength="3" maxlength="300" placeholder="What would you like to research?" required>
+          <input id="research-query" type="search" aria-label="Research topic or question" minlength="3" maxlength="300" placeholder="What would you like to research?" required>
           <button class="login-submit" id="research-submit" type="submit">Search</button>
         </form>
         <p class="settings-feedback" id="research-feedback" role="status" hidden></p>
@@ -128,7 +128,7 @@
         <h2 class="research-subheading">Summarise a website</h2>
         <p class="settings-description">Paste a public webpage URL. Orinoco fetches the page safely and summarises it using your local AI model. Private and local network addresses are blocked.</p>
         <form class="research-form" id="summary-form">
-          <input id="summary-url" type="url" maxlength="2048" placeholder="https://example.com/article" required>
+          <input id="summary-url" type="url" aria-label="Website URL to summarise" maxlength="2048" placeholder="https://example.com/article" required>
           <button class="login-submit" id="summary-submit" type="submit">Summarise</button>
         </form>
         <p class="settings-feedback" id="summary-feedback" role="status" hidden></p>
