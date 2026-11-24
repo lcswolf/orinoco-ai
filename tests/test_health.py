@@ -14,11 +14,12 @@ def test_health_endpoint_returns_ok() -> None:
     assert response.json()["service"] == "orinoco"
 
 
-def test_root_endpoint_identifies_application() -> None:
+def test_root_endpoint_serves_orinoco_application() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.json()["name"] == "Orinoco"
+    assert "text/html" in response.headers["content-type"]
+    assert "Orinoco" in response.text
 
 
 def test_ready_endpoint_returns_ready_when_model_is_present(monkeypatch) -> None:
@@ -68,6 +69,6 @@ def test_static_assets_are_served() -> None:
     js = client.get("/static/app.js")
 
     assert css.status_code == 200
-    assert "orinoco" in css.text.lower()
+    assert ".app-shell" in css.text
     assert js.status_code == 200
     assert "/readyz" in js.text
