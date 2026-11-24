@@ -28,7 +28,8 @@ This page separates confirmed project decisions from implementation work. A plan
 - Supervised daily encrypted backup scheduler (03:00 in the configured timezone by default), optional verified S3 upload, configurable 1–365 day local retention and persistent failure status.
 - Session-secret symlink rejection and restrictive file permissions; safe backup restore recovery-path checks.
 - CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions.
-- Automated Python tests and frontend JavaScript syntax validation.
+- Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing.
+- Automated Python tests, frontend JavaScript syntax validation and dependency vulnerability audit.
 
 The latest completed GitHub Actions Python test run passed 136 tests, with one non-failing Starlette/httpx TestClient deprecation warning. Coverage includes first-admin bootstrap, login throttling, account-wide session revocation, sensitive-memory filtering, loopback-only inference, Office archive expansion limits, SSRF redirect/response-size protections, encrypted backup upload/restore, document cleanup and storage-path protection, browser security headers, timezone configuration, SQLite schema upgrades, daily backup scheduling/retention, Egg wiring and chat recovery when memory persistence fails. The audit-hardened custom image has built successfully in CI; the expanded smoke test is being updated to confirm the daily scheduler process is running. No image has been published to GHCR or tested on a live Pterodactyl node.
 
@@ -49,7 +50,7 @@ The latest completed GitHub Actions Python test run passed 136 tests, with one n
 
 ## Not implemented yet
 
-- Remote bucket lifecycle retention and restore-from-remote convenience; safe application update/rollback.
+- Remote bucket lifecycle retention and restore-from-remote convenience; automated application update/migration/rollback tooling (a manual operator runbook is documented).
 - Conversation deletion/editing, pagination and streaming responses.
 - Advanced semantic/vector document search and OCR for scanned PDFs.
 - Original Womble-inspired mascot artwork and final UK-oriented interface treatment.
@@ -61,7 +62,7 @@ The latest completed GitHub Actions Python test run passed 136 tests, with one n
 ## Next implementation sequence
 
 1. Finish the repository-wide pre-release audit, dependency audit and final container smoke test.
-2. Add safe application update, database migration and rollback tooling.
+2. Validate the manual update/rollback runbook on a disposable Pterodactyl server, then add automated migration/update safeguards.
 3. Complete the agreed persona settings and original Orinoco mascot/UK interface treatment.
 4. Validate the Egg on a disposable server in the user's Panel and perform a real backup/restore drill.
 5. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
