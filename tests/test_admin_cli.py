@@ -38,7 +38,7 @@ def test_admin_bootstrap_refuses_when_any_account_already_exists(tmp_path, monke
 
 
 def test_admin_package_exposes_documented_module_command() -> None:
-    """The package entry point must make the documented -m command executable."""
+    """The package entry point must make the documented -m commands executable."""
     import subprocess
     import sys
 
@@ -50,3 +50,54 @@ def test_admin_package_exposes_documented_module_command() -> None:
     )
     assert result.returncode == 0
     assert "create-admin" in result.stdout
+    assert "reset-password" in result.stdout
+
+
+def test_admin_password_reset_uses_configured_database_and_revokes_sessions(
+    tmp_path, monkeypatch
+) -> None:
+    """The offline recovery command resets a password in the selected database."""
+    from orinoco.db import create_user, get_user_by_username, initialise_database
+
+    database = tmp_path / "custom" / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    user = create_user("recoveradmin", "an-old-long-password-123", role="admin", database_path=database)
+    old_version = user.session_version
+    monkeypatch.setattr("builtins.input", lambda prompt: "recoveradmin")
+    passwords = iter(["a-new-long-password-456", "a-new-long-password-456"])
+    monkeypatch.setattr("orinoco.admin.cli.getpass.getpass", lambda prompt: next(passwords))
+    monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
+
+    assert main() == 0
+    assert authenticate_user(
+        "recoveradmin",
+        "an-old-long-password-123",
+        database_path=database,
+    ) is None
+    assert authenticate_user(
+        "recoveradmin",
+        "a-new-long-password-456",
+        database_path=database,
+    ) is not None
+    updated = get_user_by_username("recoveradmin", database_path=database)
+    assert updated is not None
+    assert updated.session_version == old_version + 1
+
+
+def test_admin_password_reset_requires_exact_account_confirmation(tmp_path, monkeypatch) -> None:
+    """A mistyped account confirmation must not change any credentials."""
+    import pytest
+    from orinoco.db import create_user, initialise_database
+
+    database = tmp_path / "accounts.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("recoveradmin", "an-old-long-password-123", role="admin", database_path=database)
+    monkeypatch.setattr("builtins.input", lambda prompt: "different-account")
+    monkeypatch.setattr(
+        "orinoco.admin.cli.getpass.getpass",
+        lambda prompt: pytest.fail("password prompt must not be reached"),
+    )
+    monkeypatch.setattr("sys.argv", ["python -m orinoco.admin", "reset-password", "recoveradmin"])
+
+    assert main() == 2
