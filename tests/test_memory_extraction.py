@@ -8,7 +8,9 @@ def test_memory_extractor_keeps_only_safe_durable_facts() -> None:
       "User prefers concise, practical answers.",
       "User's password is super-secret.",
       "User's email is person@example.com.",
-      "User has a medical diagnosis."
+      "User has a medical diagnosis.",
+      "User lives at 12 High Street.",
+      "User postcode is SW1A 1AA."
     ]"""
 
     assert extract_memory_candidates(raw) == [
