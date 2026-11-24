@@ -24,6 +24,7 @@
         <a class="nav-link active" id="chat-link" href="/" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span> Chat</a>
         <a class="nav-link" id="memories-link" href="#memories"><span class="nav-icon" aria-hidden="true">◇</span> My memories</a>
         <a class="nav-link" id="documents-link" href="#documents"><span class="nav-icon" aria-hidden="true">▤</span> My documents</a>
+        <a class="nav-link" id="research-link" href="#research"><span class="nav-icon" aria-hidden="true">⌕</span> Web research</a>
       </nav>
       <div class="side-label recent-label">RECENT CHATS</div>
       <div class="conversation-list" id="conversation-list" aria-label="Recent conversations"></div>
@@ -106,6 +107,19 @@
           </form>
           <div class="document-list" id="shared-document-list" aria-live="polite"></div>
         </section>
+      </section>
+      <section class="research-view" id="research-view" aria-labelledby="research-title" hidden>
+        <div class="documents-heading">
+          <div class="welcome-eyebrow"><span class="eyebrow-line"></span> OPTIONAL WEB RESEARCH</div>
+          <h1 id="research-title">Search the web</h1>
+          <p class="welcome-copy">Search results come from your configured SearXNG service. Search queries are sent to that service and the search providers it uses, so avoid including private information.</p>
+        </div>
+        <form class="research-form" id="research-form">
+          <input id="research-query" type="search" minlength="3" maxlength="300" placeholder="What would you like to research?" required>
+          <button class="login-submit" id="research-submit" type="submit">Search</button>
+        </form>
+        <p class="settings-feedback" id="research-feedback" role="status" hidden></p>
+        <div class="research-results" id="research-results" aria-live="polite"></div>
       </section>
       <footer class="footer"><span>ORINOCO</span><span>Made to be yours.</span></footer>
     </main>
