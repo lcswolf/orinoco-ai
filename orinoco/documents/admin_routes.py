@@ -8,6 +8,7 @@ from orinoco.db import (
     create_document,
     delete_document,
     get_database_path,
+    get_document,
     get_user_by_id,
     initialise_database,
     list_documents,
@@ -57,6 +58,22 @@ async def delete_shared_document(document_id: int, request: Request) -> dict[str
     """Remove a shared document after an administrator ownership check."""
     _require_csrf(request)
     _require_admin(request)
+    document = get_document(
+        0,
+        document_id,
+        allow_shared=True,
+        database_path=get_database_path(),
+    )
+    if document is None or document["scope"] != "shared":
+        raise HTTPException(status_code=404, detail="Shared document not found.")
+    try:
+        # Keep the shared-library row visible if the original file cannot be removed.
+        remove_document_file(str(document["stored_path"]))
+    except (OSError, ValueError) as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="The shared document could not be removed from storage; it remains listed so you can retry.",
+        ) from exc
     stored_path = delete_document(
         0,
         document_id,
@@ -65,5 +82,4 @@ async def delete_shared_document(document_id: int, request: Request) -> dict[str
     )
     if stored_path is None:
         raise HTTPException(status_code=404, detail="Shared document not found.")
-    remove_document_file(stored_path)
     return {"deleted": True}
