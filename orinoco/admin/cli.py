@@ -19,12 +19,26 @@ from orinoco.db import (
 )
 
 
+def _require_interactive_terminal() -> bool:
+    """Refuse password prompts without a TTY so getpass cannot echo secrets."""
+    if sys.stdin.isatty():
+        return True
+    print(
+        "This command requires an interactive terminal so passwords are not echoed. "
+        "Run it through an SSH session with a TTY.",
+        file=sys.stderr,
+    )
+    return False
+
+
 def create_initial_admin(database_path: Path | None = None) -> int:
     """Create the first administrator only when no account exists; never reset an existing installation."""
     database_path = database_path or get_database_path()
     initialise_database(database_path)
     if list_users(database_path=database_path):
         print("Orinoco already has an account; refusing to create another bootstrap administrator.", file=sys.stderr)
+        return 2
+    if not _require_interactive_terminal():
         return 2
     print("Create the first Orinoco administrator account.")
     print("Usernames: 3–32 characters; letters, numbers, dots, underscores or hyphens.")
@@ -51,6 +65,8 @@ def reset_account_password(username: str, database_path: Path | None = None) -> 
     user = get_user_by_username(username, database_path=database_path)
     if user is None:
         print("No account with that username exists.", file=sys.stderr)
+        return 2
+    if not _require_interactive_terminal():
         return 2
 
     print(f"Reset the password for '{user.username}' ({user.role}).")
