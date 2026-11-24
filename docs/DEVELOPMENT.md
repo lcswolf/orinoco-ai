@@ -75,7 +75,7 @@ Create and verify a backup:
 
 ```bash
 python -m orinoco.backups create
-python -m orinoco.backups verify /home/container/backups/orinoco-YYYYMMDDTHHMMSSZ.oribak
+python -m orinoco.backups verify /home/container/data/backups/orinoco-YYYYMMDDTHHMMSSZ.oribak
 ```
 
 Copy the encrypted backup to an independent off-server destination. The CLI
