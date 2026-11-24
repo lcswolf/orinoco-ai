@@ -1,12 +1,12 @@
 # Development
 
-This guide covers the current custom interface and local runtime foundations. Orinoco is not yet a complete assistant.
+This guide covers the current custom interface, authentication, local chat and memory foundations. Orinoco is not yet a complete assistant.
 
 ## Requirements
 
 - Python 3.12
 - Git
-- Optional: Ollama installed locally if you want the interface readiness indicator to show a loaded model
+- Optional: Ollama installed locally if you want to use the interface with a local model
 
 ## Run locally
 
@@ -28,25 +28,38 @@ Start the development server:
 uvicorn orinoco.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Open `http://127.0.0.1:8000/` to view the custom Orinoco interface. The interface checks `/readyz` and displays whether the configured local Ollama model is available. `/healthz` checks only that the web process is responding.
+Open `http://127.0.0.1:8000/` to view the custom Orinoco interface. Sign in to use chat. The interface checks `/readyz` and displays whether the configured local Ollama model is available. `/healthz` checks only that the web process is responding.
 
-The chat composer is available after sign-in. Chats and message pairs are stored in SQLite and scoped to the signed-in account. The local chat endpoint uses Ollama on loopback; no external AI inference API is called.
+Chats are stored in SQLite and scoped to the signed-in account. The chat API uses the local Ollama service on loopback; it does not call an external AI inference API.
 
-## Account foundation
+## Account bootstrap
 
-The repository now includes SQLite account storage and Argon2 password hashing primitives. A local-only bootstrap command can create an administrator account:
+The repository includes SQLite account storage and Argon2 password hashing. A local-only command creates the first administrator:
 
 ```bash
 ORINOCO_DATABASE_PATH=./data/orinoco.sqlite3 python -m orinoco.admin create-admin
 ```
 
-The command asks for a username and password interactively; it does not place the password in shell history. Use a password of at least 12 characters. The web interface includes a sign-in dialog, signed sessions, CSRF-protected login/logout routes, password changes and an administrator-only account panel. Administrators can create standard users and suspend/reactivate accounts. Public self-registration, account recovery and MFA are not implemented yet.
+The command asks for a username and password interactively; it does not place the password in shell history. Use a password of at least 12 characters. Administrators can create standard accounts from the account settings panel. Public self-registration is disabled.
+
+## Personal memories
+
+Orinoco can extract a small number of durable, non-sensitive personal facts after a chat turn. These are stored against the signed-in account, included only in that account's future chat context, and can be reviewed, edited or deleted from **My memories** in settings.
+
+Automatic memory extraction uses an additional local model request and can be disabled with:
+
+```bash
+AUTO_SAVE_MEMORIES=false
+```
+
+The extractor is deliberately conservative and filters common secret/contact/address patterns and selected sensitive categories. It is not infallible; users should review saved memories.
 
 ## Run tests
 
 ```bash
 python -m pip install -r requirements-dev.txt
 python -m pytest
+node --check orinoco/static/app.js
 ```
 
 ## Build the container image
@@ -65,24 +78,12 @@ The intended container startup command is:
 supervisord -n -c /opt/orinoco/docker/supervisord.conf
 ```
 
-For a local container test, the image's normal supervisor startup can be used with the model download disabled:
-
-```bash
-docker run --rm -p 8000:8000 \
-  -e STARTUP='supervisord -n -c /opt/orinoco/docker/supervisord.conf' \
-  -e SERVER_PORT=8000 \
-  -e AUTO_DOWNLOAD_MODEL=false \
-  orinoco:dev
-```
-
-Then visit `http://127.0.0.1:8000/`.
-
 ## Current limitations
 
-- No account recovery or MFA screens.
-- No conversation editing/deletion, streaming responses or chat pagination.
-- No memory, document ingestion, web search or URL summarisation.
+- No conversation deletion/editing, pagination or streaming responses.
+- No document ingestion, retrieval or shared/private libraries.
+- No web search or URL summarisation.
 - No Discord or voice integration.
-- The Pterodactyl Egg and container image are still preview/development artefacts and have not been deployed to the user's Panel.
+- The Pterodactyl Egg and container image are preview/development artefacts and have not been deployed to the user's Panel.
 
 Do not expose this development scaffold as a public assistant service.
