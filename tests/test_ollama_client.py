@@ -68,3 +68,13 @@ def test_chat_converts_http_errors_to_ollama_error() -> None:
 def test_context_length_is_bounded() -> None:
     with pytest.raises(ValueError):
         OllamaClient(context_length=16384)
+
+
+def test_environment_cannot_redirect_inference_to_remote_provider(monkeypatch) -> None:
+    """The default inference endpoint remains loopback even if an env override is present."""
+    monkeypatch.setenv("ORINOCO_OLLAMA_API", "https://remote-inference.example/api")
+    client = OllamaClient()
+    try:
+        assert str(client._client.base_url) == "http://127.0.0.1:11434"
+    finally:
+        asyncio.run(client.aclose())
