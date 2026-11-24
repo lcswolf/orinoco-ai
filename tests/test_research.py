@@ -25,6 +25,11 @@ def test_searxng_client_normalises_and_filters_results(monkeypatch) -> None:
                     {"title": "  Useful   result ", "url": "https://example.com/a", "content": "  A   summary  "},
                     {"title": "Unsafe", "url": "javascript:alert(1)", "content": "ignored"},
                     {"title": "Credentials", "url": "https://user:pass@example.com", "content": "ignored"},
+                    {"title": "Loopback", "url": "http://127.0.0.1/admin", "content": "ignored"},
+                    {"title": "Private network", "url": "http://192.168.1.10/", "content": "ignored"},
+                    {"title": "Local hostname", "url": "http://printer.local/", "content": "ignored"},
+                    {"title": "Reserved test domain", "url": "https://search.example.test/", "content": "ignored"},
+                    {"title": "Invalid port", "url": "https://example.com:99999/", "content": "ignored"},
                 ]
             },
         )
