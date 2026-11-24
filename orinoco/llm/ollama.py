@@ -59,6 +59,7 @@ class OllamaClient:
             base_url=resolved_url.rstrip("/"),
             timeout=timeout,
             transport=transport,
+            trust_env=False,
         )
 
     async def chat(self, messages: Sequence[dict[str, str]]) -> str:
