@@ -73,6 +73,9 @@ The latest completed GitHub Actions Python test run [#984](https://github.com/lc
 
 ## Next implementation sequence
 
+0. Make the Panel-first management requirement a release gate: replace SSH/TTY-only first-admin setup and password recovery, add safe backup-key generation, and verify backup/restore/update workflows through Panel controls. Track acceptance in [Panel-first Management](PANEL_MANAGEMENT.md).
+
+
 1. Keep the fixed Debian snapshot timestamp explicit and update it deliberately during security maintenance, then rerun container build and smoke checks.
 2. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
 3. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
