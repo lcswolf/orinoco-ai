@@ -85,7 +85,7 @@ Application, Egg/image and model updates are separate operations. A manual Ptero
 ## Remaining operational decisions
 
 - Remote object-storage lifecycle/retention policy and restore-from-remote convenience.
-- Application update, database migration and rollback workflow.
+- Automated image switching and a live update/rollback drill; the backup-gated migration CLI and operator runbook are implemented.
 - Final off-site object-storage provider and operational key-management procedure.
 - Reverse-proxy request/rate limits and the exact public/private access arrangement.
 
