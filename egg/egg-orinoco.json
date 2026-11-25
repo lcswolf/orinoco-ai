@@ -136,6 +136,15 @@
       "rules": "required|string|max:512"
     },
     {
+      "name": "First Administrator Setup Token",
+      "description": "Optional one-time token used to create the first administrator from the Orinoco setup page. Generate a random value of at least 32 characters, set it here, restart Orinoco, complete setup, then clear this variable and restart. The database independently prevents a second bootstrap.",
+      "env_variable": "ORINOCO_BOOTSTRAP_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|min:32|max:256"
+    },
+    {
       "name": "Backup Encryption Key",
       "description": "Required for encrypted backup creation, verification and restore. Generate with python -m orinoco.backups generate-key and store the key securely outside the VPS. Do not reuse it elsewhere.",
       "env_variable": "ORINOCO_BACKUP_KEY",
