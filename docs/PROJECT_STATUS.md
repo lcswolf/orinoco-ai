@@ -74,7 +74,7 @@ The latest completed Python CI for the Panel-first feature branch [#1022](https:
 
 ## Next implementation sequence
 
-0. Complete the Panel-first management release gate: first-admin setup, one-time administrator recovery, browser-only backup-key generation and the Panel Startup Command runbook audit are implemented on the feature branch. Python CI #1010 and container smoke #417 passed. Verify the full workflow on a disposable Panel 1.13.0 server, including real-browser secret clearing and a restore/rollback drill. Track acceptance in [Panel-first Management](PANEL_MANAGEMENT.md).
+0. Complete the Panel-first management release gate: first-admin setup, one-time administrator recovery, browser-only backup-key generation and the Panel Startup Command runbook audit are implemented on the feature branch. Python CI #1022 (259 tests) and container smoke #429 passed. Verify the full workflow on a disposable Panel 1.13.0 server, including real-browser secret clearing and a restore/rollback drill. Track acceptance in [Panel-first Management](PANEL_MANAGEMENT.md).
 
 
 1. Keep the fixed Debian snapshot timestamp explicit and update it deliberately during security maintenance, then rerun container build and smoke checks.
