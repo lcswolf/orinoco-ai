@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import sqlite3
@@ -25,7 +26,7 @@ def get_database_path() -> Path:
 
 
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
-CURRENT_SCHEMA_VERSION = 7
+CURRENT_SCHEMA_VERSION = 8
 
 
 class MemoryLimitExceeded(ValueError):
@@ -146,7 +147,7 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 f"Database schema version {schema_version} is newer than this Orinoco build "
                 f"(supports up to {CURRENT_SCHEMA_VERSION}). Refusing to modify it."
             )
-        # Schema upgrades through v7 are additive: create missing tables/indexes,
+        # Schema upgrades through v8 are additive: create missing tables/indexes,
         # then add the session version column if an earlier users table lacks it.
         connection.execute(
             """
@@ -167,6 +168,14 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 "ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 1 "
                 "CHECK (session_version >= 1)"
             )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS used_admin_recovery_tokens (
+                token_hash TEXT PRIMARY KEY,
+                consumed_at TEXT NOT NULL
+            )
+            """
+        )
         connection.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
         connection.execute(
             """
@@ -506,6 +515,67 @@ def reset_user_password(
             (new_hash, user_id),
         )
         return cursor.rowcount == 1
+
+def reset_admin_password_with_recovery_token(
+    username: str,
+    new_password: str,
+    recovery_token: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> User | None:
+    """Reset an active administrator once per high-entropy recovery token.
+
+    Only a SHA-256 fingerprint is persisted. The token fingerprint insert and
+    password/session update share one IMMEDIATE transaction, so concurrent
+    requests cannot consume the same token twice or leave a partial reset.
+    """
+    normalized = username.strip().lower()
+    if not recovery_token or len(recovery_token) < 32:
+        return None
+    try:
+        new_hash = hash_password(new_password)
+    except ValueError as exc:
+        raise AccountError(str(exc)) from exc
+
+    token_hash = hashlib.sha256(recovery_token.encode("utf-8")).hexdigest()
+    consumed_at = datetime.now(UTC).isoformat()
+    user_id: int | None = None
+    initialise_database(database_path)
+    with _database(database_path) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        already_used = connection.execute(
+            "SELECT 1 FROM used_admin_recovery_tokens WHERE token_hash = ?",
+            (token_hash,),
+        ).fetchone()
+        if already_used is not None:
+            return None
+
+        user = connection.execute(
+            """
+            SELECT id FROM users
+            WHERE username = ? COLLATE NOCASE AND role = 'admin' AND active = 1
+            """,
+            (normalized,),
+        ).fetchone()
+        if user is None:
+            return None
+
+        user_id = int(user["id"])
+        connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?, session_version = session_version + 1
+            WHERE id = ?
+            """,
+            (new_hash, user_id),
+        )
+        connection.execute(
+            "INSERT INTO used_admin_recovery_tokens (token_hash, consumed_at) VALUES (?, ?)",
+            (token_hash, consumed_at),
+        )
+
+    return get_user_by_id(user_id, database_path=database_path)
+
 
 
 def get_user_by_username(
