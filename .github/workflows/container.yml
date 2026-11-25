@@ -9,6 +9,7 @@ on:
       - "orinoco/**"
       - "requirements.txt"
       - ".dockerignore"
+      - "egg/**"
       - ".github/workflows/container.yml"
   pull_request:
     paths:
@@ -40,6 +41,9 @@ jobs:
 
       - name: Validate shell scripts
         run: for script in docker/*.sh; do sh -n "$script"; done
+
+      - name: Validate Pterodactyl Egg JSON
+        run: python -m json.tool egg/egg-orinoco.json >/dev/null
 
       - name: Validate Caddy and Nginx proxy templates
         shell: bash
