@@ -183,9 +183,7 @@ def test_create_first_admin_rejects_invalid_password_without_creating_account(tm
 
 def test_admin_recovery_token_resets_password_once_and_revokes_sessions(tmp_path) -> None:
     """Recovery tokens are consumed durably and each reset invalidates old sessions."""
-    import pytest
     from orinoco.db import (
-        AccountError,
         create_user,
         initialise_database,
         reset_admin_password_with_recovery_token,
