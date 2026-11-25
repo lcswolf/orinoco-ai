@@ -1318,7 +1318,7 @@ document.getElementById("backup-key-generate").addEventListener("click", () => {
   window.crypto.getRandomValues(randomBytes);
   const binary = Array.from(randomBytes, (byte) => String.fromCharCode(byte)).join("");
   // Keep the base64 padding: Python's urlsafe_b64decode expects the same format.
-  const key = window.btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_");
+  const key = window.btoa(binary).replace(/\+/g, "-").replace(/\//g, "_");
   value.value = key;
   result.hidden = false;
   feedback.textContent = "Generated in this browser only. Copy it into the hidden Panel variable and store an off-server copy.";
