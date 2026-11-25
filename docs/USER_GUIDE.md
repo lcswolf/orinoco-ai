@@ -73,7 +73,7 @@ After signing in as an administrator, open **Account settings → Backup encrypt
 3. Restart Orinoco so the service reads the new variable.
 4. Return to the browser and use **Clear key**. Closing the settings dialog also clears the displayed value. Do not leave the key displayed on a shared device.
 
-The browser generator requires HTTPS and a modern browser. The older CLI generator still prints to standard output; do not run it through the Panel console or as a Startup Command. If the key is lost, encrypted backups cannot be restored.
+The browser generator requires a modern browser with `crypto.getRandomValues`. It also works when Orinoco is accessed directly by IP and port over HTTP; if automatic clipboard access is unavailable, the key is selected for manual copying. HTTPS is recommended for normal sign-in and use. The older CLI generator still prints to standard output; do not run it through the Panel console or as a Startup Command. If the key is lost, encrypted backups cannot be restored.
 
 If you configure S3-compatible backup storage, use a private bucket, HTTPS endpoint and a dedicated restricted credential. Configure a bucket lifecycle policy separately; local retention does not automatically delete remote objects.
 
