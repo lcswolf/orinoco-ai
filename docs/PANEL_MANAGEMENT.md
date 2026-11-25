@@ -1,6 +1,6 @@
 # Panel-first operations and management requirements
 
-**Status: partially implemented in `feature/panel-first-bootstrap`; Python CI #1010 passed (258 tests) and container build/smoke #417 passed. Live Panel 1.13.0 and real-browser verification remain outstanding.**
+**Status: partially implemented in `feature/panel-first-bootstrap`; Python CI #1022 passed (259 tests) and container build/smoke #429 passed. Live Panel 1.13.0 and real-browser verification remain outstanding.**
 
 Orinoco's operational requirement is that, after the VPS has been provisioned with Pterodactyl Panel and Wings and the Orinoco Egg has been imported, routine Orinoco administration must not require SSH, Docker commands or a shell on the host.
 
