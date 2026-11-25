@@ -1,6 +1,6 @@
 # Pterodactyl Egg (Panel 1.x / 1.13.0)
 
-For the full installation, configuration and user walkthrough, see the [User and Setup Guide](USER_GUIDE.md).
+For the full installation, configuration and user walkthrough, see the [User and Setup Guide](USER_GUIDE.md). The [Panel-first Management requirements](PANEL_MANAGEMENT.md) define the operational target and outstanding work.
 
 **Status: preview definition. Do not deploy yet.**
 
@@ -22,7 +22,7 @@ The planned image name is `ghcr.io/lcswolf/orinoco-ai:stable`. See [Updating and
 
 Supervisor runs Ollama on `127.0.0.1:11434`, first-run model initialisation and the Orinoco web app on the assigned Pterodactyl allocation. The Ollama API is not exposed as a public allocation. Model files, the SQLite database, session secret, uploaded documents and extracted document index live in persistent server storage under `/home/container/data`.
 
-The image pins Ollama 0.40.18, disables Ollama cloud features and limits model concurrency to one. The web app uses secure signed sessions, CSRF-protected authentication, per-user chat/memory/document isolation and administrator-managed accounts. First-admin creation and offline password resets require a real interactive terminal; from SSH, identify the container with `docker ps` and use `docker exec -it CONTAINER_ID python -m orinoco.admin create-admin` or `docker exec -it CONTAINER_ID python -m orinoco.admin reset-password USERNAME`. Do not run password prompts through a non-interactive Pterodactyl console or startup command.
+The image pins Ollama 0.40.18, disables Ollama cloud features and limits model concurrency to one. The web app uses secure signed sessions, CSRF-protected authentication, per-user chat/memory/document isolation and administrator-managed accounts. **Current Panel-first blocker:** first-admin creation and offline password recovery still require SSH and an interactive TTY. These must be replaced before the intended no-SSH Orinoco setup is considered complete. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 The initial chat queue admits one active generation plus up to eight additional in-flight chat requests by default. Excess requests receive HTTP 503 with a short retry hint instead of accumulating without bound. The administrator can adjust `ORINOCO_MAX_PENDING_GENERATIONS` from 0 to 32 in the Egg; this queue and the per-user chat rate limiter are process-local and assume one web worker.
 
@@ -44,7 +44,7 @@ User-triggered public webpage fetching and local summarisation are implemented w
 
 ## Egg variables and security
 
-The Egg includes curated model selection, automatic model download, model context, single-request concurrency, automatic memory saving, database path, an administrator-only trusted-proxy allowlist, optional integration settings, an admin-only backup encryption key, hidden S3-compatible destination/credential variables, a daily backup time and a local retention period. The defaults are 03:00 in the configured TIMEZONE and 14 days. The backup encryption key is a required, hidden, administrator-supplied value when creating the Pterodactyl server; generate it first with `python -m orinoco.backups generate-key` and store it securely outside the VPS. The `SEARXNG_URL` endpoint is also hidden and administrator-only because it controls an outbound network destination. The backup scheduler reports failures in the Pterodactyl console and writes non-secret operational status to `/home/container/data/backups/.scheduler-status.json`. Configure a private bucket and a dedicated restricted credential; all S3 endpoints must use HTTPS. Remote object retention still needs a bucket lifecycle policy.
+The Egg includes curated model selection, automatic model download, model context, single-request concurrency, automatic memory saving, database path, an administrator-only trusted-proxy allowlist, optional integration settings, an admin-only backup encryption key, hidden S3-compatible destination/credential variables, a daily backup time and a local retention period. The defaults are 03:00 in the configured TIMEZONE and 14 days. The backup encryption key is a required, hidden, administrator-supplied value when creating the Pterodactyl server. The current CLI key generator prints to standard output; a safe Panel-first generation workflow that avoids persistent console logs remains outstanding. The `SEARXNG_URL` endpoint is also hidden and administrator-only because it controls an outbound network destination. The backup scheduler reports failures in the Pterodactyl console and writes non-secret operational status to `/home/container/data/backups/.scheduler-status.json`. Configure a private bucket and a dedicated restricted credential; all S3 endpoints must use HTTPS. Remote object retention still needs a bucket lifecycle policy.
 
 Keep the Discord token blank until its integration and secret-handling design are complete. A hidden Egg variable is not a secret store; processes inside the container can read environment variables. Never commit tokens or private data.
 
