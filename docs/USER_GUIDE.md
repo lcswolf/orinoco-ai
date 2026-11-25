@@ -66,8 +66,6 @@ Keep the Discord and voice settings disabled. These integrations are not impleme
 
 ### Generate and protect the backup key
 
-### Generate and protect the backup key
-
 After signing in as an administrator, open **Account settings → Backup encryption key** and choose **Generate backup key**. Orinoco uses the browser's cryptographically secure random-number generator to create a 256-bit URL-safe base64 key. The key is generated locally in the browser: it is not sent to the Orinoco server, saved in browser storage or written to logs.
 
 1. Use the **Copy key** button and store the key in a password manager or another secure location away from the VPS.
@@ -81,7 +79,7 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 
 ## 5. Create the first administrator
 
-**First-admin browser setup is implemented on the feature branch but is not yet CI- or live-Panel-verified.** The planned flow is:
+**First-admin browser setup is implemented on the feature branch and has passed automated CI; live Panel verification is still pending.** The planned flow is:
 
 1. In Pterodactyl, stop the Orinoco server and set the hidden **First Administrator Setup Token** variable to a randomly generated value of at least 32 characters. Do not use a memorable password.
 2. Start/restart Orinoco and open its web address. When the database has no accounts, the first-run setup dialog appears.
@@ -91,7 +89,7 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 
 The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. The token expires 30 minutes after each application start; restarting Orinoco re-arms the configured token. The database still prevents repeat setup after an administrator exists. It does not expose public registration. These protections still need automated CI and disposable Panel verification before release.
 
-**Administrator recovery is implemented on the feature branch but awaits CI and live Panel verification.** To arm it, set the hidden **Administrator Recovery Token** variable in Pterodactyl to a random value of at least 32 characters and restart Orinoco. Open the sign-in dialog and choose **Administrator locked out? Recover access**. Enter the token, the existing administrator username and a new password. The token expires 30 minutes after startup; its fingerprint is stored in the database after use, so the same token cannot be replayed after a restart. The password reset revokes every existing session. After recovery, clear the Panel variable and restart Orinoco. Do not put the token or password in Startup Commands or console logs. See [Panel-first Management](PANEL_MANAGEMENT.md).
+**Administrator recovery is implemented on the feature branch; automated CI is running and live Panel verification is still pending.** To arm it, set the hidden **Administrator Recovery Token** variable in Pterodactyl to a random value of at least 32 characters and restart Orinoco. Open the sign-in dialog and choose **Administrator locked out? Recover access**. Enter the token, the existing administrator username and a new password. The token expires 30 minutes after startup; its fingerprint is stored in the database after use, so the same token cannot be replayed after a restart. The password reset revokes every existing session. After recovery, clear the Panel variable and restart Orinoco. Do not put the token or password in Startup Commands or console logs. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 ## 6. Use the web interface
 
