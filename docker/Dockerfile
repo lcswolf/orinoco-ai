@@ -32,8 +32,8 @@ RUN useradd --create-home --home-dir /home/container --shell /usr/sbin/nologin c
 
 WORKDIR /opt/orinoco
 
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt \
+COPY requirements.lock ./requirements.lock
+RUN pip install --no-cache-dir --require-hashes -r requirements.lock \
     && /usr/local/bin/ollama --version \
     && supervisord --version
 
