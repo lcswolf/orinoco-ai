@@ -20,7 +20,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Use a fixed Debian archive snapshot so apt dependency resolution is repeatable.
 # Check-Valid-Until is disabled because snapshot Release metadata is historical.
 # The CPU-only runtime uses the host's CPU and RAM.
-RUN printf 'Types: deb\\nURIs: https://snapshot.debian.org/archive/debian/%s/\\nSuites: bookworm bookworm-updates\\nComponents: main\\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\\nCheck-Valid-Until: no\\n\\nTypes: deb\\nURIs: https://snapshot.debian.org/archive/debian-security/%s/\\nSuites: bookworm-security\\nComponents: main\\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\\nCheck-Valid-Until: no\\n' "$DEBIAN_SNAPSHOT" "$DEBIAN_SNAPSHOT" > /etc/apt/sources.list.d/debian.sources \\\n    && apt-get update \\
+RUN printf '%s\n' \
+    'Types: deb' \
+    "URIs: https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT}/" \
+    'Suites: bookworm bookworm-updates' \
+    'Components: main' \
+    'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' \
+    'Check-Valid-Until: no' \
+    '' \
+    'Types: deb' \
+    "URIs: https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT}/" \
+    'Suites: bookworm-security' \
+    'Components: main' \
+    'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' \
+    'Check-Valid-Until: no' \
+    > /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl zstd tzdata \
     && curl --fail --show-error --location \
         --output /tmp/ollama-install.sh \
