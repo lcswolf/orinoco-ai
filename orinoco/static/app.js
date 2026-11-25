@@ -1296,3 +1296,49 @@ document.getElementById("summary-form").addEventListener("submit", async (event)
     button.textContent = "Summarise";
   }
 });
+
+
+// Backup keys are generated only in the administrator's browser. Never send
+// this value to the API, persist it in browser storage, or write it to logs.
+document.getElementById("backup-key-generate").addEventListener("click", () => {
+  const warning = document.getElementById("backup-key-warning");
+  const result = document.getElementById("backup-key-result");
+  const value = document.getElementById("backup-key-value");
+  const feedback = document.getElementById("backup-key-feedback");
+  warning.hidden = true;
+  feedback.textContent = "";
+
+  if (!window.isSecureContext || !window.crypto?.getRandomValues || typeof window.btoa !== "function") {
+    warning.textContent = "A secure HTTPS connection and browser cryptography are required to generate a key. Open Orinoco using its HTTPS address and try again.";
+    warning.hidden = false;
+    return;
+  }
+
+  const randomBytes = new Uint8Array(32);
+  window.crypto.getRandomValues(randomBytes);
+  const binary = Array.from(randomBytes, (byte) => String.fromCharCode(byte)).join("");
+  // Keep the base64 padding: Python's urlsafe_b64decode expects the same format.
+  const key = window.btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_");
+  value.value = key;
+  result.hidden = false;
+  feedback.textContent = "Generated in this browser only. Copy it into the hidden Panel variable and store an off-server copy.";
+});
+
+document.getElementById("backup-key-copy").addEventListener("click", async () => {
+  const value = document.getElementById("backup-key-value");
+  const feedback = document.getElementById("backup-key-feedback");
+  try {
+    await navigator.clipboard.writeText(value.value);
+    feedback.textContent = "Copied. Save it in a password manager and paste it into the hidden ORINOCO_BACKUP_KEY Panel variable.";
+  } catch {
+    value.focus();
+    value.select();
+    feedback.textContent = "Automatic clipboard access was blocked. The key is selected; copy it manually, then store it outside the VPS.";
+  }
+});
+
+document.getElementById("backup-key-clear").addEventListener("click", () => {
+  document.getElementById("backup-key-value").value = "";
+  document.getElementById("backup-key-result").hidden = true;
+  document.getElementById("backup-key-feedback").textContent = "";
+});
