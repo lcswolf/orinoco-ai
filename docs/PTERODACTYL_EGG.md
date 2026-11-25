@@ -1,5 +1,7 @@
 # Pterodactyl Egg (Panel 1.x / 1.13.0)
 
+For the full installation, configuration and user walkthrough, see the [User and Setup Guide](USER_GUIDE.md).
+
 **Status: preview definition. Do not deploy yet.**
 
 This Egg targets the stable Pterodactyl 1.x import format (`PTDL_v1`) and the confirmed Panel 1.13.0 target. It remains a preview: import compatibility and runtime behaviour have not yet been validated on a live Panel, and the matching Orinoco image has not been published to GHCR.
