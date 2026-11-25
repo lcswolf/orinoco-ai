@@ -358,6 +358,56 @@ def create_user(
     )
 
 
+def create_first_admin(
+    username: str,
+    password: str,
+    *,
+    database_path: Path = DEFAULT_DATABASE_PATH,
+) -> User:
+    """Atomically create the first administrator, refusing if any account already exists.
+
+    BEGIN IMMEDIATE serializes competing bootstrap requests so two requests cannot
+    both observe an empty users table and create separate initial accounts.
+    """
+    normalized = _validate_username(username)
+    try:
+        password_hash = hash_password(password)
+    except ValueError as exc:
+        raise AccountError(str(exc)) from exc
+
+    created_at = datetime.now(UTC).isoformat()
+    with _database(database_path) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        existing = connection.execute("SELECT 1 FROM users LIMIT 1").fetchone()
+        if existing is not None:
+            raise AccountError("Orinoco setup has already been completed")
+        try:
+            cursor = connection.execute(
+                """
+                INSERT INTO users (username, password_hash, role, active, created_at)
+                VALUES (?, ?, 'admin', 1, ?)
+                """,
+                (normalized, password_hash, created_at),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise AccountError("that username is already in use") from exc
+        user_id = int(cursor.lastrowid)
+
+    try:
+        database_path.chmod(0o600)
+    except OSError:
+        pass
+
+    return User(
+        id=user_id,
+        username=normalized,
+        role="admin",
+        active=True,
+        created_at=created_at,
+        session_version=1,
+    )
+
+
 
 def list_users(*, database_path: Path = DEFAULT_DATABASE_PATH) -> list[User]:
     """Return account summaries without exposing password hashes."""
