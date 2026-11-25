@@ -27,7 +27,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Explicit authenticated web-search workspace and per-message opt-in web search in chat, using an administrator-configured SearXNG endpoint.
 - User-triggered public webpage summarisation using local Ollama, with DNS-pinned public-IP resolution, blocked private/local addresses, redirect validation and bounded response sizes.
 - Liveness endpoint /healthz and local-model readiness endpoint /readyz.
-- Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download.
+- Non-root Pterodactyl runtime foundation, pinned Ollama CPU runtime, process supervision and automatic model download; first-run pulls retry transient failures up to three times before failing visibly.
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0; live import validation remains outstanding.
 - Encrypted local backup creation, verification and confirmed restore CLI using AES-256-GCM.
 - S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification; restore keeps pre-restore database, document and session-secret recovery copies.
