@@ -36,7 +36,7 @@ Pterodactyl is the control plane for the Orinoco server. The Orinoco web interfa
 
 ## Required implementation work
 
-- [x] Replace SSH/TTY-only first-admin creation with a browser setup flow enabled by a hidden Panel variable. The feature branch uses constant-time token comparison, CSRF protection, per-client attempt throttling and an atomic database guard that refuses setup once any account exists. The token remains in the process environment until removed from the Panel, but cannot create a second account after the first succeeds. CI and live Panel testing are still pending.
+- [x] Replace SSH/TTY-only first-admin creation with a browser setup flow enabled by a hidden Panel variable. The feature branch uses constant-time token comparison, CSRF protection, per-client attempt throttling, a 30-minute validity window after application start and an atomic database guard that refuses setup once any account exists. The token remains in the process environment until removed from the Panel, but cannot create a second account after the first succeeds. CI and live Panel testing are still pending.
 - Provide a safe administrator recovery path that can be armed from the Panel, is single-use, revokes existing sessions, and cannot be used as a public password-reset endpoint.
 - Provide a safe backup-key creation workflow that does not leave the key in persistent console logs. Explain how to copy it once into the hidden Egg variable and store an off-server copy.
 - Review the existing Panel Startup Command procedures for backup, verify, migration and restore. Make the maintenance mode obvious, validate paths, avoid secret output, and make normal startup restoration explicit.
