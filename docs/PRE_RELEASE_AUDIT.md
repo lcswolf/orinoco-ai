@@ -10,6 +10,19 @@ This is the working checklist for a repository-wide review before the first prod
 
 Reviewed the served HTML, CSS and JavaScript plus the frontend security regression tests. The mobile drawer has a labelled opener and close controls, `aria-expanded` state, inert background content, Escape dismissal, a keyboard Tab loop and focus restoration. Narrow-screen topbar rules retain labelled status and conversation controls. Form controls have accessible names, static HTML IDs and ARIA references are checked for uniqueness/resolution, and untrusted chat/search/document content is inserted as text rather than parsed HTML. External links are restricted to credential-free HTTP(S) URLs. These are source-level checks, not a substitute for running a real browser: iOS Safari, Android Chrome and desktop browser/keyboard/zoom checks remain release tasks.
 
+## Manual browser test matrix — pending real devices
+
+The following checks cannot be honestly marked complete from source inspection or CI alone. Run them against the deployed preview on real devices before public release and record browser/OS versions and results:
+
+| Environment | Viewports / checks |
+|---|---|
+| iOS Safari | iPhone narrow portrait and landscape; open/close drawer, VoiceOver labels, focus/scroll behaviour, login/settings dialogs, chat composer and keyboard resize |
+| Android Chrome | Narrow portrait and landscape; TalkBack labels, drawer touch targets, backdrop dismissal, keyboard resize, file upload and conversation selector |
+| Desktop Chrome, Firefox and Edge | Keyboard-only navigation, visible focus, dialog focus/close behaviour, zoom to 200%, narrow window resize, long content and document lists |
+| Responsive widths | 320, 375/390, 720/768 and 1280 CSS pixels; no horizontal page overflow, clipped controls or overlapping topbar items |
+
+For every environment, verify sign-in/sign-out, settings save feedback, private memories/documents navigation, chat submission and status announcements. Test with a standard account and administrator account where applicable. Record defects and retest fixes; automated source assertions are supporting evidence, not a pass for this matrix.
+
 ## Audit scope
 
 - Authentication, authorisation, session cookies, CSRF and account bootstrap.
