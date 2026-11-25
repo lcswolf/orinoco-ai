@@ -1,6 +1,6 @@
 # Panel-first operations and management requirements
 
-**Status: target design and audit checklist. Not yet fully implemented or live-verified.**
+**Status: partially implemented in `feature/panel-first-bootstrap`; CI and live Panel verification are still outstanding.**
 
 Orinoco's operational requirement is that, after the VPS has been provisioned with Pterodactyl Panel and Wings and the Orinoco Egg has been imported, routine Orinoco administration must not require SSH, Docker commands or a shell on the host.
 
@@ -14,7 +14,7 @@ Pterodactyl is the control plane for the Orinoco server. The Orinoco web interfa
 | Change model, context, memory and backup settings | Pterodactyl server variables | Egg variables exist; live Panel test outstanding |
 | View runtime and scheduler logs | Pterodactyl Console | Designed; live Panel test outstanding |
 | Upload/download application files and backup archives | Pterodactyl File Manager | Depends on Panel file-manager permissions and live test |
-| First administrator setup | Orinoco first-run web setup, initiated/configured through Panel | **Not implemented; current CLI requires SSH and a TTY** |
+| First administrator setup | Orinoco first-run web setup, initiated/configured through Panel | **Web bootstrap API and setup dialog implemented on feature branch; token-gated, rate-limited and database-enforced one-time creation; CI/live verification pending** |
 | Administrator account recovery | Secure Panel-triggered recovery workflow or authenticated admin UI | **Not implemented as a Panel-only recovery path; current CLI requires SSH and a TTY** |
 | Create/suspend ordinary accounts and edit assistant persona | Orinoco admin web interface | Implemented in application; UI/live verification outstanding |
 | Generate backup encryption key | Browser-side secure generator or another documented Panel-only safe workflow | **Current CLI prints to stdout; do not expose key in persistent console logs** |
@@ -36,7 +36,7 @@ Pterodactyl is the control plane for the Orinoco server. The Orinoco web interfa
 
 ## Required implementation work
 
-- Replace SSH/TTY-only first-admin creation with a secure first-run setup flow that can be initiated from the browser and enabled using a hidden Panel variable. It must refuse setup once any account exists, use constant-time token comparison, rate-limit attempts, and invalidate the bootstrap credential after success.
+- [x] Replace SSH/TTY-only first-admin creation with a browser setup flow enabled by a hidden Panel variable. The feature branch uses constant-time token comparison, CSRF protection, per-client attempt throttling and an atomic database guard that refuses setup once any account exists. The token remains in the process environment until removed from the Panel, but cannot create a second account after the first succeeds. CI and live Panel testing are still pending.
 - Provide a safe administrator recovery path that can be armed from the Panel, is single-use, revokes existing sessions, and cannot be used as a public password-reset endpoint.
 - Provide a safe backup-key creation workflow that does not leave the key in persistent console logs. Explain how to copy it once into the hidden Egg variable and store an off-server copy.
 - Review the existing Panel Startup Command procedures for backup, verify, migration and restore. Make the maintenance mode obvious, validate paths, avoid secret output, and make normal startup restoration explicit.
