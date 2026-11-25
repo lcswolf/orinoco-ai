@@ -9,6 +9,10 @@ const userName = document.getElementById("user-name");
 const userRole = document.getElementById("user-role");
 const userAvatar = document.getElementById("user-avatar");
 const loginDialog = document.getElementById("login-dialog");
+const setupDialog = document.getElementById("setup-dialog");
+const setupForm = document.getElementById("setup-form");
+const setupError = document.getElementById("setup-error");
+const setupSubmit = document.getElementById("setup-submit");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
@@ -375,6 +379,70 @@ accountAction.addEventListener("click", async () => {
 
 document.getElementById("login-cancel").addEventListener("click", () => loginDialog.close());
 
+document.getElementById("setup-cancel").addEventListener("click", () => setupDialog.close());
+
+async function checkFirstRunSetup() {
+  try {
+    const response = await fetch("/api/auth/setup-status", { headers: { Accept: "application/json" } });
+    if (!response.ok) return;
+    const status = await response.json();
+    if (!status.setup_required) return;
+    setupDialog.showModal();
+    if (!status.bootstrap_enabled) {
+      setupError.textContent = "First-run setup is not armed yet. In Pterodactyl, set the hidden First Administrator Setup Token variable to a random value of at least 32 characters, then restart Orinoco.";
+      setupError.hidden = false;
+      setupSubmit.disabled = true;
+    }
+  } catch {
+    // A temporary status-check failure must not prevent the sign-in screen from loading.
+  }
+}
+
+setupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setupError.hidden = true;
+  setupSubmit.disabled = true;
+  setupSubmit.textContent = "Creating administrator…";
+  const password = document.getElementById("setup-password").value;
+  const confirmation = document.getElementById("setup-password-confirm").value;
+  if (password !== confirmation) {
+    setupError.textContent = "The passwords do not match.";
+    setupError.hidden = false;
+    setupSubmit.disabled = false;
+    setupSubmit.textContent = "Create administrator";
+    return;
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/auth/bootstrap", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf,
+      },
+      body: JSON.stringify({
+        token: document.getElementById("setup-token").value,
+        username: document.getElementById("setup-username").value,
+        password,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not complete first-run setup.");
+    setupForm.reset();
+    setupDialog.close();
+    showAccount(result.user);
+    await refreshConversations();
+  } catch (error) {
+    setupError.textContent = error.message || "Could not complete first-run setup.";
+    setupError.hidden = false;
+  } finally {
+    setupSubmit.disabled = false;
+    setupSubmit.textContent = "Create administrator";
+  }
+});
+
+
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   loginError.hidden = true;
@@ -519,6 +587,7 @@ chatInput.addEventListener("keydown", (event) => {
 
 clearThread();
 refreshStatus();
+checkFirstRunSetup();
 refreshAccount();
 
 
