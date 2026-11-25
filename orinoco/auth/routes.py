@@ -247,7 +247,7 @@ async def setup_status() -> dict[str, bool]:
     initialise_database(get_database_path())
     return {
         "setup_required": not bool(list_users(database_path=get_database_path())),
-        "bootstrap_enabled": bool(os.environ.get("ORINOCO_BOOTSTRAP_TOKEN")),
+        "bootstrap_enabled": len(os.environ.get("ORINOCO_BOOTSTRAP_TOKEN", "")) >= 32,
     }
 
 
