@@ -200,6 +200,10 @@ The chat API now reserves one of a bounded number of in-flight slots before load
 
 The network plan now documents Caddy public TLS, Nginx loopback-only request/body/rate/connection limits, the public HTTPS subdomain, short-lived IP certificate access on port 8443, and tailnet-only Tailscale Serve on port 8444 without Funnel. Uvicorn is explicitly started with forwarded-header processing disabled until the real proxy peer address can be measured and allow-listed. The live Leaseweb/Pterodactyl host, Docker published-port firewall path, certificate issuance/renewal, actual client IP handling and all three access paths still require verification. See `docs/NETWORK_DEPLOYMENT.md`.
 
+### First-run model download recovery — improved
+
+The startup audit found that a failed first-run Ollama pull was attempted only once. The model-init process then exited while the web interface remained alive and correctly reported model readiness as HTTP 503. A transient registry/network failure would therefore require an operator restart. Model initialization now retries the curated model pull up to three times, waiting 30 seconds between failures; exhaustion logs an explicit error and leaves readiness false rather than claiming the model is available. A regression check protects the retry limit, delay and failure message. The selected model and user data remain under the persistent /home/container/data volume; Ollama model weights are intentionally excluded from encrypted backups to avoid very large backup files. Live Supervisor restart timing and a failed-download recovery rehearsal remain part of the disposable Panel test.
+
 ## Remaining review work
 
 - [x] Add administrator-managed core persona and humour controls plus private per-user response voice, tone and answer-detail preferences, including persistence, API authorisation and prompt integration.
@@ -225,7 +229,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [ ] Import the Egg into a live disposable Panel 1.13.0 instance and verify server startup and allocation wiring; automated JSON checks do not replace this live compatibility test.
 - [ ] Apply and live-test the Caddy/Nginx/Tailscale design in [Network Deployment](NETWORK_DEPLOYMENT.md): public HTTPS subdomain, HTTPS IP:8443, private Tailscale Serve :8444 (no Funnel), Docker/Wings firewall restrictions, edge body/rate/connection limits and certificate renewal.
 - [ ] Decide whether host-level full-disk or dedicated-volume encryption is required for the live SQLite database and uploaded documents; document the unlock and recovery process before storing sensitive material.
-- [ ] Validate container startup ordering, process failure handling, writable persistent paths and model-download behaviour.
+- [x] Review container startup ordering, process failure handling, writable persistent paths and model-download behaviour at repository level. First-run model pulls now retry transient failures three times with a 30-second delay; after exhaustion the model-init process exits with a clear console error and /readyz remains HTTP 503. The web process may still serve the interface while the model is unavailable. Live Supervisor/Pterodactyl startup and failure-recovery behaviour remains to be exercised on a disposable server
 - [x] Add restrictive browser security headers and verify they apply to application/API/static responses.
 - [x] Validate external links and render untrusted search/document/chat text without HTML parsing.
 - [ ] Browser-test the accessible mobile navigation drawer, focus trapping, narrow topbar and API error states on iOS, Android and desktop. Static regression checks now cover ARIA state, inert background content, Escape/Tab handling and focus-visible styling.
