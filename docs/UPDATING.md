@@ -45,6 +45,8 @@ These commands run as the normal unprivileged container user. Do not change the 
 4. Keep the existing persistent server directory and Egg settings. Do not reinstall the server or delete its data directory.
 5. Before starting Supervisor, temporarily set the **Startup Command** to the migration command below, using the fresh backup path created in the pre-update step. Start the server once and wait for the migration command to exit successfully:
 
+If migration or its post-migration integrity checks fail, Orinoco now attempts to restore the verified pre-migration backup automatically while the application is stopped. Confirm the console explicitly reports that the backup was restored, then check the database and files before retrying. If the console says automatic restore also failed, do not start Supervisor; follow the manual restore procedure in the rollback section below.
+
 ```text
 python -m orinoco.updates migrate --backup /home/container/data/backups/your-pre-update-backup.oribak
 ```
