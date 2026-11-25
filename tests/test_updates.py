@@ -128,6 +128,14 @@ def test_migration_rejects_foreign_key_inconsistency_after_schema_changes(tmp_pa
             )
 
     monkeypatch.setattr(updates, "initialise_database", initialise_with_orphan)
+    restored: list[tuple[Path, bool]] = []
+    monkeypatch.setattr(
+        updates,
+        "restore_backup",
+        lambda path, confirm=False: restored.append((path, confirm)) or {"restored": True},
+    )
 
-    with pytest.raises(updates.UpdateError, match="foreign-key consistency errors"):
+    with pytest.raises(updates.UpdateError, match="automatically restored"):
         updates.migrate_database(backup_path=backup)
+
+    assert restored == [(backup, True)]
