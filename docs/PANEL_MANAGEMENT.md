@@ -15,9 +15,9 @@ Pterodactyl is the control plane for the Orinoco server. The Orinoco web interfa
 | View runtime and scheduler logs | Pterodactyl Console | Designed; live Panel test outstanding |
 | Upload/download application files and backup archives | Pterodactyl File Manager | Depends on Panel file-manager permissions and live test |
 | First administrator setup | Orinoco first-run web setup, initiated/configured through Panel | **Web bootstrap API and setup dialog implemented on feature branch; token-gated, rate-limited and database-enforced one-time creation; automated CI passed; live Panel verification pending** |
-| Administrator account recovery | Secure Panel-triggered recovery workflow or authenticated admin UI | **One-time, 30-minute Panel token recovery API and browser dialog implemented on feature branch; CI/live verification pending** |
+| Administrator account recovery | Secure Panel-triggered recovery workflow or authenticated admin UI | **One-time, 30-minute Panel token recovery API and browser dialog implemented on feature branch; Python CI passed; container smoke and live Panel verification pending** |
 | Create/suspend ordinary accounts and edit assistant persona | Orinoco admin web interface | Implemented in application; UI/live verification outstanding |
-| Generate backup encryption key | Orinoco administrator Settings (browser-only generator) | **Browser generator implemented on feature branch; HTTPS required; CI/manual browser verification pending** |
+| Generate backup encryption key | Orinoco administrator Settings (browser-only generator) | **Browser generator implemented on feature branch; HTTPS required; Python CI passed; container smoke and manual browser verification pending** |
 | Create and verify backups | Orinoco admin UI or a Panel-triggered one-shot maintenance command | Scheduled backups implemented; manual maintenance currently uses Startup Command |
 | Restore backup | Panel-triggered maintenance mode / one-shot command while app is stopped | CLI exists; runbook uses Panel Startup Command; live recovery drill outstanding |
 | Apply application update and migration | Panel image selection plus Panel-triggered migration command | Runbook exists; automated image switching and live rollback drill outstanding |
