@@ -82,7 +82,7 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 
 The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. The token expires 30 minutes after each application start; restarting Orinoco re-arms the configured token. The database still prevents repeat setup after an administrator exists. It does not expose public registration. These protections still need automated CI and disposable Panel verification before release.
 
-**Administrator recovery is still a gap:** the existing offline recovery command requires SSH and a TTY. Do not work around this by putting passwords into Startup Commands or console input. See [Panel-first Management](PANEL_MANAGEMENT.md).
+**Administrator recovery is implemented on the feature branch but awaits CI and live Panel verification.** To arm it, set the hidden **Administrator Recovery Token** variable in Pterodactyl to a random value of at least 32 characters and restart Orinoco. Open the sign-in dialog and choose **Administrator locked out? Recover access**. Enter the token, the existing administrator username and a new password. The token expires 30 minutes after startup; its fingerprint is stored in the database after use, so the same token cannot be replayed after a restart. The password reset revokes every existing session. After recovery, clear the Panel variable and restart Orinoco. Do not put the token or password in Startup Commands or console logs. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 ## 6. Use the web interface
 
