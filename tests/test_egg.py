@@ -120,3 +120,29 @@ def test_egg_persistent_data_paths_match_install_and_runtime(egg: dict) -> None:
     assert "/home/container/data/models" in ollama_start
     variables = {item["env_variable"]: item for item in egg["variables"]}
     assert variables["ORINOCO_DATABASE_PATH"]["default_value"].startswith("/home/container/data/")
+
+
+def test_egg_startup_and_image_match_container_runtime(egg: dict) -> None:
+    """Prevent a valid Egg from starting the wrong process or image."""
+    repository_root = EGG_PATH.resolve().parents[1]
+    dockerfile = (repository_root / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    supervisor = (repository_root / "docker" / "supervisord.conf").read_text(encoding="utf-8")
+    entrypoint = (repository_root / "docker" / "entrypoint.py").read_text(encoding="utf-8")
+
+    assert egg["startup"] == "supervisord -n -c /opt/orinoco/docker/supervisord.conf"
+    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:stable"]
+    assert 'ENTRYPOINT ["python", "/usr/local/bin/orinoco-entrypoint"]' in dockerfile
+    assert "os.execvp(args[0], args)" in entrypoint
+    for program in ("ollama", "model-init", "orinoco-web", "backup-scheduler"):
+        assert f"[program:{program}]" in supervisor
+
+
+def test_web_and_ollama_listeners_match_network_boundary() -> None:
+    """The web app uses the assigned allocation; Ollama stays container-local."""
+    repository_root = EGG_PATH.resolve().parents[1]
+    web_start = (repository_root / "docker" / "web-start.sh").read_text(encoding="utf-8")
+    ollama_start = (repository_root / "docker" / "ollama-start.sh").read_text(encoding="utf-8")
+    assert 'PORT="${SERVER_PORT:-8000}"' in web_start
+    assert '--host 0.0.0.0 --port "$PORT" --no-proxy-headers' in web_start
+    assert 'export OLLAMA_HOST="127.0.0.1:11434"' in ollama_start
+    assert "export OLLAMA_NO_CLOUD=1" in ollama_start
