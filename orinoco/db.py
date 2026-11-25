@@ -370,6 +370,8 @@ def create_first_admin(
     both observe an empty users table and create separate initial accounts.
     """
     normalized = _validate_username(username)
+    # Ensure a fresh installation has its schema before entering the atomic guard.
+    initialise_database(database_path)
     try:
         password_hash = hash_password(password)
     except ValueError as exc:
