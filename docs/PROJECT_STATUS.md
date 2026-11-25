@@ -6,7 +6,7 @@ This page separates confirmed project decisions from implementation work. A plan
 
 ## Implemented in the repository
 
-- Public project repository and project documentation.
+- Public project repository, technical documentation and a step-by-step preview user/setup guide covering host preparation, Egg installation, configuration, first-admin setup, app usage, backups and troubleshooting.
 - Custom responsive Orinoco interface, served directly by FastAPI, with an original Womble-inspired woodland helper mascot, woodland-green/brass accents and UK-friendly copy.
 - Owner-only conversation deletion with CSRF protection, explicit confirmation and cascading message removal.
 - Bounded login throttling per username and observed client address; forwarded-IP headers are not trusted.
