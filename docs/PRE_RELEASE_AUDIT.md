@@ -2,7 +2,7 @@
 
 **Status: in progress — do not deploy to a public VPS yet.**
 
-Latest GitHub Actions Python test run [#901](https://github.com/lcswolf/orinoco-ai/actions/runs/45594530428) passed on commit `22fdc5fc`: **242 tests passed**, with two Starlette deprecation warnings. Dependency auditing and frontend JavaScript syntax checks also passed. Container build and smoke test [#391](https://github.com/lcswolf/orinoco-ai/actions/runs/45593823787) passed on runtime commit `7a5221da`, which includes the migration-recovery implementation. The workflow validates the Pterodactyl Egg JSON and Caddy/Nginx proxy templates. Static Egg/runtime consistency checks passed; live Pterodactyl import, deployment and recovery drill remain outstanding.
+Latest GitHub Actions Python test run [#905](https://github.com/lcswolf/orinoco-ai/actions/runs/45607237685) passed on commit `0fcaa3a3`: **246 tests passed**, with two Starlette deprecation warnings. Dependency auditing and frontend JavaScript syntax checks also passed. Container build and smoke test [#391](https://github.com/lcswolf/orinoco-ai/actions/runs/45593823787) passed on runtime commit `7a5221da`, which includes the migration-recovery implementation. The workflow validates the Pterodactyl Egg JSON and Caddy/Nginx proxy templates. Egg startup/image, listener-boundary and proxy-trust regression checks passed; live Pterodactyl import, deployment and recovery drill remain outstanding.
 
 This is the working checklist for a repository-wide review before the first production deployment. The audit checks implementation, tests, documentation, runtime packaging and the Pterodactyl Egg together. A passing unit-test suite is useful evidence, but it is not a substitute for a live deployment and recovery test.
 
@@ -130,7 +130,7 @@ The runtime now installs the operating-system timezone database so the configure
 
 ### Runtime and CI version pins — checked
 
-The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 242 tests (run #901 on `22fdc5fc`), including the migration-failure recovery regression. The dependency audit reports no known vulnerabilities and the frontend JavaScript syntax check passes. Two Starlette/httpx deprecation warnings remain; they do not currently fail tests. Container build and smoke test run #391 passed on code commit `7a5221da`; it includes shell, Egg JSON, proxy-template validation, image build and startup/service smoke checks. The final release gate will repeat the full suite and container smoke test on the same release commit.
+The Docker image's Ollama pin, `0.40.18`, matches the latest non-prerelease release published on 24 November 2026 ([official Ollama release](https://github.com/ollama/ollama/releases/tag/v0.40.18)). The GitHub Actions workflows use Node 24-compatible releases ([checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0), [setup-buildx v4.4.1](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1), [build-push v7.4.0](https://github.com/docker/build-push-action/releases/tag/v7.4.0)). The latest completed Python suite passes 246 tests (run #905 on `0fcaa3a3`), including the migration-failure recovery regression. The dependency audit reports no known vulnerabilities and the frontend JavaScript syntax check passes. Two Starlette/httpx deprecation warnings remain; they do not currently fail tests. Container build and smoke test run #391 passed on code commit `7a5221da`; it includes shell, Egg JSON, proxy-template validation, image build and startup/service smoke checks. The final release gate will repeat the full suite and container smoke test on the same release commit.
 
 ### SQLite file permissions and symlink handling — hardened
 
@@ -158,11 +158,11 @@ A dedicated Supervisor-managed process completes at most one successful backup c
 
 ### Post-migration relational integrity — strengthened
 
-The one-shot migration command now runs both SQLite's structural `integrity_check` and `foreign_key_check` after applying schema changes. A migration is not reported as successful if it leaves orphaned conversations, messages, memories or documents. A regression test injects an orphaned conversation after schema initialisation and confirms the command fails closed. This regression test passed in GitHub Actions run #901 (242 tests total).
+The one-shot migration command now runs both SQLite's structural `integrity_check` and `foreign_key_check` after applying schema changes. A migration is not reported as successful if it leaves orphaned conversations, messages, memories or documents. A regression test injects an orphaned conversation after schema initialisation and confirms the command fails closed. This regression test passed in GitHub Actions run #905 (246 tests total).
 
 ### Backup-gated update migrations — implemented
 
-The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. If migration or post-migration integrity checks fail, it now attempts to restore that verified backup automatically while Orinoco is stopped; if the restore also fails, the command clearly directs the operator to manual recovery. The failure-injection regression passed in GitHub Actions run #901. The operator runbook documents this behaviour. Automated image switching and a live upgrade/rollback drill remain outstanding.
+The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. If migration or post-migration integrity checks fail, it now attempts to restore that verified backup automatically while Orinoco is stopped; if the restore also fails, the command clearly directs the operator to manual recovery. The failure-injection regression passed in GitHub Actions run #905. The operator runbook documents this behaviour. Automated image switching and a live upgrade/rollback drill remain outstanding.
 
 ### Document storage symlink parents — hardened
 
@@ -233,7 +233,7 @@ The network plan now documents Caddy public TLS, Nginx loopback-only request/bod
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm the latest Python test suite, dependency audit and frontend JavaScript syntax checks passed on commit `2bc1019f` (run #901; 242 tests).
+- [x] Confirm the latest Python test suite, dependency audit and frontend JavaScript syntax checks passed on commit `2bc1019f` (run #905; 246 tests).
 - [x] Confirm the container build and smoke test passed on runtime commit `7a5221da` (run #391); image remains unpublished.
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
