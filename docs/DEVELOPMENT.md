@@ -9,6 +9,10 @@ This guide covers the custom interface, authentication, local chat, per-user res
 - Optional: a local Ollama service for model responses
 - Optional: a SearXNG instance for web search
 
+## Dependency locks
+
+`requirements.txt` and `requirements-dev.txt` are the editable dependency inputs. The generated `requirements.lock` and `requirements-dev.lock` files include SHA-256 hashes; do not edit those lock files by hand. The [dependency-lock workflow](../.github/workflows/dependency-lock.yml) compiles and verifies them, installs both with `--require-hashes`, and audits the runtime lock. Pull requests validate the generated locks without committing them; a successful main-branch run commits any verified lock update. The workflow currently installs `pip-tools` without a version pin, so the lock-generation tool itself is not yet fully reproducible.
+
 ## Run locally
 
 From the repository root:
