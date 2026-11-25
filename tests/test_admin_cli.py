@@ -179,3 +179,71 @@ def test_create_first_admin_rejects_invalid_password_without_creating_account(tm
     with pytest.raises(AccountError):
         create_first_admin("firstadmin", "short", database_path=database)
     assert list_users(database_path=database) == []
+
+
+def test_admin_recovery_token_resets_password_once_and_revokes_sessions(tmp_path) -> None:
+    """Recovery tokens are consumed durably and each reset invalidates old sessions."""
+    import pytest
+    from orinoco.db import (
+        AccountError,
+        create_user,
+        initialise_database,
+        reset_admin_password_with_recovery_token,
+    )
+
+    database = tmp_path / "admin-recovery.sqlite3"
+    initialise_database(database)
+    admin = create_user(
+        "recoveradmin",
+        "an-old-admin-password-123",
+        role="admin",
+        database_path=database,
+    )
+    first = reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-new-admin-password-456",
+        "panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    )
+    assert first is not None
+    assert first.session_version == admin.session_version + 1
+
+    assert reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-third-admin-password-789",
+        "panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    ) is None
+
+    # A different, newly armed token can be used for a later recovery.
+    second = reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-third-admin-password-789",
+        "a-different-panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    )
+    assert second is not None
+    assert second.session_version == admin.session_version + 2
+
+
+def test_admin_recovery_refuses_unknown_or_inactive_accounts(tmp_path) -> None:
+    """A recovery token cannot be used to create an account or reactivate one."""
+    from orinoco.db import create_user, initialise_database, reset_admin_password_with_recovery_token, set_user_active
+
+    database = tmp_path / "admin-recovery-inactive.sqlite3"
+    initialise_database(database)
+    admin = create_user("recoveradmin", "an-old-admin-password-123", role="admin", database_path=database)
+    assert set_user_active(admin.id, False, database_path=database) is True
+
+    assert reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-new-admin-password-456",
+        "panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    ) is None
+    assert reset_admin_password_with_recovery_token(
+        "missingadmin",
+        "a-new-admin-password-456",
+        "a-different-panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    ) is None
