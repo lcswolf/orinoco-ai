@@ -231,6 +231,7 @@ def test_admin_recovery_refuses_unknown_or_inactive_accounts(tmp_path) -> None:
     database = tmp_path / "admin-recovery-inactive.sqlite3"
     initialise_database(database)
     admin = create_user("recoveradmin", "an-old-admin-password-123", role="admin", database_path=database)
+    create_user("backupadmin", "another-admin-password-456", role="admin", database_path=database)
     assert set_user_active(admin.id, False, database_path=database) is True
 
     assert reset_admin_password_with_recovery_token(
