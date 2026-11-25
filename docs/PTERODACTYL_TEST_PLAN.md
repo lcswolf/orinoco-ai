@@ -71,6 +71,20 @@ Do not simulate failures on a server containing data that must be retained.
 
 Use synthetic test data only. Delete the test accounts and files after the rehearsal.
 
+## Panel-first operations acceptance
+
+The operational goal is to manage Orinoco through Pterodactyl Panel and the Orinoco web interface, without SSH or Docker commands after the VPS, Panel and Wings infrastructure is ready. See [Panel-first Management](PANEL_MANAGEMENT.md).
+
+- [ ] Create the first administrator using the browser setup flow armed from a hidden Panel variable; no SSH, Docker exec, TTY or password in console logs.
+- [ ] Confirm first-run setup refuses a second bootstrap after an account exists and the bootstrap token is invalidated after success.
+- [ ] Recover a locked-out administrator using the documented Panel-first recovery flow; confirm it is single-use and revokes existing sessions.
+- [ ] Generate and configure the backup encryption key without printing it to persistent Panel console logs; retain an off-server copy.
+- [ ] Change supported Egg variables in the Panel and confirm the running service applies them after restart.
+- [ ] Use the Panel console and file manager for normal logs and file operations without shell access.
+- [ ] Run backup, verification, restore, migration and rollback using the documented Panel maintenance workflow; confirm the server returns to normal startup afterwards.
+- [ ] Confirm every routine operational step in the user guide can be completed without SSH or Docker commands.
+- [ ] Record any remaining host-level SSH task separately as infrastructure provisioning, not Orinoco application administration.
+
 ## 6. Backup, restore and update recovery
 
 - [ ] Generate a local encrypted backup through the documented CLI.
