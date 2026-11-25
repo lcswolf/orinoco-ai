@@ -3,6 +3,8 @@ FROM python:3.12-slim-bookworm@sha256:44cf1793efa7c7a476bb0f2cff81443f4a072c90c1
 # Published SHA-256 for the install.sh asset in the pinned Ollama release.
 ARG OLLAMA_VERSION=0.40.18
 ARG OLLAMA_INSTALL_SHA256=17659c2456c9e65a3b11056b76da51774911cb822f47bf44f7f3ecc0c40528a8
+# Fixed Debian snapshot: update this timestamp deliberately during security maintenance.
+ARG DEBIAN_SNAPSHOT=20261125T000000Z
 
 LABEL org.opencontainers.image.title="Orinoco AI"
 LABEL org.opencontainers.image.description="Self-hosted personal AI assistant"
@@ -15,8 +17,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Ollama's official installer needs curl and zstd at build time. The release
 # installer is checksum-verified before execution; build-only tools are removed.
+# Use a fixed Debian archive snapshot so apt dependency resolution is repeatable.
+# Check-Valid-Until is disabled because snapshot Release metadata is historical.
 # The CPU-only runtime uses the host's CPU and RAM.
-RUN apt-get update \
+RUN printf 'Types: deb\\nURIs: https://snapshot.debian.org/archive/debian/%s/\\nSuites: bookworm bookworm-updates\\nComponents: main\\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\\nCheck-Valid-Until: no\\n\\nTypes: deb\\nURIs: https://snapshot.debian.org/archive/debian-security/%s/\\nSuites: bookworm-security\\nComponents: main\\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\\nCheck-Valid-Until: no\\n' "$DEBIAN_SNAPSHOT" "$DEBIAN_SNAPSHOT" > /etc/apt/sources.list.d/debian.sources \\\n    && apt-get update \\
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl zstd tzdata \
     && curl --fail --show-error --location \
         --output /tmp/ollama-install.sh \
