@@ -75,8 +75,8 @@ Use synthetic test data only. Delete the test accounts and files after the rehea
 
 The operational goal is to manage Orinoco through Pterodactyl Panel and the Orinoco web interface, without SSH or Docker commands after the VPS, Panel and Wings infrastructure is ready. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
-- [ ] Create the first administrator using the browser setup flow armed from a hidden Panel variable; no SSH, Docker exec, TTY or password in console logs.
-- [ ] Confirm first-run setup refuses a second bootstrap after an account exists and the bootstrap token is invalidated after success.
+- [ ] Create the first administrator using the browser setup flow armed from a hidden Panel variable; confirm CSRF enforcement, token expiry, failed-attempt throttling and no SSH, Docker exec, TTY or password in console logs.
+- [ ] Confirm first-run setup refuses a second bootstrap after an account exists, the token expires 30 minutes after application start, and the Panel variable is cleared after successful setup.
 - [ ] Recover a locked-out administrator using the documented Panel-first recovery flow; confirm it is single-use and revokes existing sessions.
 - [ ] Generate and configure the backup encryption key without printing it to persistent Panel console logs; retain an off-server copy.
 - [ ] Change supported Egg variables in the Panel and confirm the running service applies them after restart.
