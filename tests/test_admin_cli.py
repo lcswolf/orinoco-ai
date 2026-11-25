@@ -145,3 +145,37 @@ def test_initial_admin_bootstrap_refuses_noninteractive_password_input(tmp_path,
 
     assert main() == 2
     assert list_users(database_path=database) == []
+
+
+def test_create_first_admin_is_one_time_and_refuses_existing_accounts(tmp_path) -> None:
+    """The browser bootstrap persistence operation can only create one first account."""
+    import pytest
+    from orinoco.db import AccountError, create_first_admin, list_users
+
+    database = tmp_path / "first-admin.sqlite3"
+    first = create_first_admin(
+        "firstadmin",
+        "a-long-first-admin-password-123",
+        database_path=database,
+    )
+    assert first.role == "admin"
+    assert [user.username for user in list_users(database_path=database)] == ["firstadmin"]
+
+    with pytest.raises(AccountError, match="setup has already been completed"):
+        create_first_admin(
+            "secondadmin",
+            "a-long-second-admin-password-123",
+            database_path=database,
+        )
+    assert [user.username for user in list_users(database_path=database)] == ["firstadmin"]
+
+
+def test_create_first_admin_rejects_invalid_password_without_creating_account(tmp_path) -> None:
+    """Invalid bootstrap credentials leave the database ready for a valid setup attempt."""
+    import pytest
+    from orinoco.db import AccountError, create_first_admin, list_users
+
+    database = tmp_path / "invalid-first-admin.sqlite3"
+    with pytest.raises(AccountError):
+        create_first_admin("firstadmin", "short", database_path=database)
+    assert list_users(database_path=database) == []
