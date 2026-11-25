@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install lock compiler
-        run: python -m pip install pip-tools
+        run: python -m pip install pip-tools==7.7.0
       - name: Compile runtime and development locks
         run: |
           pip-compile --generate-hashes --resolver=backtracking --output-file=requirements.lock requirements.txt
