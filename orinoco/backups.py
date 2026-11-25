@@ -385,6 +385,9 @@ def _validate_database_snapshot(database_path: Path) -> None:
                     f"Backup database is missing required Orinoco tables: {missing}."
                 )
 
+            if schema_version >= 8:
+                required_tables.add("used_admin_recovery_tokens")
+
             if schema_version >= 7:
                 preference_columns = {
                     str(row[1])
