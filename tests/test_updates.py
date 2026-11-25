@@ -139,3 +139,23 @@ def test_migration_rejects_foreign_key_inconsistency_after_schema_changes(tmp_pa
         updates.migrate_database(backup_path=backup)
 
     assert restored == [(backup, True)]
+
+
+
+def test_migration_reports_manual_recovery_if_automatic_restore_fails(tmp_path, monkeypatch) -> None:
+    """A failed automatic rollback must give an explicit manual recovery instruction."""
+    database = tmp_path / "orinoco.sqlite3"
+    initialise_database(database)
+    backup = tmp_path / "before.oribak"
+    backup.write_bytes(b"placeholder encrypted archive")
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setattr(updates, "verify_backup", lambda path: {"verified": True})
+    monkeypatch.setattr(updates, "initialise_database", lambda path: (_ for _ in ()).throw(RuntimeError("migration failure")))
+    monkeypatch.setattr(
+        updates,
+        "restore_backup",
+        lambda path, confirm=False: (_ for _ in ()).throw(updates.BackupError("recovery path conflict")),
+    )
+
+    with pytest.raises(updates.UpdateError, match="automatic restore also failed"):
+        updates.migrate_database(backup_path=backup)
