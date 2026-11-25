@@ -23,3 +23,27 @@ def test_nginx_model_response_timeout_exceeds_local_ollama_timeout() -> None:
     assert guide_match is not None
     assert int(template_match.group(1)) > app_timeout
     assert int(guide_match.group(1)) == int(template_match.group(1))
+
+
+def test_nginx_proxy_is_loopback_only_and_overwrites_forwarded_client_ip() -> None:
+    """The app must receive a proxy-derived client address, not client spoofing."""
+    template = (ROOT / "deploy" / "nginx" / "orinoco.conf.example").read_text(encoding="utf-8")
+    assert "listen 127.0.0.1:8081;" in template
+    assert "set_real_ip_from 127.0.0.1;" in template
+    assert "real_ip_header X-Forwarded-For;" in template
+    assert "proxy_set_header X-Forwarded-For $remote_addr;" in template
+    assert "proxy_set_header X-Real-IP $remote_addr;" in template
+    assert "limit_req zone=orinoco_login" in template
+    assert "limit_req zone=orinoco_chat" in template
+    assert "client_max_body_size 12m;" in template
+    assert "client_max_body_size 11m;" in template
+
+
+def test_caddy_public_ingress_keeps_domain_ip_and_tls_boundaries() -> None:
+    """Public ingress uses TLS and forwards only to the local Nginx edge."""
+    template = (ROOT / "deploy" / "caddy" / "Caddyfile.example").read_text(encoding="utf-8")
+    assert "default_sni {$ORINOCO_PUBLIC_IPV4}" in template
+    assert "https://{$ORINOCO_PUBLIC_IPV4}:8443" in template
+    assert "profile shortlived" in template
+    assert "reverse_proxy 127.0.0.1:8081" in template
+    assert "header_up X-Forwarded-For {remote_host}" in template
