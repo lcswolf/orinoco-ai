@@ -15,7 +15,7 @@ From the repository root:
 
 ```bash
 python -m venv .venv
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.lock
 ORINOCO_COOKIE_SECURE=false uvicorn orinoco.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -176,9 +176,10 @@ After restore, check `/healthz`, `/readyz`, sign-in, conversations and documents
 ## Run tests
 
 ```bash
-python -m pip install -r requirements-dev.txt
+python -m pip install --require-hashes -r requirements-dev.lock
 python -m pytest
 node --check orinoco/static/app.js
+pip-audit -r requirements.lock
 ```
 
 ## Build the container image
