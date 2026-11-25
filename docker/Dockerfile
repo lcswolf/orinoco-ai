@@ -1,6 +1,8 @@
 FROM python:3.12-slim-bookworm
 
+# Published SHA-256 for the install.sh asset in the pinned Ollama release.
 ARG OLLAMA_VERSION=0.40.18
+ARG OLLAMA_INSTALL_SHA256=17659c2456c9e65a3b11056b76da51774911cb822f47bf44f7f3ecc0c40528a8
 
 LABEL org.opencontainers.image.title="Orinoco AI"
 LABEL org.opencontainers.image.description="Self-hosted personal AI assistant"
