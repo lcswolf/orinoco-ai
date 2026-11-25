@@ -210,3 +210,14 @@ def test_model_choices_match_confirmed_stable_auto_download_configuration() -> N
     assert variables["AI_MODEL"]["default_value"] == "qwen2.5:1.5b"
     assert variables["AI_MODEL"]["rules"] == "required|string|in:qwen2.5:0.5b,qwen2.5:1.5b,qwen2.5:3b"
     assert variables["AUTO_DOWNLOAD_MODEL"]["default_value"] == "true"
+
+
+def test_model_download_has_bounded_transient_retries_and_clear_failure() -> None:
+    """A registry hiccup gets retries, but an exhausted pull fails visibly."""
+    script = (ROOT / "docker" / "model-init.sh").read_text(encoding="utf-8")
+
+    assert "max_pull_attempts=3" in script
+    assert 'until /usr/local/bin/ollama pull "$MODEL"; do' in script
+    assert "sleep 30" in script
+    assert "Model download failed after $max_pull_attempts attempts." in script
+    assert "readyz will remain HTTP 503" in script
