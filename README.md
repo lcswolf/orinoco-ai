@@ -26,6 +26,10 @@ Orinoco aims to provide a friendly, private assistant that can be hosted on a mo
 - **Small-server friendly:** resource usage and model choices should suit modest VPS hardware.
 - **Transparent operation:** distinguish verified information from uncertainty and provide source links where applicable.
 
+## Setup and usage
+
+The step-by-step [User and Setup Guide](docs/USER_GUIDE.md) covers host preparation, Pterodactyl installation, configuration, first administrator setup, using chat/memories/documents/web research, backups and troubleshooting. It is marked preview until the image and live deployment are release-verified.
+
 ## Planned deployment
 
 The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 1.13.0 (stable 1.x release line) managing Orinoco through a custom Egg and Docker image. The container foundation includes a pinned Ollama CPU runtime, a supervisor, first-run model download and separate liveness/readiness checks.
@@ -36,7 +40,7 @@ The repository includes a custom responsive interface, secure authentication, ad
 
 Encrypted local backups, verified S3-compatible off-site uploads, a supervised daily scheduler and configurable local retention are implemented. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding. The container build and smoke test pass in CI, but the image has not been published to GHCR or deployed. Discord, voice and production deployment are not implemented yet.
 
-See [Network Deployment](docs/NETWORK_DEPLOYMENT.md), [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md), [Updating and Rollback](docs/UPDATING.md), [Pre-release Audit](docs/PRE_RELEASE_AUDIT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
+See [User and Setup Guide](docs/USER_GUIDE.md), [Network Deployment](docs/NETWORK_DEPLOYMENT.md), [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md), [Updating and Rollback](docs/UPDATING.md), [Pre-release Audit](docs/PRE_RELEASE_AUDIT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
 
 ## Security
 
