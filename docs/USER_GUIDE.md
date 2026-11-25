@@ -72,7 +72,17 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 
 ## 5. Create the first administrator
 
-**Panel-first gap — not yet implemented:** the current first-admin and password-recovery commands require SSH and a TTY. We will replace these with a secure, single-use browser setup/recovery flow that is armed through hidden Panel variables. Until that work is complete, this preview is not ready for a no-SSH installation. Do not work around this by putting passwords into Startup Commands or console input. See [Panel-first Management](PANEL_MANAGEMENT.md).
+**First-admin browser setup is implemented on the feature branch but is not yet CI- or live-Panel-verified.** The planned flow is:
+
+1. In Pterodactyl, stop the Orinoco server and set the hidden **First Administrator Setup Token** variable to a randomly generated value of at least 32 characters. Do not use a memorable password.
+2. Start/restart Orinoco and open its web address. When the database has no accounts, the first-run setup dialog appears.
+3. Enter the Panel token, choose an administrator username and create a strong password.
+4. After success, return to Pterodactyl, clear the setup-token variable and restart Orinoco. The database independently prevents a second bootstrap even if the variable is accidentally left set.
+5. Store the administrator password in a password manager.
+
+The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. It does not expose public registration. These protections still need automated CI and disposable Panel verification before release.
+
+**Administrator recovery is still a gap:** the existing offline recovery command requires SSH and a TTY. Do not work around this by putting passwords into Startup Commands or console input. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 ## 6. Use the web interface
 
