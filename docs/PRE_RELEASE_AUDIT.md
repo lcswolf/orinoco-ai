@@ -278,3 +278,7 @@ The startup audit found that a failed first-run Ollama pull was attempted only o
 ## Release gate
 
 Do not publish the `stable` image or deploy the Egg until all critical findings are fixed, the full automated suite and container smoke test pass on the same commit, and a live Pterodactyl installation and restore test have been completed. Discord and voice remain optional later milestones; they must not delay or weaken the core security and recovery release gate.
+
+## Pterodactyl live test plan — prepared, execution pending
+
+A dedicated [disposable Pterodactyl deployment test plan](PTERODACTYL_TEST_PLAN.md) now defines the entry gates and manual checks for Panel 1.13.0 and Wings: Egg import, allocation and direct IP:port access, model download/recovery, persistent volume, account isolation, encrypted backup/restore, update rollback, public proxy/TLS, Tailscale-only access, resource usage, browser testing and safe teardown. It is a runbook only; no Panel import, image publication or VPS deployment has taken place. Execution remains blocked until a disposable host and a matching, digest-recorded image are available.
