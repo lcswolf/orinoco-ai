@@ -87,3 +87,7 @@ The previously discussed target VPS has 4 vCPU and 6 GiB RAM. The proposed initi
 ## Release policy
 
 The intended update channel is stable. Releases should be versioned, documented and tested. Database migrations must be backed up and have a documented recovery path.
+
+## Next deployment-readiness gate
+
+A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. No image has been published and no live Panel/VPS test has been run. Python dependency ranges remain bounded but are not yet hash-locked; the audit intentionally does not claim dependency reproducibility beyond the current CI vulnerability scan.
