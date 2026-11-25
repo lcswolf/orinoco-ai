@@ -79,7 +79,7 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 
 ## 5. Create the first administrator
 
-**First-admin browser setup is implemented on the feature branch and has passed automated CI; live Panel verification is still pending.** The planned flow is:
+**First-admin browser setup is implemented on the feature branch and has passed automated CI; live Panel verification is still pending.** The setup steps are:
 
 1. In Pterodactyl, stop the Orinoco server and set the hidden **First Administrator Setup Token** variable to a randomly generated value of at least 32 characters. Do not use a memorable password.
 2. Start/restart Orinoco and open its web address. When the database has no accounts, the first-run setup dialog appears.
