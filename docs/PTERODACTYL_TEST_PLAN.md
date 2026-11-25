@@ -77,7 +77,7 @@ The operational goal is to manage Orinoco through Pterodactyl Panel and the Orin
 
 - [ ] Create the first administrator using the browser setup flow armed from a hidden Panel variable; confirm CSRF enforcement, token expiry, failed-attempt throttling and no SSH, Docker exec, TTY or password in console logs.
 - [ ] Confirm first-run setup refuses a second bootstrap after an account exists, the token expires 30 minutes after application start, and the Panel variable is cleared after successful setup.
-- [ ] Recover a locked-out administrator using the documented Panel-first recovery flow; confirm it is single-use and revokes existing sessions.
+- [ ] Arm administrator recovery with the hidden Panel variable, recover the existing admin through the browser, confirm token expiry and durable replay rejection after a restart, and verify all old sessions are revoked.
 - [ ] Generate and configure the backup encryption key without printing it to persistent Panel console logs; retain an off-server copy.
 - [ ] Change supported Egg variables in the Panel and confirm the running service applies them after restart.
 - [ ] Use the Panel console and file manager for normal logs and file operations without shell access.
