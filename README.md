@@ -48,4 +48,4 @@ Contributions and suggestions are welcome. Please read [CONTRIBUTING.md](CONTRIB
 
 ## Licence
 
-This project is intended to be released under the MIT Licence. See [LICENSE](LICENSE).
+Orinoco AI is released under the MIT Licence. See [LICENSE](LICENSE).
