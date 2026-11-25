@@ -2,7 +2,7 @@
 
 **Status: preview guide.** Orinoco's application and container are under active development. The Docker image has not been published and the Pterodactyl Egg has not yet been imported and tested on a live Panel. Use this guide for planning and for a future test installation only; do not treat the steps as a production-ready deployment until the release gate in [Project Status](PROJECT_STATUS.md) is cleared.
 
-This guide is intended to cover the complete user journey: preparing a host, installing and configuring Orinoco, creating the first administrator, using the web interface, managing data and backups, and troubleshooting.
+This guide is intended to cover the complete user journey. The operating goal is Panel-first management: after the VPS, Pterodactyl Panel and Wings are ready, routine Orinoco setup and operation should not require SSH or Docker commands. See [Panel-first Management](PANEL_MANAGEMENT.md) for the requirements and current gaps.
 
 ## 1. What you need
 
@@ -13,7 +13,7 @@ For the planned first installation:
 - Pterodactyl Panel 1.13.0 (stable 1.x) and a working Wings node.
 - A Pterodactyl allocation for Orinoco's web interface.
 - A domain name if you want the public HTTPS subdomain.
-- SSH access with permission to configure the host.
+- A provisioned Pterodactyl host and node. Initial Ubuntu, Panel/Wings and host-network provisioning may still require infrastructure-level access; routine Orinoco management is intended to use the Panel.
 - A secure place away from the VPS to store the backup encryption key.
 
 Orinoco runs its language model locally through Ollama. The first launch downloads the selected model, so allow time and disk space for the model and its cache. The initial model choices are Qwen 2.5 0.5B, 1.5B and 3B. The 1.5B model is the recommended starting point for the planned VPS; 3B is experimental at this memory size.
@@ -66,38 +66,13 @@ Keep the Discord and voice settings disabled. These integrations are not impleme
 
 ### Generate and protect the backup key
 
-Generate a key using the Orinoco backup utility:
-
-```sh
-python -m orinoco.backups generate-key
-```
-
-Use the key-generation command in the Orinoco runtime or a trusted environment with the same application package. Copy the generated key into the hidden `ORINOCO_BACKUP_KEY` Egg variable and store a separate copy in a password manager or other secure location **not on the VPS**. If you lose this key, encrypted backups cannot be restored. Do not put it in Git, screenshots, tickets or ordinary notes.
+**Panel-first gap — workflow to be improved:** the current key generator prints a key to standard output. Do not run it as a Startup Command because console output may persist in logs. A safe key-generation and one-time copy workflow that does not leave the secret in Panel logs is required before the no-SSH setup is complete. The key must be entered into the hidden ORINOCO_BACKUP_KEY Egg variable and stored separately off the VPS. If lost, encrypted backups cannot be restored.
 
 If you configure S3-compatible backup storage, use a private bucket, HTTPS endpoint and a dedicated restricted credential. Configure a bucket lifecycle policy separately; local retention does not automatically delete remote objects.
 
 ## 5. Create the first administrator
 
-The first administrator must be created using an interactive terminal. The Pterodactyl console is attached to the process supervisor and is not a suitable password prompt.
-
-1. In the host's SSH session, identify the Orinoco container:
-   ```sh
-   docker ps
-   ```
-2. Open the interactive admin-creation command, replacing `CONTAINER_ID` with the actual container ID:
-   ```sh
-   docker exec -it CONTAINER_ID python -m orinoco.admin create-admin
-   ```
-3. Follow the prompts to enter the administrator username and password. Use a unique, strong password.
-4. Open your configured Orinoco HTTPS address and sign in.
-
-To reset a user's password from an interactive host terminal, use:
-
-```sh
-docker exec -it CONTAINER_ID python -m orinoco.admin reset-password USERNAME
-```
-
-Do not put passwords into a Pterodactyl startup command or a non-interactive console. These commands are documented for the planned runtime; validate them against the released image before relying on them.
+**Panel-first gap — not yet implemented:** the current first-admin and password-recovery commands require SSH and a TTY. We will replace these with a secure, single-use browser setup/recovery flow that is armed through hidden Panel variables. Until that work is complete, this preview is not ready for a no-SSH installation. Do not work around this by putting passwords into Startup Commands or console input. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 ## 6. Use the web interface
 
