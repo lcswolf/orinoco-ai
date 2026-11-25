@@ -66,7 +66,16 @@ Keep the Discord and voice settings disabled. These integrations are not impleme
 
 ### Generate and protect the backup key
 
-**Panel-first gap — workflow to be improved:** the current key generator prints a key to standard output. Do not run it as a Startup Command because console output may persist in logs. A safe key-generation and one-time copy workflow that does not leave the secret in Panel logs is required before the no-SSH setup is complete. The key must be entered into the hidden ORINOCO_BACKUP_KEY Egg variable and stored separately off the VPS. If lost, encrypted backups cannot be restored.
+### Generate and protect the backup key
+
+After signing in as an administrator, open **Account settings → Backup encryption key** and choose **Generate backup key**. Orinoco uses the browser's cryptographically secure random-number generator to create a 256-bit URL-safe base64 key. The key is generated locally in the browser: it is not sent to the Orinoco server, saved in browser storage or written to logs.
+
+1. Use the **Copy key** button and store the key in a password manager or another secure location away from the VPS.
+2. In Pterodactyl, paste it into the hidden `ORINOCO_BACKUP_KEY` server variable.
+3. Restart Orinoco so the service reads the new variable.
+4. Return to the browser and use **Clear key**. Do not leave the key displayed on a shared device.
+
+The browser generator requires HTTPS and a modern browser. The older CLI generator still prints to standard output; do not run it through the Panel console or as a Startup Command. If the key is lost, encrypted backups cannot be restored.
 
 If you configure S3-compatible backup storage, use a private bucket, HTTPS endpoint and a dedicated restricted credential. Configure a bucket lifecycle policy separately; local retention does not automatically delete remote objects.
 
