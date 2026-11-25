@@ -214,6 +214,8 @@ def _public_user(user: User) -> dict[str, object]:
 
 _BOOTSTRAP_WINDOW_SECONDS = 15 * 60
 _BOOTSTRAP_MAX_FAILURES = 5
+_BOOTSTRAP_TOKEN_TTL_SECONDS = 30 * 60
+_BOOTSTRAP_ARMED_AT = time.monotonic()
 _bootstrap_failures: OrderedDict[str, deque[float]] = OrderedDict()
 
 
@@ -247,7 +249,10 @@ async def setup_status() -> dict[str, bool]:
     initialise_database(get_database_path())
     return {
         "setup_required": not bool(list_users(database_path=get_database_path())),
-        "bootstrap_enabled": len(os.environ.get("ORINOCO_BOOTSTRAP_TOKEN", "")) >= 32,
+        "bootstrap_enabled": (
+            len(os.environ.get("ORINOCO_BOOTSTRAP_TOKEN", "")) >= 32
+            and time.monotonic() - _BOOTSTRAP_ARMED_AT <= _BOOTSTRAP_TOKEN_TTL_SECONDS
+        ),
     }
 
 
@@ -263,7 +268,11 @@ async def bootstrap_first_admin(
     # Always perform a constant-time comparison, including when setup is not armed.
     expected_token = configured_token.encode("utf-8") if configured_token else bytes(32)
     token_matches = hmac.compare_digest(payload.token.encode("utf-8"), expected_token)
-    if len(configured_token) < 32 or not token_matches:
+    if (
+        len(configured_token) < 32
+        or time.monotonic() - _BOOTSTRAP_ARMED_AT > _BOOTSTRAP_TOKEN_TTL_SECONDS
+        or not token_matches
+    ):
         _bootstrap_failures.setdefault(remote_ip, deque()).append(time.monotonic())
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
