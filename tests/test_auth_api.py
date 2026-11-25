@@ -543,3 +543,128 @@ def test_first_admin_setup_token_expires_thirty_minutes_after_startup(tmp_path, 
         )
 
     assert response.status_code == 403
+
+
+def test_panel_admin_recovery_resets_password_and_revokes_existing_sessions(tmp_path, monkeypatch) -> None:
+    """A valid Panel token resets one admin password and revokes every older session."""
+    from orinoco.auth import routes as auth_routes
+    from orinoco.db import get_user_by_username
+
+    database = tmp_path / "panel-admin-recovery.sqlite3"
+    token = "panel-admin-recovery-token-with-at-least-32-random-characters"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_ADMIN_RECOVERY_TOKEN", token)
+    initialise_database(database)
+    admin = create_user(
+        "recoveradmin",
+        "an-old-admin-password-123",
+        role="admin",
+        database_path=database,
+    )
+
+    with (
+        TestClient(app, base_url="https://testserver") as first_session,
+        TestClient(app, base_url="https://testserver") as second_session,
+        TestClient(app, base_url="https://testserver") as recovery_client,
+    ):
+        for client in (first_session, second_session):
+            csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+            login = client.post(
+                "/api/auth/login",
+                headers={"X-CSRF-Token": csrf},
+                json={"username": "recoveradmin", "password": "an-old-admin-password-123"},
+            )
+            assert login.status_code == 200
+
+        csrf = recovery_client.get("/api/auth/csrf").json()["csrf_token"]
+        recovered = recovery_client.post(
+            "/api/auth/recover-admin",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": token,
+                "username": "recoveradmin",
+                "new_password": "a-new-admin-password-456",
+            },
+        )
+        assert recovered.status_code == 200
+        assert recovered.json()["authenticated"] is True
+        assert recovered.json()["user"]["role"] == "admin"
+        assert recovery_client.get("/api/auth/me").json()["authenticated"] is True
+        assert first_session.get("/api/auth/me").json()["authenticated"] is False
+        assert second_session.get("/api/auth/me").json()["authenticated"] is False
+
+        # The same token cannot be replayed, even while its startup window remains open.
+        retry_csrf = recovery_client.get("/api/auth/csrf").json()["csrf_token"]
+        replay = recovery_client.post(
+            "/api/auth/recover-admin",
+            headers={"X-CSRF-Token": retry_csrf},
+            json={
+                "token": token,
+                "username": "recoveradmin",
+                "new_password": "a-third-admin-password-789",
+            },
+        )
+        assert replay.status_code == 403
+
+    updated = get_user_by_username("recoveradmin", database_path=database)
+    assert updated is not None
+    assert updated.session_version == admin.session_version + 1
+
+
+def test_panel_admin_recovery_requires_csrf_and_hidden_panel_token(tmp_path, monkeypatch) -> None:
+    """The recovery endpoint cannot be called cross-site or when Panel recovery is not armed."""
+    database = tmp_path / "unarmed-admin-recovery.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.delenv("ORINOCO_ADMIN_RECOVERY_TOKEN", raising=False)
+    initialise_database(database)
+    create_user("recoveradmin", "an-old-admin-password-123", role="admin", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        no_csrf = client.post(
+            "/api/auth/recover-admin",
+            json={
+                "token": "a-panel-admin-recovery-token-with-at-least-32-random-characters",
+                "username": "recoveradmin",
+                "new_password": "a-new-admin-password-456",
+            },
+        )
+        assert no_csrf.status_code == 403
+
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        unarmed = client.post(
+            "/api/auth/recover-admin",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": "a-panel-admin-recovery-token-with-at-least-32-random-characters",
+                "username": "recoveradmin",
+                "new_password": "a-new-admin-password-456",
+            },
+        )
+        assert unarmed.status_code == 403
+
+
+def test_panel_admin_recovery_token_expires_after_thirty_minutes(tmp_path, monkeypatch) -> None:
+    """A forgotten recovery variable expires after the application startup window."""
+    from orinoco.auth import routes as auth_routes
+
+    database = tmp_path / "expired-admin-recovery.sqlite3"
+    token = "panel-admin-recovery-token-with-at-least-32-random-characters"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_ADMIN_RECOVERY_TOKEN", token)
+    monkeypatch.setattr(auth_routes, "_ADMIN_RECOVERY_ARMED_AT", auth_routes.time.monotonic() - 31 * 60)
+    initialise_database(database)
+    create_user("recoveradmin", "an-old-admin-password-123", role="admin", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        response = client.post(
+            "/api/auth/recover-admin",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": token,
+                "username": "recoveradmin",
+                "new_password": "a-new-admin-password-456",
+            },
+        )
+
+    assert response.status_code == 403
