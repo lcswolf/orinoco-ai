@@ -32,7 +32,7 @@ Personal memories are capped at 100 per account by default. The administrator ca
 
 - Custom responsive Orinoco interface and sign-in.
 - Local Ollama chat with private per-user conversation history.
-- Argon2 accounts, administrator user management, password changes, a token-gated first-run web bootstrap (feature branch; verification pending) and an offline TTY-only password-reset command.
+- Argon2 accounts, administrator user management, password changes, a token-gated first-run web bootstrap and one-time Panel-triggered administrator recovery (feature branch; live verification pending). The offline TTY-only reset command remains available as an emergency fallback.
 - Per-user automatic memories with review/edit/delete controls.
 - Private and shared document libraries for TXT, Markdown, PDF, DOCX, XLSX and PPTX, with bounded extraction and FTS5 keyword retrieval.
 - Explicit web-search workspace and per-message opt-in chat search using a configured SearXNG service.
