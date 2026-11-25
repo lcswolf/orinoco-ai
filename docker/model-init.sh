@@ -37,6 +37,20 @@ if /usr/local/bin/ollama show "$MODEL" >/dev/null 2>&1; then
     echo "Model $MODEL is already present; no download needed."
 else
     echo "Downloading model $MODEL into persistent storage. This may take a while."
-    /usr/local/bin/ollama pull "$MODEL"
+    # A transient network or registry failure should not require an operator
+    # to restart the Pterodactyl server immediately. Ollama can resume a
+    # partial download on the next pull attempt.
+    pull_attempt=1
+    max_pull_attempts=3
+    until /usr/local/bin/ollama pull "$MODEL"; do
+        if [ "$pull_attempt" -ge "$max_pull_attempts" ]; then
+            echo "ERROR: Model download failed after $max_pull_attempts attempts." >&2
+            echo "The web service may be running, but /readyz will remain HTTP 503 until the model is available." >&2
+            exit 1
+        fi
+        pull_attempt=$((pull_attempt + 1))
+        echo "Model download failed; retrying ($pull_attempt/$max_pull_attempts) in 30 seconds." >&2
+        sleep 30
+    done
     echo "Model $MODEL downloaded successfully."
 fi
