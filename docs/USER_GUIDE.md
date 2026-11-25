@@ -137,6 +137,7 @@ Orinoco supports encrypted local backups, verification, confirmed restore and op
 - The backup includes application data and private documents, but not Egg/environment variables or Ollama model weights.
 - Keep the encryption key and any environment-supplied session secret separately.
 - A backup stored only on the VPS is not an off-site backup.
+- Manual one-off backup creation and verification are run through the Pterodactyl Startup Command; Orinoco does not currently have a manual-backup button in its web interface. Follow [Updating and Rollback](UPDATING.md) and restore the normal Startup Command after each one-shot task.
 
 Before an application update, create and verify a fresh backup. Follow [Updating and Rollback](UPDATING.md) exactly; schema rollback requires restoring the pre-update backup before starting the older image. Do not restore a backup while Orinoco is running.
 
