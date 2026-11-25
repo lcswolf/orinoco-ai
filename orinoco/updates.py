@@ -15,7 +15,7 @@ import sys
 import tarfile
 from pathlib import Path
 
-from orinoco.backups import BackupError, create_backup, upload_backup, verify_backup
+from orinoco.backups import BackupError, create_backup, restore_backup, upload_backup, verify_backup
 from orinoco.db import CURRENT_SCHEMA_VERSION, get_database_path, initialise_database
 
 
@@ -56,25 +56,44 @@ def migrate_database(*, backup_path: Path | None = None) -> dict[str, object]:
         except (BackupError, OSError, sqlite3.Error) as exc:
             raise UpdateError(f"The pre-migration backup could not be verified: {exc}") from exc
 
-    initialise_database(database_path)
-
-    connection = sqlite3.connect(database_path)
     try:
-        integrity = connection.execute("PRAGMA integrity_check").fetchone()
-        schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-        foreign_key_issue = connection.execute("PRAGMA foreign_key_check").fetchone()
-    finally:
-        connection.close()
+        initialise_database(database_path)
 
-    if not integrity or integrity[0] != "ok":
-        raise UpdateError("The database failed its post-migration integrity check.")
-    if foreign_key_issue:
-        raise UpdateError("The database contains foreign-key consistency errors after migration.")
-    if schema_version != CURRENT_SCHEMA_VERSION:
-        raise UpdateError(
-            f"Expected schema version {CURRENT_SCHEMA_VERSION}, found {schema_version}."
-        )
+        connection = sqlite3.connect(database_path)
+        try:
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()
+            schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+            foreign_key_issue = connection.execute("PRAGMA foreign_key_check").fetchone()
+        finally:
+            connection.close()
 
+        if not integrity or integrity[0] != "ok":
+            raise UpdateError("The database failed its post-migration integrity check.")
+        if foreign_key_issue:
+            raise UpdateError("The database contains foreign-key consistency errors after migration.")
+        if schema_version != CURRENT_SCHEMA_VERSION:
+            raise UpdateError(
+                f"Expected schema version {CURRENT_SCHEMA_VERSION}, found {schema_version}."
+            )
+    except Exception as migration_error:
+        # A verified encrypted backup is mandatory for an existing database.
+        # If migration or its integrity checks fail, restore that snapshot
+        # immediately while the app is stopped rather than leaving a partial
+        # schema upgrade for the operator to diagnose.
+        if database_exists and backup_path is not None:
+            try:
+                restore_backup(backup_path, confirm=True)
+            except Exception as restore_error:
+                raise UpdateError(
+                    f"Migration failed ({migration_error}); automatic restore also failed "
+                    f"({restore_error}). Stop Orinoco and perform the manual restore "
+                    f"from the verified backup."
+                ) from migration_error
+            raise UpdateError(
+                f"Migration failed and the verified pre-migration backup was automatically "
+                f"restored: {migration_error}"
+            ) from migration_error
+        raise
     return {
         "database": str(database_path),
         "schema_version": schema_version,
