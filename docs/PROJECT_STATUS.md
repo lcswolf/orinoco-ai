@@ -35,13 +35,14 @@ This page separates confirmed project decisions from implementation work. A plan
 - Session-secret symlink rejection and restrictive file permissions; safe backup restore recovery-path checks.
 - CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions.
 - Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing; backup-verified update preparation and explicit SQLite migration CLI.
+- Automatic migration recovery: when an existing database migration or its post-migration integrity checks fail, the CLI attempts to restore the verified pre-migration backup; a regression test covers the failure path.
 - Automated Python tests, frontend JavaScript syntax validation and dependency vulnerability audit.
 - Configurable per-user/shared document count and byte quotas, application declared-body limits, and per-user chat submission throttling; reverse-proxy enforcement is documented but not deployed.
 - Bounded in-flight chat admission (one active generation plus up to eight additional requests by default); overload is rejected with HTTP 503 instead of accumulating an unbounded queue.
 - Configurable per-user personal-memory count cap (100 by default), with atomic quota enforcement and graceful automatic-extraction behaviour when full.
 - Network deployment design for Caddy public TLS, Nginx loopback edge limits, HTTPS public-IP access and private Tailscale Serve; Uvicorn forwarded-header trust is disabled by default.
 
-The latest GitHub Actions Python test run [#889](https://github.com/lcswolf/orinoco-ai/actions/runs/45521514540) passed on commit `e6c2fb43`: **239 tests passed**, with two Starlette deprecation warnings. Dependency auditing and frontend JavaScript syntax checks passed. Container build and smoke test [#390](https://github.com/lcswolf/orinoco-ai/actions/runs/45521514521) passed on the same commit, including shell validation, Pterodactyl Egg JSON validation, proxy-template checks, image build and container smoke tests. The image was built and smoke-tested without publishing; it has not been published to GHCR or deployed to Pterodactyl.
+The latest GitHub Actions Python test run [#894](https://github.com/lcswolf/orinoco-ai/actions/runs/45593888288) passed on commit `42edd4db`: **239 tests passed**, with two Starlette deprecation warnings. Dependency auditing found no known vulnerabilities and the frontend JavaScript syntax check passed. Container build and smoke test [#391](https://github.com/lcswolf/orinoco-ai/actions/runs/45593823787) is still in progress on code commit `7a5221da`; the image is built and smoke-tested without publishing, and has not been published to GHCR or deployed to Pterodactyl.
 
 ## Confirmed direction
 
