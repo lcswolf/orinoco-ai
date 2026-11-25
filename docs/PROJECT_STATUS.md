@@ -33,7 +33,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification; restore keeps pre-restore database, document and session-secret recovery copies.
 - Supervised daily encrypted backup scheduler (03:00 in the configured timezone by default), optional verified S3 upload, configurable 1–365 day local retention and persistent failure status.
 - Session-secret symlink rejection and restrictive file permissions; safe backup restore recovery-path checks.
-- CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions. GitHub Actions are pinned to immutable commit SHAs; Python dependency ranges remain bounded but are not yet hash-locked.
+- CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions. GitHub Actions are pinned to immutable commit SHAs; Python runtime and development dependencies are now compiled into SHA-256 hash-locked requirements files; CI and the Docker image install them with `--require-hashes`.
 - Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing; backup-verified update preparation and explicit SQLite migration CLI.
 - Automatic migration recovery: when an existing database migration or its post-migration integrity checks fail, the CLI attempts to restore the verified pre-migration backup; a regression test covers the failure path.
 - Automated Python tests, frontend JavaScript syntax validation and dependency vulnerability audit.
@@ -90,4 +90,4 @@ The intended update channel is stable. Releases should be versioned, documented 
 
 ## Next deployment-readiness gate
 
-A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. No image has been published and no live Panel/VPS test has been run. Python dependency ranges remain bounded but are not yet hash-locked; the audit intentionally does not claim dependency reproducibility beyond the current CI vulnerability scan.
+A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. No image has been published and no live Panel/VPS test has been run. Python runtime and development dependencies are hash-locked, verified by clean hash-required installs and a clean vulnerability audit.
