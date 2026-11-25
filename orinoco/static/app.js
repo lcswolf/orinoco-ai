@@ -13,6 +13,10 @@ const setupDialog = document.getElementById("setup-dialog");
 const setupForm = document.getElementById("setup-form");
 const setupError = document.getElementById("setup-error");
 const setupSubmit = document.getElementById("setup-submit");
+const adminRecoveryDialog = document.getElementById("admin-recovery-dialog");
+const adminRecoveryForm = document.getElementById("admin-recovery-form");
+const adminRecoveryError = document.getElementById("admin-recovery-error");
+const adminRecoverySubmit = document.getElementById("admin-recovery-submit");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
@@ -378,6 +382,63 @@ accountAction.addEventListener("click", async () => {
 });
 
 document.getElementById("login-cancel").addEventListener("click", () => loginDialog.close());
+
+document.getElementById("admin-recovery-open").addEventListener("click", () => {
+  loginDialog.close();
+  adminRecoveryError.hidden = true;
+  adminRecoveryForm.reset();
+  adminRecoveryDialog.showModal();
+  document.getElementById("admin-recovery-token").focus();
+});
+
+document.getElementById("admin-recovery-cancel").addEventListener("click", () => {
+  adminRecoveryDialog.close();
+});
+
+adminRecoveryForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  adminRecoveryError.hidden = true;
+  adminRecoverySubmit.disabled = true;
+  adminRecoverySubmit.textContent = "Recovering access…";
+  const newPassword = document.getElementById("admin-recovery-password").value;
+  const confirmation = document.getElementById("admin-recovery-password-confirm").value;
+  if (newPassword !== confirmation) {
+    adminRecoveryError.textContent = "The passwords do not match.";
+    adminRecoveryError.hidden = false;
+    adminRecoverySubmit.disabled = false;
+    adminRecoverySubmit.textContent = "Reset administrator password";
+    return;
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/auth/recover-admin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf,
+      },
+      body: JSON.stringify({
+        token: document.getElementById("admin-recovery-token").value,
+        username: document.getElementById("admin-recovery-username").value,
+        new_password: newPassword,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Administrator recovery failed.");
+    adminRecoveryForm.reset();
+    adminRecoveryDialog.close();
+    showAccount(result.user);
+    await refreshConversations();
+  } catch (error) {
+    adminRecoveryError.textContent = error.message || "Administrator recovery failed.";
+    adminRecoveryError.hidden = false;
+  } finally {
+    adminRecoverySubmit.disabled = false;
+    adminRecoverySubmit.textContent = "Reset administrator password";
+  }
+});
+
 
 document.getElementById("setup-cancel").addEventListener("click", () => setupDialog.close());
 
