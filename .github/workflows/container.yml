@@ -9,7 +9,6 @@ on:
       - "orinoco/**"
       - "requirements.txt"
       - "requirements.lock"
-      - "requirements.lock"
       - ".dockerignore"
       - "egg/**"
       - ".github/workflows/container.yml"
@@ -19,6 +18,7 @@ on:
       - "deploy/**"
       - "orinoco/**"
       - "requirements.txt"
+      - "requirements.lock"
       - ".dockerignore"
       - ".github/workflows/container.yml"
   workflow_dispatch:
