@@ -8,6 +8,8 @@ on:
       - "deploy/**"
       - "orinoco/**"
       - "requirements.txt"
+      - "requirements.lock"
+      - "requirements.lock"
       - ".dockerignore"
       - "egg/**"
       - ".github/workflows/container.yml"
