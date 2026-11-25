@@ -144,7 +144,7 @@ Validate the file before reload with `nginx -t`. Confirm the real client IP appe
 
 ## 2. Caddy public HTTPS
 
-Use a current Caddy 2.11 release from the official Caddy repository. Replace the example domain and public IPv4 address with the actual values. Keep Caddy's certificate and state directory persistent and protected.
+Use a current Caddy 2.11 release from the official Caddy repository. Replace the example domain and public IPv4 address with the actual values. Keep Caddy's certificate and state directory persistent and protected. The IP-certificate block uses the ACME `shortlived` profile; see the [Caddy TLS/ACME profile documentation](https://caddyserver.com/docs/caddyfile/directives/tls) for the current syntax and requirements.
 
 Example Caddyfile:
 
@@ -196,7 +196,7 @@ sudo tailscale serve status
 sudo tailscale funnel status
 ```
 
-Use the HTTPS tailnet DNS name shown by `tailscale serve status`, including port 8444. Confirm the Serve status is private to the tailnet and that Funnel has no active public listener. Do not run `tailscale funnel` for Orinoco. Tailscale Serve requires HTTPS certificates to be enabled in the tailnet; its access-control rules apply to served services. If the VPS is rebuilt, re-check the Serve configuration rather than assuming it persisted.
+Use the HTTPS tailnet DNS name shown by `tailscale serve status`, including port 8444. Confirm the Serve status is private to the tailnet and that Funnel has no active public listener. See the [current Tailscale Serve CLI reference](https://tailscale.com/docs/reference/tailscale-cli/serve) before applying the command, as Serve/Funnel syntax changed in Tailscale 1.52. Do not run `tailscale funnel` for Orinoco. Tailscale Serve requires HTTPS certificates to be enabled in the tailnet; its access-control rules apply to served services. If the VPS is rebuilt, re-check the Serve configuration rather than assuming it persisted.
 
 ## 4. Network and firewall boundaries
 
