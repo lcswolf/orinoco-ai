@@ -155,7 +155,7 @@
     },
     {
       "name": "Backup Encryption Key",
-      "description": "Required for encrypted backup creation, verification and restore. Generate with python -m orinoco.backups generate-key and store the key securely outside the VPS. Do not reuse it elsewhere.",
+      "description": "Required for encrypted backup creation, verification and restore. Generate it in Orinoco's administrator Settings using the browser-only key generator; copy it into this hidden variable and keep an independent off-server copy. The key is generated locally in the browser and is not sent to Orinoco. Do not reuse it elsewhere.",
       "env_variable": "ORINOCO_BACKUP_KEY",
       "default_value": "",
       "user_viewable": false,
