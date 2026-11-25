@@ -195,7 +195,7 @@ The one-shot migration command now runs both SQLite's structural `integrity_chec
 
 ### Backup-gated update migrations — implemented
 
-The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. If migration or post-migration integrity checks fail, it now attempts to restore that verified backup automatically while Orinoco is stopped; if the restore also fails, the command clearly directs the operator to manual recovery. The failure-injection regression passed in GitHub Actions run #913. The operator runbook documents this behaviour. Automated image switching and a live upgrade/rollback drill remain outstanding.
+The `orinoco.updates` one-shot CLI creates and verifies a fresh encrypted pre-update backup, uploads it when S3 is configured, and requires a verified backup before applying the additive SQLite migrations to an existing database. If migration or post-migration integrity checks fail, it now attempts to restore that verified backup automatically while Orinoco is stopped; if the restore also fails, the command clearly directs the operator to manual recovery. The failure-injection regression passed in GitHub Actions run #941. The operator runbook documents this behaviour. Automated image switching and a live upgrade/rollback drill remain outstanding.
 
 ### Document storage symlink parents — hardened
 
