@@ -270,7 +270,7 @@ The startup audit found that a failed first-run Ollama pull was attempted only o
 - [x] Add weekly Dependabot monitoring for Python and GitHub Actions dependencies.
 - [x] Add pip-audit to CI and resolve the reported cryptography advisories; the follow-up audit is clean.
 - [ ] Continue reviewing dependency updates and build reproducibility.
-- [x] Confirm the latest Python test suite, hash-locked dependency audit and frontend JavaScript syntax checks passed on commit `9b0541ff` (run #967; 247 tests).
+- [x] Confirm the latest Python test suite, hash-locked dependency audit and frontend JavaScript syntax checks passed on commit `0ff20625` (run #967; 247 tests).
 - [x] Confirm the container build and smoke test passed on commit `9b0541ff` (run #397); image remains unpublished.
 - [ ] Repeat all checks on the final release commit after remaining audit work.
 - [ ] Perform a live Pterodactyl test with a disposable server, then test backup restore before considering production readiness.
