@@ -1342,3 +1342,17 @@ document.getElementById("backup-key-clear").addEventListener("click", () => {
   document.getElementById("backup-key-result").hidden = true;
   document.getElementById("backup-key-feedback").textContent = "";
 });
+
+// Clear temporary secrets when their dialogs close (including Escape dismissal).
+adminRecoveryDialog.addEventListener("close", () => {
+  adminRecoveryForm.reset();
+  adminRecoveryError.hidden = true;
+});
+
+settingsDialog.addEventListener("close", () => {
+  document.getElementById("backup-key-value").value = "";
+  document.getElementById("backup-key-result").hidden = true;
+  document.getElementById("backup-key-feedback").textContent = "";
+  document.getElementById("backup-key-warning").hidden = true;
+});
+
