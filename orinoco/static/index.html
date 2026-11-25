@@ -254,6 +254,21 @@
           <p class="settings-feedback" id="user-feedback" role="status" hidden></p>
         </form>
         <div class="user-list" id="admin-user-list" aria-live="polite"></div>
+        <div class="settings-section" aria-labelledby="backup-key-heading">
+          <h3 id="backup-key-heading">Backup encryption key</h3>
+          <p class="settings-description">Generate a new 256-bit key in this browser. It is not sent to Orinoco or stored on the server. Copy it into the hidden ORINOCO_BACKUP_KEY variable in Pterodactyl and keep an independent copy in a password manager. Losing this key means encrypted backups cannot be restored.</p>
+          <button class="login-submit" id="backup-key-generate" type="button">Generate backup key</button>
+          <div id="backup-key-result" hidden>
+            <label for="backup-key-value">New backup key — copy it now</label>
+            <input id="backup-key-value" type="text" readonly autocomplete="off" spellcheck="false">
+            <div class="settings-actions">
+              <button class="login-submit" id="backup-key-copy" type="button">Copy key</button>
+              <button class="dialog-cancel" id="backup-key-clear" type="button">Clear key</button>
+            </div>
+            <p class="settings-feedback" id="backup-key-feedback" role="status"></p>
+          </div>
+          <p class="settings-feedback" id="backup-key-warning" role="status" hidden></p>
+        </div>
       </section>
   <section class="settings-section" id="admin-persona-tools" hidden aria-labelledby="persona-heading">
     <h3 id="persona-heading">Core assistant personality</h3>
