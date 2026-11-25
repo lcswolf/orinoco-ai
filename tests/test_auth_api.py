@@ -517,3 +517,29 @@ def test_first_admin_setup_throttles_invalid_tokens(tmp_path, monkeypatch) -> No
 
     assert [response.status_code for response in responses[:5]] == [403] * 5
     assert responses[5].status_code == 429
+
+
+def test_first_admin_setup_token_expires_thirty_minutes_after_startup(tmp_path, monkeypatch) -> None:
+    """A forgotten bootstrap variable cannot remain usable indefinitely."""
+    from orinoco.auth import routes as auth_routes
+
+    database = tmp_path / "expired-bootstrap.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_BOOTSTRAP_TOKEN", "panel-generated-bootstrap-token-with-strong-entropy")
+    monkeypatch.setattr(auth_routes, "_BOOTSTRAP_ARMED_AT", auth_routes.time.monotonic() - 31 * 60)
+    initialise_database(database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        assert client.get("/api/auth/setup-status").json()["bootstrap_enabled"] is False
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        response = client.post(
+            "/api/auth/bootstrap",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": "panel-generated-bootstrap-token-with-strong-entropy",
+                "username": "firstadmin",
+                "password": "a-long-first-admin-password-123",
+            },
+        )
+
+    assert response.status_code == 403
