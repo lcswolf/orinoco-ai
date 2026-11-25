@@ -1,4 +1,4 @@
-# Architecture Proposal
+# Architecture and Deployment Design
 
 **Status: implementation in progress; deployment details remain subject to testing.**
 
