@@ -282,3 +282,8 @@ Do not publish the `stable` image or deploy the Egg until all critical findings 
 ## Pterodactyl live test plan — prepared, execution pending
 
 A dedicated [disposable Pterodactyl deployment test plan](PTERODACTYL_TEST_PLAN.md) now defines the entry gates and manual checks for Panel 1.13.0 and Wings: Egg import, allocation and direct IP:port access, model download/recovery, persistent volume, account isolation, encrypted backup/restore, update rollback, public proxy/TLS, Tailscale-only access, resource usage, browser testing and safe teardown. It is a runbook only; no Panel import, image publication or VPS deployment has taken place. Execution remains blocked until a disposable host and a matching, digest-recorded image are available.
+
+
+## Python dependency reproducibility — hash locks added
+
+The repository now has generated `requirements.lock` and `requirements-dev.lock` files, compiled for Python 3.12 with SHA-256 hashes. The dependency-lock workflow compiles both from the human-maintained bounded input files, verifies clean hash-required installations and audits the runtime lock. On pushes to `main`, it commits changed lock files after all checks pass; pull requests compile and verify locks but do not write to the branch. The test workflow and Docker image now install from the lock files with `--require-hashes`, and the container workflow watches the runtime lock. This pins the Python package resolution for the supported Python 3.12 environment; it does not pin the OS base-image digest or the external apt repository state, which remain separate reproducibility items.
