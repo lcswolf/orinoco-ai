@@ -14,7 +14,7 @@ Pterodactyl is the control plane for the Orinoco server. The Orinoco web interfa
 | Change model, context, memory and backup settings | Pterodactyl server variables | Egg variables exist; live Panel test outstanding |
 | View runtime and scheduler logs | Pterodactyl Console | Designed; live Panel test outstanding |
 | Upload/download application files and backup archives | Pterodactyl File Manager | Depends on Panel file-manager permissions and live test |
-| First administrator setup | Orinoco first-run web setup, initiated/configured through Panel | **Web bootstrap API and setup dialog implemented on feature branch; token-gated, rate-limited and database-enforced one-time creation; CI/live verification pending** |
+| First administrator setup | Orinoco first-run web setup, initiated/configured through Panel | **Web bootstrap API and setup dialog implemented on feature branch; token-gated, rate-limited and database-enforced one-time creation; automated CI passed; live Panel verification pending** |
 | Administrator account recovery | Secure Panel-triggered recovery workflow or authenticated admin UI | **One-time, 30-minute Panel token recovery API and browser dialog implemented on feature branch; CI/live verification pending** |
 | Create/suspend ordinary accounts and edit assistant persona | Orinoco admin web interface | Implemented in application; UI/live verification outstanding |
 | Generate backup encryption key | Orinoco administrator Settings (browser-only generator) | **Browser generator implemented on feature branch; HTTPS required; CI/manual browser verification pending** |
