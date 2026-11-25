@@ -399,3 +399,121 @@ def test_login_proxy_allowlist_rejects_overly_broad_networks(monkeypatch) -> Non
     request = _request_with_peer("127.0.0.1", "8.8.8.8")
 
     assert auth_routes._resolve_client_ip(request) is None
+
+
+def test_first_admin_setup_requires_panel_token_and_is_one_time(tmp_path, monkeypatch) -> None:
+    """A hidden Panel token can bootstrap one admin but never enable public registration."""
+    from orinoco.db import list_users
+
+    database = tmp_path / "bootstrap.sqlite3"
+    token = "panel-generated-bootstrap-token-with-strong-entropy"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_BOOTSTRAP_TOKEN", token)
+    initialise_database(database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        assert client.get("/api/auth/setup-status").json() == {
+            "setup_required": True,
+            "bootstrap_enabled": True,
+        }
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        rejected = client.post(
+            "/api/auth/bootstrap",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": "wrong-panel-token-with-enough-length",
+                "username": "firstadmin",
+                "password": "a-long-first-admin-password-123",
+            },
+        )
+        assert rejected.status_code == 403
+        assert list_users(database_path=database) == []
+
+        accepted = client.post(
+            "/api/auth/bootstrap",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": token,
+                "username": "firstadmin",
+                "password": "a-long-first-admin-password-123",
+            },
+        )
+        assert accepted.status_code == 200
+        assert accepted.json()["authenticated"] is True
+        assert accepted.json()["user"]["role"] == "admin"
+        assert client.get("/api/auth/me").json()["authenticated"] is True
+        assert client.get("/api/auth/setup-status").json()["setup_required"] is False
+
+        second_csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        second = client.post(
+            "/api/auth/bootstrap",
+            headers={"X-CSRF-Token": second_csrf},
+            json={
+                "token": token,
+                "username": "secondadmin",
+                "password": "a-long-second-admin-password-123",
+            },
+        )
+        assert second.status_code == 409
+        assert [user.username for user in list_users(database_path=database)] == ["firstadmin"]
+
+
+def test_first_admin_setup_requires_csrf_and_an_armed_panel_token(tmp_path, monkeypatch) -> None:
+    """Bootstrap cannot be triggered by a cross-site request or an unarmed public endpoint."""
+    database = tmp_path / "unarmed-bootstrap.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.delenv("ORINOCO_BOOTSTRAP_TOKEN", raising=False)
+    initialise_database(database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        no_csrf = client.post(
+            "/api/auth/bootstrap",
+            json={
+                "token": "a-panel-token-that-is-long-enough-to-validate",
+                "username": "firstadmin",
+                "password": "a-long-first-admin-password-123",
+            },
+        )
+        assert no_csrf.status_code == 403
+
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        unarmed = client.post(
+            "/api/auth/bootstrap",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "token": "a-panel-token-that-is-long-enough-to-validate",
+                "username": "firstadmin",
+                "password": "a-long-first-admin-password-123",
+            },
+        )
+        assert unarmed.status_code == 403
+        assert client.get("/api/auth/setup-status").json()["setup_required"] is True
+
+
+def test_first_admin_setup_throttles_invalid_tokens(tmp_path, monkeypatch) -> None:
+    """Repeated bad setup tokens are throttled instead of allowing unlimited guesses."""
+    from orinoco.auth import routes as auth_routes
+
+    database = tmp_path / "bootstrap-throttle.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    monkeypatch.setenv("ORINOCO_BOOTSTRAP_TOKEN", "panel-generated-bootstrap-token-with-strong-entropy")
+    monkeypatch.setattr(auth_routes, "_bootstrap_failures", __import__("collections").OrderedDict())
+    initialise_database(database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        csrf = client.get("/api/auth/csrf").json()["csrf_token"]
+        responses = [
+            client.post(
+                "/api/auth/bootstrap",
+                headers={"X-CSRF-Token": csrf},
+                json={
+                    "token": "incorrect-panel-token-with-sufficient-length",
+                    "username": "firstadmin",
+                    "password": "a-long-first-admin-password-123",
+                },
+            )
+            for _ in range(6)
+        ]
+
+    assert [response.status_code for response in responses[:5]] == [403] * 5
+    assert responses[5].status_code == 429
