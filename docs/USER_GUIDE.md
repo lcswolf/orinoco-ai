@@ -80,7 +80,7 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 4. After success, return to Pterodactyl, clear the setup-token variable and restart Orinoco. The database independently prevents a second bootstrap even if the variable is accidentally left set.
 5. Store the administrator password in a password manager.
 
-The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. It does not expose public registration. These protections still need automated CI and disposable Panel verification before release.
+The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. The token expires 30 minutes after each application start; restarting Orinoco re-arms the configured token. The database still prevents repeat setup after an administrator exists. It does not expose public registration. These protections still need automated CI and disposable Panel verification before release.
 
 **Administrator recovery is still a gap:** the existing offline recovery command requires SSH and a TTY. Do not work around this by putting passwords into Startup Commands or console input. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
