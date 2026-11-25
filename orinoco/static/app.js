@@ -1308,8 +1308,8 @@ document.getElementById("backup-key-generate").addEventListener("click", () => {
   warning.hidden = true;
   feedback.textContent = "";
 
-  if (!window.isSecureContext || !window.crypto?.getRandomValues || typeof window.btoa !== "function") {
-    warning.textContent = "A secure HTTPS connection and browser cryptography are required to generate a key. Open Orinoco using its HTTPS address and try again.";
+  if (!window.crypto?.getRandomValues || typeof window.btoa !== "function") {
+    warning.textContent = "This browser does not provide the secure random-number generator required for backup keys. Try a modern browser.";
     warning.hidden = false;
     return;
   }
