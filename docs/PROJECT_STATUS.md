@@ -43,7 +43,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Configurable per-user personal-memory count cap (100 by default), with atomic quota enforcement and graceful automatic-extraction behaviour when full.
 - Network deployment design for Caddy public TLS, Nginx loopback edge limits, HTTPS public-IP access and private Tailscale Serve; Uvicorn forwarded-header trust is disabled by default.
 
-The latest completed GitHub Actions Python test run [#913](https://github.com/lcswolf/orinoco-ai/actions/runs/45611868448) passed on commit `82794c80`: **247 tests passed**, including automatic migration recovery, Egg startup/image contract checks, reverse-proxy trust/TLS boundaries and model-download retry checks, with two Starlette deprecation warnings. Dependency auditing found no known vulnerabilities and the frontend JavaScript syntax check passed. Container build and smoke test [#392](https://github.com/lcswolf/orinoco-ai/actions/runs/45611660714) passed on runtime commit `035f894e`; shell validation, Pterodactyl Egg JSON validation, proxy-template checks, image build and service smoke checks all succeeded. The image remains unpublished and has not been deployed to Pterodactyl.
+The latest completed GitHub Actions Python test run [#918](https://github.com/lcswolf/orinoco-ai/actions/runs/45618110190) passed on commit `294a331a`: **247 tests passed**, with two Starlette deprecation warnings. Run [#917](https://github.com/lcswolf/orinoco-ai/actions/runs/45617122519) also passed after the chat/memory safety review. The repository-level audit has now reviewed authentication/session handling, private/shared document ownership and extraction limits, database query ownership and transaction boundaries, additive schema upgrades, encrypted backup archive validation, WAL-consistent snapshots, restore rollback and remote S3 byte verification. The audit checklist distinguishes these completed code reviews from live operational gates. The latest audit-document commit is `166d3a17`; its Python CI run [#919](https://github.com/lcswolf/orinoco-ai/actions/runs/45618569213) is still running. Dependency auditing and frontend JavaScript syntax checks passed in the preceding CI workflow. Container build and smoke test [#392](https://github.com/lcswolf/orinoco-ai/actions/runs/45611660714) passed on runtime commit `035f894e`; shell validation, Pterodactyl Egg JSON validation, proxy-template checks, image build and service smoke checks all succeeded. The image remains unpublished and has not been deployed to Pterodactyl.
 
 ## Confirmed direction
 
@@ -73,7 +73,7 @@ The latest completed GitHub Actions Python test run [#913](https://github.com/lc
 
 ## Next implementation sequence
 
-1. Finish the repository-wide pre-release audit and repeat the Python tests and container smoke test on the latest commit.
+1. Finish the final audit documentation/CI checks and repeat the container smoke test on the latest runtime commit; repository-level security reviews are complete.
 2. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
 3. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
 4. Perform a real encrypted backup/restore and update/rollback drill on the disposable Pterodactyl server.
