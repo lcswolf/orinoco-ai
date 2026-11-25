@@ -73,7 +73,7 @@ The latest completed GitHub Actions Python test run [#967](https://github.com/lc
 
 ## Next implementation sequence
 
-1. Repeat the container smoke test against the pinned base image and document the remaining Debian/apt reproducibility boundary.
+1. Verify the fixed Debian snapshot apt sources in the container build/smoke run #399; keep the snapshot timestamp explicit and update it deliberately during security maintenance.
 2. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
 3. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
 4. Perform a real encrypted backup/restore and update/rollback drill on the disposable Pterodactyl server.
@@ -90,4 +90,4 @@ The intended update channel is stable. Releases should be versioned, documented 
 
 ## Next deployment-readiness gate
 
-A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. No image has been published and no live Panel/VPS test has been run. Python runtime and development dependencies are hash-locked, verified by clean hash-required installs and a clean vulnerability audit. The current container smoke test passed on commit `9b0541ff`; the Python base-image digest is the next reproducibility task.
+A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. No image has been published and no live Panel/VPS test has been run. Python runtime and development dependencies are hash-locked, verified by clean hash-required installs and a clean vulnerability audit. The container smoke test passed on commit `9b0541ff` with the base-image digest pinned. The Debian snapshot source configuration is being verified in container run #399.
