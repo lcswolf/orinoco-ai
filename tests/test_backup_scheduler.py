@@ -157,7 +157,9 @@ def test_supervisor_and_egg_enable_configured_daily_scheduler() -> None:
 
     assert "[program:backup-scheduler]" in supervisor
     assert "command=python -m orinoco.backup_scheduler" in supervisor
-    assert "autorestart=false" in supervisor
+    assert "autorestart=unexpected" in supervisor
+    assert "startsecs=0" in supervisor
+    assert "startretries=5" in supervisor
     assert variables["ORINOCO_BACKUP_ENABLED"]["default_value"] == "false"
     assert variables["ORINOCO_BACKUP_ENABLED"]["user_editable"] is False
     assert variables["ORINOCO_BACKUP_TIME"]["default_value"] == "03:00"
