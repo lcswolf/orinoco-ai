@@ -141,22 +141,14 @@ jobs:
           docker exec orinoco-smoke python -c \
             "from zoneinfo import ZoneInfo; ZoneInfo('Europe/London')"
           docker exec orinoco-smoke python -m orinoco.backups --help >/dev/null
-          # The optional scheduler should exit cleanly when disabled, rather
-          # than remain as a running process or enter a Supervisor restart loop.
-          scheduler_exited=false
-          for attempt in $(seq 1 15); do
-            # supervisorctl may return non-zero when a process is intentionally
-            # EXITED; capture the state text without aborting this strict shell.
-            scheduler_status=$(docker exec orinoco-smoke supervisorctl status backup-scheduler || true)
-            if printf '%s\n' "$scheduler_status" | grep -q '^backup-scheduler[[:space:]]\+EXITED'; then
-              scheduler_exited=true
-              break
-            fi
-            sleep 1
-          done
-          printf '%s\n' "$scheduler_status"
-          test "$scheduler_exited" = true
+          # Supervisor is intentionally configured without a control socket,
+          # so inspect the container process table rather than calling supervisorctl.
+          # The disabled scheduler should exit and must not be restarted.
+          docker exec orinoco-smoke python -c \
+            "from pathlib import Path; import sys; sys.exit(0 if not any(b'-m\\x00orinoco.backup_scheduler\\x00' in p.read_bytes() for p in Path('/proc').glob('[0-9]*/cmdline')) else 1)"
 
           ready_code=$(curl --silent --output /tmp/orinoco-ready.json --write-out "%{http_code}" http://127.0.0.1:8080/readyz)
+          echo "Readiness endpoint HTTP status: $ready_code"
+          cat /tmp/orinoco-ready.json
           test "$ready_code" = "503"
           grep -q "model_missing" /tmp/orinoco-ready.json
