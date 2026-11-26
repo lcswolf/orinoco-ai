@@ -63,8 +63,10 @@ def test_standard_user_cannot_access_admin_api(tmp_path, monkeypatch) -> None:
     with TestClient(app, base_url="https://testserver") as client:
         sign_in(client, "normaluser", "a-long-user-password-456")
         response = client.get("/api/admin/users")
+        diagnostics_response = client.get("/api/admin/diagnostics")
 
     assert response.status_code == 403
+    assert diagnostics_response.status_code == 403
 
 
 def test_admin_cannot_suspend_self_or_last_admin(tmp_path, monkeypatch) -> None:
@@ -108,3 +110,24 @@ def test_user_can_change_password_and_session_is_rotated(tmp_path, monkeypatch) 
     assert authenticate_user(
         "nugget", "a-new-secure-password-789", database_path=database
     ) is not None
+
+
+
+def test_admin_can_run_diagnostics(tmp_path, monkeypatch) -> None:
+    from orinoco import diagnostics
+
+    async def fake_diagnostics():
+        return {"status": "pass", "version": "test", "checks": []}
+
+    monkeypatch.setattr(diagnostics, "run_diagnostics", fake_diagnostics)
+    database = tmp_path / "orinoco.sqlite3"
+    monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
+    initialise_database(database)
+    create_user("adminuser", "a-long-admin-password-123", role="admin", database_path=database)
+
+    with TestClient(app, base_url="https://testserver") as client:
+        sign_in(client, "adminuser", "a-long-admin-password-123")
+        response = client.get("/api/admin/diagnostics")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "pass", "version": "test", "checks": []}
