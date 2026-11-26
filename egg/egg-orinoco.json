@@ -154,6 +154,15 @@
       "rules": "nullable|string|min:32|max:256"
     },
     {
+      "name": "Enable Orinoco Automatic Backups",
+      "description": "Optional Orinoco-managed daily encrypted backups. Disabled by default when using Pterodactyl scheduled backups; manual encrypted backup and restore tools remain available.",
+      "env_variable": "ORINOCO_BACKUP_ENABLED",
+      "default_value": "false",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|string|in:true,false"
+    },
+    {
       "name": "Backup Encryption Key",
       "description": "Optional during initial setup. After creating the first administrator, generate a key in Orinoco's administrator Settings, copy it into this hidden Panel variable and keep an independent off-server copy. Encrypted backups remain unavailable until a valid key is configured. The key is generated locally in the browser and is not sent to Orinoco. Do not reuse it elsewhere.",
       "env_variable": "ORINOCO_BACKUP_KEY",
