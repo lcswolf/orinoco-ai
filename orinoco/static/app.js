@@ -9,6 +9,14 @@ const userName = document.getElementById("user-name");
 const userRole = document.getElementById("user-role");
 const userAvatar = document.getElementById("user-avatar");
 const loginDialog = document.getElementById("login-dialog");
+const setupDialog = document.getElementById("setup-dialog");
+const setupForm = document.getElementById("setup-form");
+const setupError = document.getElementById("setup-error");
+const setupSubmit = document.getElementById("setup-submit");
+const adminRecoveryDialog = document.getElementById("admin-recovery-dialog");
+const adminRecoveryForm = document.getElementById("admin-recovery-form");
+const adminRecoveryError = document.getElementById("admin-recovery-error");
+const adminRecoverySubmit = document.getElementById("admin-recovery-submit");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
@@ -375,6 +383,127 @@ accountAction.addEventListener("click", async () => {
 
 document.getElementById("login-cancel").addEventListener("click", () => loginDialog.close());
 
+document.getElementById("admin-recovery-open").addEventListener("click", () => {
+  loginDialog.close();
+  adminRecoveryError.hidden = true;
+  adminRecoveryForm.reset();
+  adminRecoveryDialog.showModal();
+  document.getElementById("admin-recovery-token").focus();
+});
+
+document.getElementById("admin-recovery-cancel").addEventListener("click", () => {
+  adminRecoveryDialog.close();
+});
+
+adminRecoveryForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  adminRecoveryError.hidden = true;
+  adminRecoverySubmit.disabled = true;
+  adminRecoverySubmit.textContent = "Recovering access…";
+  const newPassword = document.getElementById("admin-recovery-password").value;
+  const confirmation = document.getElementById("admin-recovery-password-confirm").value;
+  if (newPassword !== confirmation) {
+    adminRecoveryError.textContent = "The passwords do not match.";
+    adminRecoveryError.hidden = false;
+    adminRecoverySubmit.disabled = false;
+    adminRecoverySubmit.textContent = "Reset administrator password";
+    return;
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/auth/recover-admin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf,
+      },
+      body: JSON.stringify({
+        token: document.getElementById("admin-recovery-token").value,
+        username: document.getElementById("admin-recovery-username").value,
+        new_password: newPassword,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Administrator recovery failed.");
+    adminRecoveryForm.reset();
+    adminRecoveryDialog.close();
+    showAccount(result.user);
+    await refreshConversations();
+  } catch (error) {
+    adminRecoveryError.textContent = error.message || "Administrator recovery failed.";
+    adminRecoveryError.hidden = false;
+  } finally {
+    adminRecoverySubmit.disabled = false;
+    adminRecoverySubmit.textContent = "Reset administrator password";
+  }
+});
+
+
+document.getElementById("setup-cancel").addEventListener("click", () => setupDialog.close());
+
+async function checkFirstRunSetup() {
+  try {
+    const response = await fetch("/api/auth/setup-status", { headers: { Accept: "application/json" } });
+    if (!response.ok) return;
+    const status = await response.json();
+    if (!status.setup_required) return;
+    setupDialog.showModal();
+    if (!status.bootstrap_enabled) {
+      setupError.textContent = "First-run setup is not armed yet. In Pterodactyl, set the hidden First Administrator Setup Token variable to a random value of at least 32 characters, then restart Orinoco.";
+      setupError.hidden = false;
+      setupSubmit.disabled = true;
+    }
+  } catch {
+    // A temporary status-check failure must not prevent the sign-in screen from loading.
+  }
+}
+
+setupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setupError.hidden = true;
+  setupSubmit.disabled = true;
+  setupSubmit.textContent = "Creating administrator…";
+  const password = document.getElementById("setup-password").value;
+  const confirmation = document.getElementById("setup-password-confirm").value;
+  if (password !== confirmation) {
+    setupError.textContent = "The passwords do not match.";
+    setupError.hidden = false;
+    setupSubmit.disabled = false;
+    setupSubmit.textContent = "Create administrator";
+    return;
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/auth/bootstrap", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf,
+      },
+      body: JSON.stringify({
+        token: document.getElementById("setup-token").value,
+        username: document.getElementById("setup-username").value,
+        password,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not complete first-run setup.");
+    setupForm.reset();
+    setupDialog.close();
+    showAccount(result.user);
+    await refreshConversations();
+  } catch (error) {
+    setupError.textContent = error.message || "Could not complete first-run setup.";
+    setupError.hidden = false;
+  } finally {
+    setupSubmit.disabled = false;
+    setupSubmit.textContent = "Create administrator";
+  }
+});
+
+
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   loginError.hidden = true;
@@ -519,6 +648,7 @@ chatInput.addEventListener("keydown", (event) => {
 
 clearThread();
 refreshStatus();
+checkFirstRunSetup();
 refreshAccount();
 
 
@@ -1166,3 +1296,63 @@ document.getElementById("summary-form").addEventListener("submit", async (event)
     button.textContent = "Summarise";
   }
 });
+
+
+// Backup keys are generated only in the administrator's browser. Never send
+// this value to the API, persist it in browser storage, or write it to logs.
+document.getElementById("backup-key-generate").addEventListener("click", () => {
+  const warning = document.getElementById("backup-key-warning");
+  const result = document.getElementById("backup-key-result");
+  const value = document.getElementById("backup-key-value");
+  const feedback = document.getElementById("backup-key-feedback");
+  warning.hidden = true;
+  feedback.textContent = "";
+
+  if (!window.crypto?.getRandomValues || typeof window.btoa !== "function") {
+    warning.textContent = "This browser does not provide the secure random-number generator required for backup keys. Try a modern browser.";
+    warning.hidden = false;
+    return;
+  }
+
+  const randomBytes = new Uint8Array(32);
+  window.crypto.getRandomValues(randomBytes);
+  const binary = Array.from(randomBytes, (byte) => String.fromCharCode(byte)).join("");
+  // Keep the base64 padding: Python's urlsafe_b64decode expects the same format.
+  const key = window.btoa(binary).replace(/\+/g, "-").replace(/\//g, "_");
+  value.value = key;
+  result.hidden = false;
+  feedback.textContent = "Generated in this browser only. Copy it into the hidden Panel variable and store an off-server copy.";
+});
+
+document.getElementById("backup-key-copy").addEventListener("click", async () => {
+  const value = document.getElementById("backup-key-value");
+  const feedback = document.getElementById("backup-key-feedback");
+  try {
+    await navigator.clipboard.writeText(value.value);
+    feedback.textContent = "Copied. Save it in a password manager and paste it into the hidden ORINOCO_BACKUP_KEY Panel variable.";
+  } catch {
+    value.focus();
+    value.select();
+    feedback.textContent = "Automatic clipboard access was blocked. The key is selected; copy it manually, then store it outside the VPS.";
+  }
+});
+
+document.getElementById("backup-key-clear").addEventListener("click", () => {
+  document.getElementById("backup-key-value").value = "";
+  document.getElementById("backup-key-result").hidden = true;
+  document.getElementById("backup-key-feedback").textContent = "";
+});
+
+// Clear temporary secrets when their dialogs close (including Escape dismissal).
+adminRecoveryDialog.addEventListener("close", () => {
+  adminRecoveryForm.reset();
+  adminRecoveryError.hidden = true;
+});
+
+settingsDialog.addEventListener("close", () => {
+  document.getElementById("backup-key-value").value = "";
+  document.getElementById("backup-key-result").hidden = true;
+  document.getElementById("backup-key-feedback").textContent = "";
+  document.getElementById("backup-key-warning").hidden = true;
+});
+

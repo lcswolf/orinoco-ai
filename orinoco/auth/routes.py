@@ -15,12 +15,16 @@ from pydantic import BaseModel, Field
 from orinoco.auth.sessions import get_session_user
 
 from orinoco.db import (
+    AccountError,
     User,
     authenticate_user,
+    create_first_admin,
+    reset_admin_password_with_recovery_token,
     change_user_password,
     get_database_path,
     get_user_by_id,
     initialise_database,
+    list_users,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
@@ -36,6 +40,20 @@ class LoginRequest(BaseModel):
     """Validated username and password supplied to the login endpoint."""
     username: str = Field(min_length=3, max_length=32)
     password: str = Field(min_length=1, max_length=1024)
+
+
+class BootstrapRequest(BaseModel):
+    """One-time credentials for creating the initial administrator."""
+    token: str = Field(min_length=32, max_length=256)
+    username: str = Field(min_length=3, max_length=32)
+    password: str = Field(min_length=12, max_length=1024)
+
+
+class AdminRecoveryRequest(BaseModel):
+    """One-time recovery credentials for an existing administrator."""
+    token: str = Field(min_length=32, max_length=256)
+    username: str = Field(min_length=3, max_length=32)
+    new_password: str = Field(min_length=12, max_length=1024)
 
 
 class PasswordChangeRequest(BaseModel):
@@ -200,6 +218,176 @@ def _public_user(user: User) -> dict[str, object]:
         "username": user.username,
         "role": user.role,
     }
+
+
+_BOOTSTRAP_WINDOW_SECONDS = 15 * 60
+_BOOTSTRAP_MAX_FAILURES = 5
+_BOOTSTRAP_TOKEN_TTL_SECONDS = 30 * 60
+_BOOTSTRAP_ARMED_AT = time.monotonic()
+_bootstrap_failures: OrderedDict[str, deque[float]] = OrderedDict()
+
+
+def _check_bootstrap_rate(request: Request) -> str:
+    """Limit failed setup-token attempts by the observed client address."""
+    remote_ip = _resolve_client_ip(request) or "unknown"
+    now = time.monotonic()
+    failures = _bootstrap_failures.get(remote_ip)
+    if failures is None:
+        if len(_bootstrap_failures) >= MAX_TRACKED_LOGIN_IDENTITIES:
+            _bootstrap_failures.popitem(last=False)
+        failures = deque()
+        _bootstrap_failures[remote_ip] = failures
+    else:
+        _bootstrap_failures.move_to_end(remote_ip)
+    while failures and now - failures[0] > _BOOTSTRAP_WINDOW_SECONDS:
+        failures.popleft()
+    if len(failures) >= _BOOTSTRAP_MAX_FAILURES:
+        retry_after = max(1, int(_BOOTSTRAP_WINDOW_SECONDS - (now - failures[0])))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many setup attempts. Please wait before trying again.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    return remote_ip
+
+
+@router.get("/setup-status")
+async def setup_status() -> dict[str, bool]:
+    """Expose only whether first-run setup is needed and has been armed in the Panel."""
+    initialise_database(get_database_path())
+    return {
+        "setup_required": not bool(list_users(database_path=get_database_path())),
+        "bootstrap_enabled": (
+            len(os.environ.get("ORINOCO_BOOTSTRAP_TOKEN", "")) >= 32
+            and time.monotonic() - _BOOTSTRAP_ARMED_AT <= _BOOTSTRAP_TOKEN_TTL_SECONDS
+        ),
+    }
+
+
+@router.post("/bootstrap")
+async def bootstrap_first_admin(
+    payload: BootstrapRequest,
+    request: Request,
+) -> dict[str, object]:
+    """Create the first administrator using a hidden, one-time Panel token."""
+    _require_csrf(request)
+    remote_ip = _check_bootstrap_rate(request)
+    configured_token = os.environ.get("ORINOCO_BOOTSTRAP_TOKEN", "")
+    # Always perform a constant-time comparison, including when setup is not armed.
+    expected_token = configured_token.encode("utf-8") if configured_token else bytes(32)
+    token_matches = hmac.compare_digest(payload.token.encode("utf-8"), expected_token)
+    if (
+        len(configured_token) < 32
+        or time.monotonic() - _BOOTSTRAP_ARMED_AT > _BOOTSTRAP_TOKEN_TTL_SECONDS
+        or not token_matches
+    ):
+        _bootstrap_failures.setdefault(remote_ip, deque()).append(time.monotonic())
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Setup is not available or the setup token was not accepted.",
+        )
+
+    initialise_database(get_database_path())
+    try:
+        user = create_first_admin(
+            payload.username,
+            payload.password,
+            database_path=get_database_path(),
+        )
+    except AccountError as exc:
+        # Do not return account-existence or username details through the public setup route.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Initial setup has already been completed or the details were invalid.",
+        ) from exc
+
+    # Establish a fresh authenticated session. The database's one-account guard
+    # remains authoritative even if the Panel variable is left configured.
+    _bootstrap_failures.pop(remote_ip, None)
+    request.session.clear()
+    request.session["user_id"] = user.id
+    request.session["session_version"] = user.session_version
+    request.session["csrf_token"] = secrets.token_urlsafe(32)
+    return {"authenticated": True, "user": _public_user(user)}
+
+
+_ADMIN_RECOVERY_TOKEN_TTL_SECONDS = 30 * 60
+_ADMIN_RECOVERY_ARMED_AT = time.monotonic()
+_admin_recovery_failures: OrderedDict[str, deque[float]] = OrderedDict()
+
+
+def _check_admin_recovery_rate(request: Request) -> str:
+    """Throttle failed recovery attempts without storing submitted credentials."""
+    remote_ip = _resolve_client_ip(request) or "unknown"
+    now = time.monotonic()
+    failures = _admin_recovery_failures.get(remote_ip)
+    if failures is None:
+        if len(_admin_recovery_failures) >= MAX_TRACKED_LOGIN_IDENTITIES:
+            _admin_recovery_failures.popitem(last=False)
+        failures = deque()
+        _admin_recovery_failures[remote_ip] = failures
+    else:
+        _admin_recovery_failures.move_to_end(remote_ip)
+    while failures and now - failures[0] > _BOOTSTRAP_WINDOW_SECONDS:
+        failures.popleft()
+    if len(failures) >= _BOOTSTRAP_MAX_FAILURES:
+        retry_after = max(1, int(_BOOTSTRAP_WINDOW_SECONDS - (now - failures[0])))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many recovery attempts. Please wait before trying again.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    return remote_ip
+
+
+@router.post("/recover-admin")
+async def recover_admin_account(
+    payload: AdminRecoveryRequest,
+    request: Request,
+) -> dict[str, object]:
+    """Reset an administrator password with a Panel-armed, expiring, one-use token."""
+    _require_csrf(request)
+    remote_ip = _check_admin_recovery_rate(request)
+    configured_token = os.environ.get("ORINOCO_ADMIN_RECOVERY_TOKEN", "")
+    expected_token = configured_token.encode("utf-8") if configured_token else bytes(32)
+    token_matches = hmac.compare_digest(payload.token.encode("utf-8"), expected_token)
+    if (
+        len(configured_token) < 32
+        or time.monotonic() - _ADMIN_RECOVERY_ARMED_AT > _ADMIN_RECOVERY_TOKEN_TTL_SECONDS
+        or not token_matches
+    ):
+        _admin_recovery_failures.setdefault(remote_ip, deque()).append(time.monotonic())
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator recovery is not available or the recovery token was not accepted.",
+        )
+
+    try:
+        user = reset_admin_password_with_recovery_token(
+            payload.username,
+            payload.new_password,
+            payload.token,
+            database_path=get_database_path(),
+        )
+    except AccountError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The new password did not meet the account requirements.",
+        ) from exc
+    if user is None:
+        _admin_recovery_failures.setdefault(remote_ip, deque()).append(time.monotonic())
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator recovery is not available or the recovery token was not accepted.",
+        )
+
+    # Password reset increments session_version, invalidating every prior session.
+    _admin_recovery_failures.pop(remote_ip, None)
+    request.session.clear()
+    request.session["user_id"] = user.id
+    request.session["session_version"] = user.session_version
+    request.session["csrf_token"] = secrets.token_urlsafe(32)
+    return {"authenticated": True, "user": _public_user(user)}
 
 
 @router.get("/csrf")

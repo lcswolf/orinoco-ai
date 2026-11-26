@@ -151,3 +151,24 @@ def test_private_memories_navigation_prompts_for_sign_in() -> None:
     assert "if (!currentUser)" in handler
     assert "loginDialog.showModal()" in handler
     assert 'document.getElementById("login-username").focus()' in handler
+
+
+def test_backup_key_is_generated_locally_and_cleared_when_settings_close() -> None:
+    """The backup key stays in browser memory and works with direct IP/port access."""
+    html = (ROOT / "orinoco" / "static" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "orinoco" / "static" / "app.js").read_text(encoding="utf-8")
+
+    start = script.index('document.getElementById("backup-key-generate").addEventListener')
+    end = script.index('document.getElementById("backup-key-copy").addEventListener', start)
+    generator = script[start:end]
+
+    assert "window.crypto?.getRandomValues" in generator
+    assert "window.crypto.getRandomValues(randomBytes)" in generator
+    assert 'window.btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_")' in generator
+    assert "window.isSecureContext" not in generator
+    assert not any(secret_sink in generator for secret_sink in ("fetch(", "localStorage", "sessionStorage", "console."))
+    assert 'id="backup-key-value" type="text" readonly' in html
+    assert 'id="backup-key-copy"' in html
+    assert "value.select();" in script
+    assert 'settingsDialog.addEventListener("close"' in script
+    assert 'adminRecoveryDialog.addEventListener("close"' in script

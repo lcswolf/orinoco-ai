@@ -145,3 +145,104 @@ def test_initial_admin_bootstrap_refuses_noninteractive_password_input(tmp_path,
 
     assert main() == 2
     assert list_users(database_path=database) == []
+
+
+def test_create_first_admin_is_one_time_and_refuses_existing_accounts(tmp_path) -> None:
+    """The browser bootstrap persistence operation can only create one first account."""
+    import pytest
+    from orinoco.db import AccountError, create_first_admin, list_users
+
+    database = tmp_path / "first-admin.sqlite3"
+    first = create_first_admin(
+        "firstadmin",
+        "a-long-first-admin-password-123",
+        database_path=database,
+    )
+    assert first.role == "admin"
+    assert [user.username for user in list_users(database_path=database)] == ["firstadmin"]
+
+    with pytest.raises(AccountError, match="setup has already been completed"):
+        create_first_admin(
+            "secondadmin",
+            "a-long-second-admin-password-123",
+            database_path=database,
+        )
+    assert [user.username for user in list_users(database_path=database)] == ["firstadmin"]
+
+
+def test_create_first_admin_rejects_invalid_password_without_creating_account(tmp_path) -> None:
+    """Invalid bootstrap credentials leave the database ready for a valid setup attempt."""
+    import pytest
+    from orinoco.db import AccountError, create_first_admin, list_users
+
+    database = tmp_path / "invalid-first-admin.sqlite3"
+    with pytest.raises(AccountError):
+        create_first_admin("firstadmin", "short", database_path=database)
+    assert list_users(database_path=database) == []
+
+
+def test_admin_recovery_token_resets_password_once_and_revokes_sessions(tmp_path) -> None:
+    """Recovery tokens are consumed durably and each reset invalidates old sessions."""
+    from orinoco.db import (
+        create_user,
+        initialise_database,
+        reset_admin_password_with_recovery_token,
+    )
+
+    database = tmp_path / "admin-recovery.sqlite3"
+    initialise_database(database)
+    admin = create_user(
+        "recoveradmin",
+        "an-old-admin-password-123",
+        role="admin",
+        database_path=database,
+    )
+    first = reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-new-admin-password-456",
+        "panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    )
+    assert first is not None
+    assert first.session_version == admin.session_version + 1
+
+    assert reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-third-admin-password-789",
+        "panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    ) is None
+
+    # A different, newly armed token can be used for a later recovery.
+    second = reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-third-admin-password-789",
+        "a-different-panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    )
+    assert second is not None
+    assert second.session_version == admin.session_version + 2
+
+
+def test_admin_recovery_refuses_unknown_or_inactive_accounts(tmp_path) -> None:
+    """A recovery token cannot be used to create an account or reactivate one."""
+    from orinoco.db import create_user, initialise_database, reset_admin_password_with_recovery_token, set_user_active
+
+    database = tmp_path / "admin-recovery-inactive.sqlite3"
+    initialise_database(database)
+    admin = create_user("recoveradmin", "an-old-admin-password-123", role="admin", database_path=database)
+    create_user("backupadmin", "another-admin-password-456", role="admin", database_path=database)
+    assert set_user_active(admin.id, False, database_path=database) is True
+
+    assert reset_admin_password_with_recovery_token(
+        "recoveradmin",
+        "a-new-admin-password-456",
+        "panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    ) is None
+    assert reset_admin_password_with_recovery_token(
+        "missingadmin",
+        "a-new-admin-password-456",
+        "a-different-panel-recovery-token-with-at-least-32-random-characters",
+        database_path=database,
+    ) is None

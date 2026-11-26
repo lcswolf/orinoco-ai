@@ -341,3 +341,9 @@ h1 em { color: #8bd9bd; font-style: normal; }
   .account-action { margin-left: 3px; padding: 7px 7px; white-space: nowrap; }
   .icon-button { width: 32px; min-width: 32px; margin-left: 3px; }
 }
+
+
+/* Keep browser-generated backup key controls readable and easy to operate. */
+.settings-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.settings-actions .login-submit, .settings-actions .dialog-cancel { flex: 1 1 140px; margin-top: 0; }
+.settings-form input[readonly] { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; overflow-wrap: anywhere; }

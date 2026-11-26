@@ -136,8 +136,26 @@
       "rules": "required|string|max:512"
     },
     {
+      "name": "First Administrator Setup Token",
+      "description": "Optional one-time token used to create the first administrator from the Orinoco setup page. Generate a random value of at least 32 characters, set it here and restart Orinoco. The token expires 30 minutes after each application start; complete setup within that window, then clear this variable and restart. Treat the token as a secret; container processes can read it. The database independently prevents a second bootstrap.",
+      "env_variable": "ORINOCO_BOOTSTRAP_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|min:32|max:256"
+    },
+    {
+      "name": "Administrator Recovery Token",
+      "description": "Optional one-time token for recovering an existing administrator account. Set a random value of at least 32 characters in the Panel and restart Orinoco; it expires 30 minutes after startup. After recovery, clear this variable and restart. Treat the token as a secret; container processes can read it. Each token fingerprint is permanently recorded in the database so it cannot be reused after another restart.",
+      "env_variable": "ORINOCO_ADMIN_RECOVERY_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string|min:32|max:256"
+    },
+    {
       "name": "Backup Encryption Key",
-      "description": "Required for encrypted backup creation, verification and restore. Generate with python -m orinoco.backups generate-key and store the key securely outside the VPS. Do not reuse it elsewhere.",
+      "description": "Required for encrypted backup creation, verification and restore. Generate it in Orinoco's administrator Settings using the browser-only key generator; copy it into this hidden variable and keep an independent off-server copy. The key is generated locally in the browser and is not sent to Orinoco. Do not reuse it elsewhere.",
       "env_variable": "ORINOCO_BACKUP_KEY",
       "default_value": "",
       "user_viewable": false,

@@ -155,7 +155,46 @@
       <input id="login-password" name="password" type="password" autocomplete="current-password" required>
       <p class="login-error" id="login-error" role="alert" hidden></p>
       <button class="login-submit" id="login-submit" type="submit">Sign in</button>
+      <button class="dialog-cancel" id="admin-recovery-open" type="button">Administrator locked out? Recover access</button>
       <button class="dialog-cancel" id="login-cancel" type="button">Not now</button>
+    </form>
+  </dialog>
+
+  <dialog class="login-dialog" id="setup-dialog" aria-labelledby="setup-title">
+    <form id="setup-form">
+      <div class="dialog-brand"><span class="brand-mark" aria-hidden="true">o</span><span>orinoco</span></div>
+      <h2 id="setup-title">Make yourself at home</h2>
+      <p class="dialog-copy">Create the first Orinoco administrator. The one-time setup token is available in your Pterodactyl server variables.</p>
+      <label for="setup-token">One-time setup token</label>
+      <input id="setup-token" name="token" type="password" autocomplete="off" required minlength="32" maxlength="256">
+      <label for="setup-username">Administrator username</label>
+      <input id="setup-username" name="username" type="text" autocomplete="username" minlength="3" maxlength="32" required>
+      <label for="setup-password">Password</label>
+      <input id="setup-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="1024" required>
+      <label for="setup-password-confirm">Confirm password</label>
+      <input id="setup-password-confirm" name="password-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="1024" required>
+      <p class="login-error" id="setup-error" role="alert" hidden></p>
+      <button class="login-submit" id="setup-submit" type="submit">Create administrator</button>
+      <button class="dialog-cancel" id="setup-cancel" type="button">Not now</button>
+    </form>
+  </dialog>
+
+  <dialog class="login-dialog" id="admin-recovery-dialog" aria-labelledby="admin-recovery-title">
+    <form id="admin-recovery-form">
+      <div class="dialog-brand"><span class="brand-mark" aria-hidden="true">o</span><span>orinoco</span></div>
+      <h2 id="admin-recovery-title">Recover administrator access</h2>
+      <p class="dialog-copy">Arm recovery in the hidden Pterodactyl server variable first. The recovery token expires 30 minutes after Orinoco starts and can only be used once.</p>
+      <label for="admin-recovery-token">One-time recovery token</label>
+      <input id="admin-recovery-token" name="token" type="password" autocomplete="off" required minlength="32" maxlength="256">
+      <label for="admin-recovery-username">Administrator username</label>
+      <input id="admin-recovery-username" name="username" type="text" autocomplete="username" minlength="3" maxlength="32" required>
+      <label for="admin-recovery-password">New password</label>
+      <input id="admin-recovery-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="1024" required>
+      <label for="admin-recovery-password-confirm">Confirm new password</label>
+      <input id="admin-recovery-password-confirm" name="password-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="1024" required>
+      <p class="login-error" id="admin-recovery-error" role="alert" hidden></p>
+      <button class="login-submit" id="admin-recovery-submit" type="submit">Reset administrator password</button>
+      <button class="dialog-cancel" id="admin-recovery-cancel" type="button">Cancel</button>
     </form>
   </dialog>
 
@@ -215,6 +254,21 @@
           <p class="settings-feedback" id="user-feedback" role="status" hidden></p>
         </form>
         <div class="user-list" id="admin-user-list" aria-live="polite"></div>
+        <div class="settings-section" aria-labelledby="backup-key-heading">
+          <h3 id="backup-key-heading">Backup encryption key</h3>
+          <p class="settings-description">Generate a new 256-bit key in this browser. It is not sent to Orinoco or stored on the server. Copy it into the hidden ORINOCO_BACKUP_KEY variable in Pterodactyl and keep an independent copy in a password manager. Losing this key means encrypted backups cannot be restored.</p>
+          <button class="login-submit" id="backup-key-generate" type="button">Generate backup key</button>
+          <div class="settings-form" id="backup-key-result" hidden>
+            <label for="backup-key-value">New backup key — copy it now</label>
+            <input id="backup-key-value" type="text" readonly autocomplete="off" spellcheck="false">
+            <div class="settings-actions">
+              <button class="login-submit" id="backup-key-copy" type="button">Copy key</button>
+              <button class="dialog-cancel" id="backup-key-clear" type="button">Clear key</button>
+            </div>
+            <p class="settings-feedback" id="backup-key-feedback" role="status"></p>
+          </div>
+          <p class="settings-feedback" id="backup-key-warning" role="status" hidden></p>
+        </div>
       </section>
   <section class="settings-section" id="admin-persona-tools" hidden aria-labelledby="persona-heading">
     <h3 id="persona-heading">Core assistant personality</h3>

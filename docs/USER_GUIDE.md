@@ -66,13 +66,30 @@ Keep the Discord and voice settings disabled. These integrations are not impleme
 
 ### Generate and protect the backup key
 
-**Panel-first gap — workflow to be improved:** the current key generator prints a key to standard output. Do not run it as a Startup Command because console output may persist in logs. A safe key-generation and one-time copy workflow that does not leave the secret in Panel logs is required before the no-SSH setup is complete. The key must be entered into the hidden ORINOCO_BACKUP_KEY Egg variable and stored separately off the VPS. If lost, encrypted backups cannot be restored.
+After signing in as an administrator, open **Account settings → Backup encryption key** and choose **Generate backup key**. Orinoco uses the browser's cryptographically secure random-number generator to create a 256-bit URL-safe base64 key. The key is generated locally in the browser: it is not sent to the Orinoco server, saved in browser storage or written to logs.
+
+1. Use the **Copy key** button and store the key in a password manager or another secure location away from the VPS.
+2. In Pterodactyl, paste it into the hidden `ORINOCO_BACKUP_KEY` server variable.
+3. Restart Orinoco so the service reads the new variable.
+4. Return to the browser and use **Clear key**. Closing the settings dialog also clears the displayed value. Do not leave the key displayed on a shared device.
+
+The browser generator requires a modern browser with `crypto.getRandomValues`. It also works when Orinoco is accessed directly by IP and port over HTTP; if automatic clipboard access is unavailable, the key is selected for manual copying. HTTPS is recommended for normal sign-in and use. The older CLI generator still prints to standard output; do not run it through the Panel console or as a Startup Command. If the key is lost, encrypted backups cannot be restored.
 
 If you configure S3-compatible backup storage, use a private bucket, HTTPS endpoint and a dedicated restricted credential. Configure a bucket lifecycle policy separately; local retention does not automatically delete remote objects.
 
 ## 5. Create the first administrator
 
-**Panel-first gap — not yet implemented:** the current first-admin and password-recovery commands require SSH and a TTY. We will replace these with a secure, single-use browser setup/recovery flow that is armed through hidden Panel variables. Until that work is complete, this preview is not ready for a no-SSH installation. Do not work around this by putting passwords into Startup Commands or console input. See [Panel-first Management](PANEL_MANAGEMENT.md).
+**First-admin browser setup is implemented on the feature branch.** Python CI #1031 (259 tests) and container smoke #439 passed; live Panel verification is still pending. The setup steps are:
+
+1. In Pterodactyl, stop the Orinoco server and set the hidden **First Administrator Setup Token** variable to a randomly generated value of at least 32 characters. Do not use a memorable password.
+2. Start/restart Orinoco and open its web address. When the database has no accounts, the first-run setup dialog appears.
+3. Enter the Panel token, choose an administrator username and create a strong password.
+4. After success, return to Pterodactyl, clear the setup-token variable and restart Orinoco. The database independently prevents a second bootstrap even if the variable is accidentally left set.
+5. Store the administrator password in a password manager.
+
+The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. The token expires 30 minutes after each application start; restarting Orinoco re-arms the configured token. The database still prevents repeat setup after an administrator exists. It does not expose public registration. These protections passed Python CI [#1031](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355190) (259 tests); container build/smoke [#439](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355223) also passed. Disposable Panel verification remains a release requirement.
+
+**Administrator recovery is implemented on the feature branch.** Python CI [#1031](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355190) and container smoke [#439](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355223) passed; live Panel verification is still pending. To arm it, set the hidden **Administrator Recovery Token** variable in Pterodactyl to a random value of at least 32 characters and restart Orinoco. Open the sign-in dialog and choose **Administrator locked out? Recover access**. Enter the token, the existing administrator username and a new password. The token expires 30 minutes after startup; its fingerprint is stored in the database after use, so the same token cannot be replayed after a restart. The password reset revokes every existing session. Closing the recovery dialog clears its token and password fields. After recovery, clear the Panel variable and restart Orinoco. Do not put the token or password in Startup Commands or console logs. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 ## 6. Use the web interface
 
@@ -120,6 +137,7 @@ Orinoco supports encrypted local backups, verification, confirmed restore and op
 - The backup includes application data and private documents, but not Egg/environment variables or Ollama model weights.
 - Keep the encryption key and any environment-supplied session secret separately.
 - A backup stored only on the VPS is not an off-site backup.
+- Manual one-off backup creation and verification are run through the Pterodactyl Startup Command; Orinoco does not currently have a manual-backup button in its web interface. Follow [Updating and Rollback](UPDATING.md) and restore the normal Startup Command after each one-shot task.
 
 Before an application update, create and verify a fresh backup. Follow [Updating and Rollback](UPDATING.md) exactly; schema rollback requires restoring the pre-update backup before starting the older image. Do not restore a backup while Orinoco is running.
 
