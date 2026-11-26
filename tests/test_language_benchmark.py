@@ -75,13 +75,15 @@ def test_ask_ollama_posts_expected_payload_to_local_api() -> None:
     server, thread, received = make_server()
     try:
         endpoint = f"http://127.0.0.1:{server.server_port}"
-        answer = ask_ollama(endpoint, "qwen2.5:1.5b", "Helo", 2048, 5)
+        history = [{"role": "user", "content": "Helo"}, {"role": "assistant", "content": "Shwmae!"}]
+        answer = ask_ollama(endpoint, "qwen2.5:1.5b", "Beth nesaf?", 2048, 5, history)
         assert answer == "Helo!"
         assert received["path"] == "/api/chat"
         body = received["body"]
         assert body["model"] == "qwen2.5:1.5b"
         assert body["stream"] is False
         assert body["options"]["num_ctx"] == 2048
+        assert body["messages"][1:] == history + [{"role": "user", "content": "Beth nesaf?"}]
     finally:
         stop_server(server, thread)
 
