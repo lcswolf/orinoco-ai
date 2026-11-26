@@ -26,7 +26,7 @@ def get_database_path() -> Path:
 
 
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
-CURRENT_SCHEMA_VERSION = 8
+CURRENT_SCHEMA_VERSION = 9
 
 
 class MemoryLimitExceeded(ValueError):
@@ -262,6 +262,8 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                     CHECK (tone IN ('friendly', 'direct', 'playful')),
                 answer_detail TEXT NOT NULL DEFAULT 'balanced'
                     CHECK (answer_detail IN ('concise', 'balanced', 'detailed')),
+                language TEXT NOT NULL DEFAULT 'auto'
+                    CHECK (language IN ('auto', 'en', 'cy')),
                 auto_save_memories INTEGER NOT NULL DEFAULT 1
                     CHECK (auto_save_memories IN (0, 1)),
                 updated_at TEXT NOT NULL
@@ -279,6 +281,15 @@ def initialise_database(database_path: Path = DEFAULT_DATABASE_PATH) -> None:
                 ALTER TABLE user_preferences
                 ADD COLUMN auto_save_memories INTEGER NOT NULL DEFAULT 1
                     CHECK (auto_save_memories IN (0, 1))
+                """
+            )
+        # v9 adds a per-account preferred reply language; old accounts default to automatic.
+        if "language" not in preference_columns:
+            connection.execute(
+                """
+                ALTER TABLE user_preferences
+                ADD COLUMN language TEXT NOT NULL DEFAULT 'auto'
+                    CHECK (language IN ('auto', 'en', 'cy'))
                 """
             )
         connection.execute(
@@ -819,10 +830,10 @@ def get_user_preferences(
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, object]:
     """Return the account's voice, tone, answer-detail and memory-saving preferences."""
-    defaults = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
+    defaults = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "language": "auto", "auto_save_memories": True}
     with _database(database_path) as connection:
         row = connection.execute(
-            "SELECT voice, tone, answer_detail, auto_save_memories FROM user_preferences WHERE user_id = ?",
+            "SELECT voice, tone, answer_detail, language, auto_save_memories FROM user_preferences WHERE user_id = ?",
             (user_id,),
         ).fetchone()
     if row is None:
@@ -831,6 +842,7 @@ def get_user_preferences(
         "voice": str(row["voice"]),
         "tone": str(row["tone"]),
         "answer_detail": str(row["answer_detail"]),
+        "language": str(row["language"]),
         "auto_save_memories": bool(row["auto_save_memories"]),
     }
 
@@ -841,6 +853,7 @@ def update_user_preferences(
     voice: str,
     tone: str,
     answer_detail: str,
+    language: str = "auto",
     auto_save_memories: bool = True,
     database_path: Path = DEFAULT_DATABASE_PATH,
 ) -> dict[str, object]:
@@ -849,8 +862,9 @@ def update_user_preferences(
         "voice": {"bright", "calm", "professional"},
         "tone": {"friendly", "direct", "playful"},
         "answer_detail": {"concise", "balanced", "detailed"},
+        "language": {"auto", "en", "cy"},
     }
-    values = {"voice": voice, "tone": tone, "answer_detail": answer_detail}
+    values = {"voice": voice, "tone": tone, "answer_detail": answer_detail, "language": language}
     if not isinstance(auto_save_memories, bool):
         raise ValueError("Automatic memory saving preference must be true or false.")
     for field, choices in allowed.items():
@@ -860,16 +874,17 @@ def update_user_preferences(
     with _database(database_path) as connection:
         connection.execute(
             """
-            INSERT INTO user_preferences (user_id, voice, tone, answer_detail, auto_save_memories, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO user_preferences (user_id, voice, tone, answer_detail, language, auto_save_memories, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(user_id) DO UPDATE SET
                 voice = excluded.voice,
                 tone = excluded.tone,
                 answer_detail = excluded.answer_detail,
+                language = excluded.language,
                 auto_save_memories = excluded.auto_save_memories,
                 updated_at = excluded.updated_at
             """,
-            (user_id, voice, tone, answer_detail, int(auto_save_memories), now),
+            (user_id, voice, tone, answer_detail, language, int(auto_save_memories), now),
         )
     return {**values, "auto_save_memories": auto_save_memories}
 
