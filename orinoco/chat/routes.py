@@ -141,18 +141,18 @@ _SENSITIVE_MEMORY_TERMS = (
     "presgripsiwn", "llawdriniaeth", "meddyg", "ysbyty", "clinig", "anaf",
     "torri fy mraich", "torri fy nghoes", "torri asgwrn", "caethiwed",
     "crefydd", "cristion", "catholig", "protestant", "mwslim", "iddewig",
-    "hindŵ", "bwdhaidd", "sikh", "anffyddiwr", "agnostig", "eglwys", "mosg",
+    "hindŵ", "bwdhaidd", "sikh", "anffyddiwr", "agnostig", "gristion", "eglwys", "mosg",
     "synagog", "teml", "gweddi", "addoli", "gwleidyddiaeth", "etholiad",
-    "pleidleisio", "pleidlais", "cyfeiriadedd rhywiol", "hoyw", "lesbiaidd",
+    "pleidleisio", "pleidlais", "plaid wleidyddol", "cyfeiriadedd rhywiol", "hoyw", "lesbiaidd",
     "deurywiol", "trawsryweddol", "hunaniaeth rhywedd", "cofnod troseddol",
-    "euogfarn", "arestio", "carchar", "ethnigrwydd", "cefndir ethnig",
+    "euogfarn", "arestio", "carchar", "ethnigrwydd", "cefndir ethnig", "hil",
     "rhif yswiriant gwladol", "rhif pasbort",
 )
 _EMAIL_PATTERN = re.compile(r"\b[^\s@]+@[^\s@]+\.[^\s@]+\b")
 _PHONE_PATTERN = re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)")
-_ADDRESS_PATTERN = re.compile(r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr|close|court|ct|crescent|way|place|pl|terrace|ter)\b", re.IGNORECASE)
+_ADDRESS_PATTERN = re.compile(r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr|close|court|ct|crescent|way|place|pl|terrace|ter|heol|ffordd|stryd|rhodfa|l[oô]n|cae|clos|teras)\b", re.IGNORECASE)
 _UK_POSTCODE_PATTERN = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.IGNORECASE)
-_DOB_PATTERN = re.compile(r"\b(?:date of birth|dob|born on|my birthday is)\b", re.IGNORECASE)
+_DOB_PATTERN = re.compile(r"\b(?:date of birth|dob|born on|my birthday is|dyddiad geni|fy mhen-blwydd|ganwyd ar)\b", re.IGNORECASE)
 
 # Reject memory candidates that try to persist prompt-injection or policy-override
 # instructions. Memories are reference data, never an alternate instruction channel.
