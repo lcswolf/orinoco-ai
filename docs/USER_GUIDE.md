@@ -40,7 +40,7 @@ Do this only after a release image has been published and its release notes say 
 3. Create a server using the imported Orinoco Egg.
 4. Select the exact immutable Docker image tag and digest recorded in the current test/release notes. Do not guess a tag. The published `:stable` tag is mutable and should not be used as the sole release identifier.
 5. Assign the web allocation and enough disk/RAM for the model and persistent data.
-6. Set the required backup encryption key and review the other Egg variables before starting.
+6. Review the Egg variables before starting. The Orinoco backup scheduler is optional and disabled by default; configure a backup encryption key only if you intend to use Orinoco's encrypted backup features.
 7. Start the server and watch the console for Ollama startup, model download and web-service readiness messages.
 
 The live import, first start, image pull, and Pterodactyl console behaviour are still release-gated and must be tested on a disposable server first. Detailed Egg notes are in [Pterodactyl Egg](PTERODACTYL_EGG.md).
