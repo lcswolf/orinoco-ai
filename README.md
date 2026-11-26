@@ -1,54 +1,76 @@
 # Orinoco AI
 
-A self-hosted personal AI assistant with local inference, persistent memory, private documents, web research and planned Discord integration.
+**A self-hosted, privacy-focused AI assistant powered by local models.**
 
-> **Project status: early implementation.** The custom interface, local model runtime, authentication, private chat, personal memory, document libraries and explicit SearXNG search workspace are implemented. Orinoco is not yet production-ready.
+Orinoco is designed to give individuals, communities and hosting teams a friendly assistant they can run and manage themselves. It uses Ollama for local language-model inference and a custom web interface built for Orinoco.
 
-## Project goals
+> **Project status: active development / staging preview.** Core application features are implemented, and a container image has been published to GitHub Container Registry. Public anonymous pull access and live Pterodactyl installation are still to be verified. Orinoco is not production-ready.
 
-Orinoco aims to provide a friendly, private assistant that can be hosted on a modest VPS and use locally-run language models.
+## What Orinoco is aiming to provide
 
-- Custom Orinoco web interface rather than Open WebUI, with an original Womble-inspired woodland helper mascot and UK-friendly woodland palette.
-- Local model inference through Ollama, without external AI inference APIs.
-- Private administrator and standard-user accounts.
-- Per-user chat history with owner-only deletion, personal memories with review/correction/deletion controls, and private response voice/tone/detail preferences.
-- Administrator-managed core personality and humour controls.
-- Private user documents and an administrator-managed shared knowledge library.
-- Optional web search through a configured SearXNG instance.
-- User-triggered summaries of public webpages, fetched with SSRF protections and summarised by the local model.
-- Optional Discord text integration and explicitly activated voice features (planned).
+- **Private multi-user chat** with account-scoped conversation history.
+- **Local AI inference** through Ollama; no hosted AI inference API is part of the design.
+- **Personal memory controls** so users can review, correct and delete their own saved memories.
+- **Private and shared document libraries** with bounded text extraction and keyword retrieval.
+- **Optional web research** through an administrator-configured SearXNG service.
+- **Welsh and English support**, including per-user reply-language preferences.
+- **Administrator controls** for accounts, the shared assistant persona and operational settings.
+- **Pterodactyl-oriented operations**, with a custom Egg and a Panel-first day-to-day management goal.
+- **Encrypted backups and recovery tooling**, with optional S3-compatible off-site uploads.
+
+Discord text integration and voice features are planned, not currently available. See [Project Status](docs/PROJECT_STATUS.md) for the implementation breakdown.
 
 ## Design principles
 
-- **Privacy by default:** user conversations, documents and memories remain separated.
-- **Local inference:** prompts are processed by a model hosted alongside Orinoco.
-- **Safe retrieval:** webpages and documents are untrusted input and must not override system or user instructions.
-- **Small-server friendly:** resource usage and model choices should suit modest VPS hardware.
-- **Transparent operation:** distinguish verified information from uncertainty and provide source links where applicable.
+1. **Privacy by default:** conversations, memories and private documents belong to individual accounts.
+2. **Local inference:** prompts are sent to the local Ollama service, not a third-party AI inference API.
+3. **Secure boundaries:** retrieved webpages and documents are untrusted reference material, not instructions.
+4. **Modular growth:** optional integrations should not burden installations that do not need them.
+5. **Hardware awareness:** the long-term design must adapt to the CPU, memory and acceleration actually available to the container.
+6. **Honest status:** documentation distinguishes implemented, tested, staging-only and planned features.
 
-## Setup and usage
+## Getting started
 
-The step-by-step [User and Setup Guide](docs/USER_GUIDE.md) covers host preparation, Pterodactyl installation, configuration, first administrator setup, using chat/memories/documents/web research, backups and troubleshooting. It is marked preview until the image and live deployment are release-verified.
+Start with the [Documentation Index](docs/README.md).
 
-## Planned deployment
+- New users and operators: [User and Setup Guide](docs/USER_GUIDE.md)
+- Pterodactyl operators: [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md) and [Test VPS Runbook](docs/TEST_VPS_RUNBOOK.md)
+- Developers: [Development Guide](docs/DEVELOPMENT.md) and [Contributing](CONTRIBUTING.md)
+- Technical overview: [Architecture](docs/ARCHITECTURE.md)
+- Current capabilities and release gates: [Project Status](docs/PROJECT_STATUS.md)
 
-The initial deployment is intended for Ubuntu 24.04 LTS on a rented VPS, with Pterodactyl Panel 1.13.0 (stable 1.x release line) managing Orinoco through a custom Egg and Docker image. The container foundation includes a pinned Ollama CPU runtime, a supervisor, first-run model download and separate liveness/readiness checks.
+**Important:** the setup guide is a preview, not a production deployment recipe. Do not deploy to a live multi-user service until the release gates in Project Status have been completed.
 
-## Repository status
+## Container image
 
-The repository includes a custom responsive interface, secure authentication, administrator user management, authenticated local chat, private conversations and memories, private/shared document libraries, SQLite FTS5 retrieval and an explicit web-search workspace that uses an administrator-configured SearXNG service.
+The project has published an immutable test image:
 
-Encrypted local backups, verified S3-compatible off-site uploads, a supervised daily scheduler and configurable local retention are implemented. Remote bucket lifecycle retention and restore-from-remote convenience remain outstanding. The container build and smoke test pass in CI, but the image has not been published to GHCR or deployed. Discord, voice and production deployment are not implemented yet.
+- `ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539`
+- OCI index digest: `sha256:98dac555b4efad1da9b7306a09a30df5a8b25a57520fc0227590f7dd7885ff0`
 
-See [User and Setup Guide](docs/USER_GUIDE.md), [Network Deployment](docs/NETWORK_DEPLOYMENT.md), [Project Status](docs/PROJECT_STATUS.md), [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md), [Updating and Rollback](docs/UPDATING.md), [Pre-release Audit](docs/PRE_RELEASE_AUDIT.md) and [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md).
+The `stable` tag is also published, but release operators should use the exact immutable tag/digest recorded for the release being tested. Anonymous/public pull access has not yet been independently verified. The image has not yet passed a live Pterodactyl Panel 1.13.0 import and deployment test.
 
-## Security
+## Repository map
 
-Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. Ollama is configured for loopback-only access and cloud features are disabled. A hidden Egg variable is not a secure secret store. See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+| Path | Purpose |
+| --- | --- |
+| `orinoco/` | FastAPI application and feature modules |
+| `orinoco/static/` | Web interface assets |
+| `docker/` | Container image and supervised startup |
+| `egg/` | Pterodactyl Egg definition |
+| `tests/` | Automated tests |
+| `scripts/` | Developer and evaluation utilities |
+| `docs/` | User, operator, architecture and development documentation |
+
+## Security and privacy
+
+Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. Keep Ollama, the database and application data private. A hidden Pterodactyl variable is not a secure secret vault: processes inside the container can read environment variables.
+
+Read [SECURITY.md](SECURITY.md) before exposing an instance to a network or handling other people's data. Report vulnerabilities privately using GitHub's private vulnerability reporting where available.
 
 ## Contributing
 
-Contributions and suggestions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+Suggestions, bug reports and contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [documentation conventions](docs/README.md#documentation-conventions) before submitting changes.
 
 ## Licence
 
