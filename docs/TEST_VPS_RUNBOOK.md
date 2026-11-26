@@ -6,8 +6,8 @@
 
 ## Release gate before the maintenance window
 
-- [ ] The Orinoco image has been built, tagged and published to GHCR, and the exact immutable tag/digest is recorded.
-- [ ] The matching `egg/egg-orinoco.json` has been checked against the published image and imported into a dedicated Orinoco Nest.
+- [x] The Orinoco image is published to GHCR. Immutable tag: `ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539`. Published OCI index digest: `sha256:98dac555b4efad1da9b730a6b09a30df5a8b25a57520fc0227590f7dd7885ff0`.
+- [ ] The matching `egg/egg-orinoco.json` has been reviewed against the published image and imported into a dedicated Orinoco Nest on the live Panel. This remains an outstanding release gate.
 - [ ] The test owner can access the Pterodactyl administrator UI and has permission to create a test server and assign a free allocation.
 - [ ] A free, dedicated TCP allocation is identified. Do not reuse the game server's port.
 - [ ] The test server has a separate persistent data directory/volume managed by Pterodactyl. Do not attach or reuse the game server's files.
