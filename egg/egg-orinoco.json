@@ -155,12 +155,12 @@
     },
     {
       "name": "Backup Encryption Key",
-      "description": "Required for encrypted backup creation, verification and restore. Generate it in Orinoco's administrator Settings using the browser-only key generator; copy it into this hidden variable and keep an independent off-server copy. The key is generated locally in the browser and is not sent to Orinoco. Do not reuse it elsewhere.",
+      "description": "Optional during initial setup. After creating the first administrator, generate a key in Orinoco's administrator Settings, copy it into this hidden Panel variable and keep an independent off-server copy. Encrypted backups remain unavailable until a valid key is configured. The key is generated locally in the browser and is not sent to Orinoco. Do not reuse it elsewhere.",
       "env_variable": "ORINOCO_BACKUP_KEY",
       "default_value": "",
       "user_viewable": false,
       "user_editable": false,
-      "rules": "required|string|max:128"
+      "rules": "nullable|string|max:128"
     },
     {
       "name": "S3 Backup Endpoint",
