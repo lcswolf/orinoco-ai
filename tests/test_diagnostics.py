@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
+import anyio
 import pytest
 
 from orinoco import diagnostics
@@ -41,8 +42,7 @@ def test_storage_checks_do_not_create_missing_directories(tmp_path, monkeypatch)
     assert all(item["status"] in {"pass", "warning", "fail"} for item in results)
 
 
-@pytest.mark.asyncio
-async def test_ollama_check_reports_missing_model_without_downloading(monkeypatch):
+def test_ollama_check_reports_missing_model_without_downloading(monkeypatch):
     class Response:
         def raise_for_status(self):
             return None
@@ -65,14 +65,13 @@ async def test_ollama_check_reports_missing_model_without_downloading(monkeypatc
             return Response()
 
     monkeypatch.setattr(diagnostics.httpx, "AsyncClient", Client)
-    result = await diagnostics.check_ollama("wanted:1b")
+    result = anyio.run(diagnostics.check_ollama, "wanted:1b")
 
     assert result["status"] == "warning"
     assert result["selected_model"] == "wanted:1b"
 
 
-@pytest.mark.asyncio
-async def test_ollama_check_reports_unavailable_service(monkeypatch):
+def test_ollama_check_reports_unavailable_service(monkeypatch):
     class Client:
         def __init__(self, **kwargs):
             pass
@@ -87,21 +86,20 @@ async def test_ollama_check_reports_unavailable_service(monkeypatch):
             raise diagnostics.httpx.ConnectError("not available")
 
     monkeypatch.setattr(diagnostics.httpx, "AsyncClient", Client)
-    result = await diagnostics.check_ollama()
+    result = anyio.run(diagnostics.check_ollama)
 
     assert result["status"] == "fail"
     assert "could not be reached" in result["summary"]
 
 
-@pytest.mark.asyncio
-async def test_run_diagnostics_combines_results(monkeypatch):
+def test_run_diagnostics_combines_results(monkeypatch):
     monkeypatch.setattr(diagnostics, "check_database", lambda: {"name": "database", "status": "pass", "summary": "ok"})
     monkeypatch.setattr(diagnostics, "check_storage", lambda: [])
     async def ollama():
         return {"name": "ollama", "status": "warning", "summary": "missing model"}
     monkeypatch.setattr(diagnostics, "check_ollama", ollama)
 
-    result = await diagnostics.run_diagnostics()
+    result = anyio.run(diagnostics.run_diagnostics)
 
     assert result["status"] == "warning"
     assert [item["name"] for item in result["checks"]] == ["database", "ollama"]
