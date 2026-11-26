@@ -143,3 +143,63 @@ def test_support_bundle_excludes_free_form_log_messages_and_is_a_valid_zip(tmp_p
         assert "PRIVATE_CHAT_MESSAGE_DO_NOT_EXPORT" not in exported
         assert "super-secret" not in exported
         assert "exception" not in archive.read("logs/recent-events.jsonl").decode("utf-8")
+
+
+
+def test_support_bundle_restricts_all_exported_log_metadata(tmp_path):
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+    log_file = log_dir / "orinoco.log"
+    log_file.write_text(
+        json.dumps({
+            "event_code": "valid.event",
+            "level": "ERROR",
+            "logger": "orinoco.test",
+            "request_id": "safe_id-123",
+            "timestamp": "2026-11-26T12:00:00+00:00",
+            "message": "must never be copied",
+        }) + "\\n" + json.dumps({
+            "event_code": "bad\\nevent",
+            "level": "ERROR\\nINJECTED",
+            "logger": "attacker\\nforged",
+            "request_id": "id\\nforged",
+            "timestamp": "2026-11-26T12:00:00\\nforged",
+        }) + "\\n",
+        encoding="utf-8",
+    )
+
+    exported, _ = diagnostics._safe_recent_log_events(log_file)
+    records = [json.loads(line) for line in exported.splitlines()]
+
+    assert records == [{
+        "event_code": "valid.event",
+        "level": "ERROR",
+        "logger": "orinoco.test",
+        "request_id": "safe_id-123",
+        "timestamp": "2026-11-26T12:00:00+00:00",
+    }]
+    assert "must never be copied" not in exported
+    assert "forged" not in exported
+
+
+def test_support_log_export_refuses_symlink_file_and_directory(tmp_path):
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    real_log = real_dir / "orinoco.log"
+    real_log.write_text(json.dumps({"event_code": "safe.event"}) + "\\n", encoding="utf-8")
+
+    linked_file = real_dir / "linked.log"
+    linked_file.symlink_to(real_log)
+    assert diagnostics._safe_recent_log_events(linked_file) == ("", False)
+
+    linked_dir = tmp_path / "linked-dir"
+    linked_dir.symlink_to(real_dir, target_is_directory=True)
+    assert diagnostics._safe_recent_log_events(linked_dir / "orinoco.log") == ("", False)
+
+
+def test_support_log_export_rejects_unbounded_limits(tmp_path):
+    log_file = tmp_path / "orinoco.log"
+    log_file.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        diagnostics._safe_recent_log_events(log_file, limit_bytes=2 * 1024 * 1024)
