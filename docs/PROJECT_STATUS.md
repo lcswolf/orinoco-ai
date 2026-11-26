@@ -31,7 +31,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - Preview Pterodactyl 1.x Egg definition for Panel 1.13.0; live import validation remains outstanding.
 - Encrypted local backup creation, verification and confirmed restore CLI using AES-256-GCM.
 - S3-compatible encrypted backup upload over HTTPS, with remote size, metadata and downloaded-byte SHA-256 verification; restore keeps pre-restore database, document and session-secret recovery copies.
-- Supervised daily encrypted backup scheduler (03:00 in the configured timezone by default), optional verified S3 upload, configurable 1–365 day local retention and persistent failure status.
+- Optional supervised encrypted backup scheduler (disabled by default), with a configurable schedule, optional verified S3 upload, configurable 1–365 day local retention and persistent failure status.
 - Session-secret symlink rejection and restrictive file permissions; safe backup restore recovery-path checks.
 - CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions. GitHub Actions are pinned to immutable commit SHAs; Python runtime and development dependencies are now compiled into SHA-256 hash-locked requirements files; CI and the Docker image install them with `--require-hashes`.
 - Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing; backup-verified update preparation and explicit SQLite migration CLI.
