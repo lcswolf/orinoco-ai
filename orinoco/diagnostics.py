@@ -111,32 +111,46 @@ async def run_diagnostics() -> dict[str, Any]:
 
 
 def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[str, bool]:
-    """Export only allowlisted operational metadata, never free-form log messages."""
-    if path.is_symlink() or path.parent.is_symlink():
-        return "", False
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    """Export bounded operational metadata using directory-relative, no-follow opens."""
+    if limit_bytes < 1 or limit_bytes > 1024 * 1024:
+        raise ValueError("Log export limit is outside the permitted range.")
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    directory_flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
     try:
-        descriptor = os.open(path, flags)
+        # Open the directory first, then resolve the filename relative to that
+        # descriptor. This avoids the path-check/open race on the log file.
+        directory_fd = os.open(path.parent, directory_flags)
     except OSError:
         return "", False
     try:
-        metadata = os.fstat(descriptor)
-        if not stat.S_ISREG(metadata.st_mode):
+        directory_stat = os.fstat(directory_fd)
+        if not stat.S_ISDIR(directory_stat.st_mode):
             return "", False
-        truncated = metadata.st_size > limit_bytes
-        if truncated:
-            os.lseek(descriptor, metadata.st_size - limit_bytes, os.SEEK_SET)
-        chunks: list[bytes] = []
-        remaining = limit_bytes
-        while remaining > 0:
-            chunk = os.read(descriptor, min(65536, remaining))
-            if not chunk:
-                break
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        raw = b"".join(chunks).decode("utf-8", errors="replace")
+        try:
+            descriptor = os.open(path.name, file_flags, dir_fd=directory_fd)
+        except OSError:
+            return "", False
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                return "", False
+            truncated = metadata.st_size > limit_bytes
+            if truncated:
+                os.lseek(descriptor, metadata.st_size - limit_bytes, os.SEEK_SET)
+            chunks: list[bytes] = []
+            remaining = limit_bytes
+            while remaining > 0:
+                chunk = os.read(descriptor, min(65536, remaining))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            raw = b"".join(chunks).decode("utf-8", errors="replace")
+        finally:
+            os.close(descriptor)
     finally:
-        os.close(descriptor)
+        os.close(directory_fd)
 
     safe_records: list[str] = []
     for line in raw.splitlines()[-500:]:
@@ -144,21 +158,34 @@ def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[
             record = json.loads(line)
         except (TypeError, ValueError):
             continue
-        if not isinstance(record, dict) or not record.get("event_code"):
+        if not isinstance(record, dict):
             continue
-        safe = {
-            key: record[key]
-            for key in ("timestamp", "level", "logger", "event_code", "request_id")
-            if isinstance(record.get(key), (str, int, float))
-        }
-        # Event codes are the useful troubleshooting signal. Free-form message
-        # and exception fields are deliberately excluded to prevent user-data leaks.
-        event_code = safe.get("event_code")
+
+        # Every exported value is type-checked, length-bounded and restricted
+        # to a conservative character set. No arbitrary log data is copied.
+        event_code = record.get("event_code")
         if not isinstance(event_code, str) or not re.fullmatch(r"[a-z0-9_.-]{1,80}", event_code):
             continue
-        safe_records.append(json.dumps(safe, ensure_ascii=True, separators=(",", ":")))
-    return "\n".join(safe_records) + ("\n" if safe_records else ""), truncated
+        safe: dict[str, str | int | float] = {"event_code": event_code}
 
+        level = record.get("level")
+        if isinstance(level, str) and level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+            safe["level"] = level
+
+        logger = record.get("logger")
+        if isinstance(logger, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", logger):
+            safe["logger"] = logger
+
+        request_id = record.get("request_id")
+        if isinstance(request_id, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", request_id):
+            safe["request_id"] = request_id
+
+        timestamp = record.get("timestamp")
+        if isinstance(timestamp, str) and re.fullmatch(r"[0-9T:+.Z-]{1,40}", timestamp):
+            safe["timestamp"] = timestamp
+
+        safe_records.append(json.dumps(safe, ensure_ascii=True, separators=(",", ":")))
+    return "\\n".join(safe_records) + ("\\n" if safe_records else ""), truncated
 
 async def build_support_bundle() -> bytes:
     """Build a bounded in-memory ZIP containing diagnostics and safe event metadata."""
