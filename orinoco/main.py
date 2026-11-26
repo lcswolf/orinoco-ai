@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import logging
 from pathlib import Path
 
 import httpx
@@ -21,6 +22,10 @@ from orinoco.documents.admin_routes import router as shared_documents_router
 from orinoco.chat.routes import router as chat_router
 from orinoco.auth.routes import router as auth_router
 from orinoco.auth.sessions import get_session_secret, secure_cookie_enabled
+from orinoco.logging_config import configure_logging, current_request_id, reset_request_id, set_request_id
+
+configure_logging()
+logger = logging.getLogger("orinoco.http")
 
 OLLAMA_API_BASE = "http://127.0.0.1:11434"
 DEFAULT_MODEL = os.environ.get("AI_MODEL", "qwen2.5:1.5b")
@@ -160,3 +165,24 @@ async def readyz():
         return JSONResponse(status_code=503, content=result)
 
     return result
+
+
+@app.middleware("http")
+async def request_correlation(request, call_next):
+    """Attach a non-sensitive correlation ID to each request and its response."""
+    supplied = request.headers.get("x-request-id")
+    token = set_request_id(supplied)
+    try:
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = current_request_id()
+        return response
+    except Exception as exc:
+        # Do not log exception text or request data: either may contain user content.
+        logger.error(
+            "Unhandled request failure (%s)",
+            type(exc).__name__,
+            extra={"event_code": "http.unhandled_exception"},
+        )
+        raise
+    finally:
+        reset_request_id(token)
