@@ -170,7 +170,7 @@ async def download_support_bundle(request: Request) -> Response:
 
     try:
         bundle = await build_support_bundle()
-    except RuntimeError as exc:
+    except (OSError, RuntimeError) as exc:
         raise HTTPException(status_code=503, detail="The support bundle could not be generated safely.") from exc
     return Response(
         content=bundle,
