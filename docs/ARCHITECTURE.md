@@ -24,7 +24,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 The interface is being built specifically for Orinoco rather than embedding Open WebUI. The interface uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. Its visual identity uses an original Womble-inspired woodland helper mascot, woodland greens and warm brass accents, with UK-friendly copy and Europe/London defaults. It includes a responsive workspace layout, Orinoco greeting, service status, authenticated chat, saved conversations with owner-only deletion, account settings, personal memories, document libraries and the research workspace.
 
-The current interface supports authenticated chat, owner-only conversation deletion, per-user response voice/tone/detail preferences, administrator-managed core persona and humour settings, password changes, personal memory controls and document uploads. Pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
+The current interface supports authenticated chat, owner-only conversation deletion, per-user response voice/tone/detail preferences, administrator-managed core persona and humour settings, password changes, personal memory controls and document uploads. The approved expansion into a persistent, versioned administrator-managed identity profile (name, creator, purpose, background, personality and behaviour) is specified in [Identity & Behaviour Configuration](IDENTITY_CONFIGURATION.md); that broader feature is not yet implemented. Pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
 
 ## Deployment proposal
 
