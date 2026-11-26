@@ -1,9 +1,14 @@
 """Read-only, bounded operational checks for the admin diagnostics screen."""
 from __future__ import annotations
 
+import io
+import json
 import os
 import shutil
 import sqlite3
+import stat
+import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +16,7 @@ import httpx
 
 from orinoco import __version__
 from orinoco.db import get_database_path
+from orinoco.logging_config import redact_text
 
 OLLAMA_API_BASE = "http://127.0.0.1:11434"
 
@@ -101,3 +107,81 @@ async def run_diagnostics() -> dict[str, Any]:
         "version": __version__,
         "checks": checks,
     }
+
+
+
+def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[str, bool]:
+    """Export only allowlisted operational metadata, never free-form log messages."""
+    if path.is_symlink() or path.parent.is_symlink():
+        return "", False
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError:
+        return "", False
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            return "", False
+        truncated = metadata.st_size > limit_bytes
+        if truncated:
+            os.lseek(descriptor, metadata.st_size - limit_bytes, os.SEEK_SET)
+        chunks: list[bytes] = []
+        remaining = limit_bytes
+        while remaining > 0:
+            chunk = os.read(descriptor, min(65536, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        raw = b"".join(chunks).decode("utf-8", errors="replace")
+    finally:
+        os.close(descriptor)
+
+    safe_records: list[str] = []
+    for line in raw.splitlines()[-500:]:
+        try:
+            record = json.loads(line)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(record, dict) or not record.get("event_code"):
+            continue
+        safe = {
+            key: record[key]
+            for key in ("timestamp", "level", "logger", "event_code", "request_id")
+            if isinstance(record.get(key), (str, int, float))
+        }
+        # Event codes are the useful troubleshooting signal. Free-form message
+        # and exception fields are deliberately excluded to prevent user-data leaks.
+        event_code = safe.get("event_code")
+        if not isinstance(event_code, str) or len(event_code) > 80:
+            continue
+        safe_records.append(json.dumps(safe, ensure_ascii=True, separators=(",", ":")))
+    return "\n".join(safe_records) + ("\n" if safe_records else ""), truncated
+
+
+async def build_support_bundle() -> bytes:
+    """Build a bounded in-memory ZIP containing diagnostics and safe event metadata."""
+    report = await run_diagnostics()
+    log_path = get_database_path().parent / "logs" / "orinoco.log"
+    events, truncated = _safe_recent_log_events(log_path)
+    created = datetime.now(timezone.utc).isoformat()
+    manifest = {
+        "created_at": created,
+        "format_version": 1,
+        "files": ["diagnostics.json", "logs/recent-events.jsonl", "manifest.json"],
+        "log_window_truncated": truncated,
+        "privacy": (
+            "No conversations, prompts, replies, memories, documents, database files, "
+            "environment values, credentials, free-form log messages or exception text are included."
+        ),
+    }
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, mode="w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+        archive.writestr("diagnostics.json", json.dumps(report, ensure_ascii=True, indent=2))
+        archive.writestr("logs/recent-events.jsonl", events)
+        archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=True, indent=2))
+    bundle = output.getvalue()
+    if len(bundle) > 512 * 1024:
+        raise RuntimeError("The generated support bundle exceeded its size limit.")
+    return bundle
