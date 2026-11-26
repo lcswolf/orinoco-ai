@@ -1,6 +1,8 @@
 """Structural checks for the Pterodactyl Egg and container runtime layout."""
 
 import json
+import os
+import subprocess
 from pathlib import Path
 
 
@@ -221,3 +223,77 @@ def test_model_download_has_bounded_transient_retries_and_clear_failure() -> Non
     assert "sleep 30" in script
     assert "Model download failed after $max_pull_attempts attempts." in script
     assert "readyz will remain HTTP 503" in script
+
+
+
+def _run_model_init(tmp_path: Path, *, failures_before_success: int) -> subprocess.CompletedProcess[str]:
+    """Run the real model-init script with a deterministic fake Ollama binary."""
+    script = (ROOT / "docker" / "model-init.sh").read_text(encoding="utf-8")
+    fake_ollama = tmp_path / "ollama"
+    state_file = tmp_path / "pull-count"
+    fake_ollama.write_text(
+        "#!/bin/sh\n"
+        "set -eu\n"
+        "case \"$1\" in\n"
+        "  list) exit 0 ;;\n"
+        "  show) exit 1 ;;\n"
+        "  pull)\n"
+        f"    limit={failures_before_success}\n"
+        f"    count_file='{state_file}'\n"
+        "    count=0\n"
+        "    [ ! -f \"$count_file\" ] || count=$(cat \"$count_file\")\n"
+        "    count=$((count + 1))\n"
+        "    printf '%s' \"$count\" > \"$count_file\"\n"
+        "    printf 'pull:%s models:%s\\n' \"$count\" \"$OLLAMA_MODELS\" >> \"$OLLAMA_TEST_LOG\"\n"
+        "    [ \"$count\" -gt \"$limit\" ]\n"
+        "    ;;\n"
+        "  *) exit 9 ;;\n"
+        "esac\n",
+        encoding="utf-8",
+    )
+    fake_ollama.chmod(0o755)
+    fake_sleep = tmp_path / "sleep"
+    fake_sleep.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    fake_sleep.chmod(0o755)
+    script = script.replace("/usr/local/bin/ollama", str(fake_ollama))
+    executable_script = tmp_path / "model-init.sh"
+    executable_script.write_text(script, encoding="utf-8")
+    executable_script.chmod(0o755)
+    log_file = tmp_path / "ollama.log"
+    env = os.environ | {
+        "PATH": f"{tmp_path}:{os.environ.get('PATH', '')}",
+        "AUTO_DOWNLOAD_MODEL": "true",
+        "AI_MODEL": "qwen2.5:1.5b",
+        "OLLAMA_MODELS": str(tmp_path / "persistent-models"),
+        "OLLAMA_TEST_LOG": str(log_file),
+    }
+    result = subprocess.run(
+        ["/bin/sh", str(executable_script)],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=10,
+    )
+    result.ollama_log = log_file.read_text(encoding="utf-8") if log_file.exists() else ""
+    return result
+
+
+def test_model_init_recovers_after_transient_pull_failures(tmp_path: Path) -> None:
+    """A transient registry failure is retried and the later successful pull completes."""
+    result = _run_model_init(tmp_path, failures_before_success=2)
+
+    assert result.returncode == 0, result.stderr
+    assert result.ollama_log.count("pull:") == 3
+    assert f"models:{tmp_path / 'persistent-models'}" in result.ollama_log
+    assert "downloaded successfully" in result.stdout
+
+
+def test_model_init_stops_after_three_failed_pulls(tmp_path: Path) -> None:
+    """An unavailable registry fails visibly after the configured retry budget."""
+    result = _run_model_init(tmp_path, failures_before_success=99)
+
+    assert result.returncode == 1
+    assert result.ollama_log.count("pull:") == 3
+    assert "failed after 3 attempts" in result.stderr
+    assert "readyz will remain HTTP 503" in result.stderr
