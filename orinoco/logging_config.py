@@ -97,3 +97,8 @@ def configure_logging() -> None:
     root.addHandler(handler)
     root.setLevel(logging.INFO)
     root._orinoco_logging_configured = True  # type: ignore[attr-defined]
+
+
+def current_request_id() -> str:
+    """Return the current request correlation ID for response headers."""
+    return _request_id.get()
