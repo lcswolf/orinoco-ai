@@ -745,8 +745,8 @@ def test_production_recovery_failures_without_trusted_proxy_do_not_share_bucket(
                 "/api/auth/recover-admin",
                 headers={"X-CSRF-Token": csrf},
                 json={
-                    "token": "an-invalid-recovery-token-with-enough-length",
-                    "username": "recoveradmin",
+                    "token": "a-valid-panel-recovery-token-with-strong-entropy",
+                    "username": "missingadmin",
                     "new_password": "a-new-admin-password-456",
                 },
             )
