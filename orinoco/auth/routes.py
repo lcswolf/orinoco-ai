@@ -227,9 +227,13 @@ _BOOTSTRAP_ARMED_AT = time.monotonic()
 _bootstrap_failures: OrderedDict[str, deque[float]] = OrderedDict()
 
 
-def _check_bootstrap_rate(request: Request) -> str:
+def _check_bootstrap_rate(request: Request) -> str | None:
     """Limit failed setup-token attempts by the observed client address."""
-    remote_ip = _resolve_client_ip(request) or "unknown"
+    remote_ip = _resolve_client_ip(request)
+    # Never combine unrelated clients into one global "unknown" bucket. When
+    # the proxy is not trusted yet, the reverse proxy must enforce edge limits.
+    if remote_ip is None:
+        return None
     now = time.monotonic()
     failures = _bootstrap_failures.get(remote_ip)
     if failures is None:
@@ -281,7 +285,8 @@ async def bootstrap_first_admin(
         or time.monotonic() - _BOOTSTRAP_ARMED_AT > _BOOTSTRAP_TOKEN_TTL_SECONDS
         or not token_matches
     ):
-        _bootstrap_failures.setdefault(remote_ip, deque()).append(time.monotonic())
+        if remote_ip is not None:
+            _bootstrap_failures.setdefault(remote_ip, deque()).append(time.monotonic())
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Setup is not available or the setup token was not accepted.",
@@ -303,7 +308,8 @@ async def bootstrap_first_admin(
 
     # Establish a fresh authenticated session. The database's one-account guard
     # remains authoritative even if the Panel variable is left configured.
-    _bootstrap_failures.pop(remote_ip, None)
+    if remote_ip is not None:
+        _bootstrap_failures.pop(remote_ip, None)
     request.session.clear()
     request.session["user_id"] = user.id
     request.session["session_version"] = user.session_version
@@ -318,7 +324,11 @@ _admin_recovery_failures: OrderedDict[str, deque[float]] = OrderedDict()
 
 def _check_admin_recovery_rate(request: Request) -> str:
     """Throttle failed recovery attempts without storing submitted credentials."""
-    remote_ip = _resolve_client_ip(request) or "unknown"
+    remote_ip = _resolve_client_ip(request)
+    # A shared/unknown proxy identity would let one caller lock out everyone.
+    # Rely on the configured reverse-proxy edge limit until client IPs are trusted.
+    if remote_ip is None:
+        return None
     now = time.monotonic()
     failures = _admin_recovery_failures.get(remote_ip)
     if failures is None:
@@ -356,7 +366,8 @@ async def recover_admin_account(
         or time.monotonic() - _ADMIN_RECOVERY_ARMED_AT > _ADMIN_RECOVERY_TOKEN_TTL_SECONDS
         or not token_matches
     ):
-        _admin_recovery_failures.setdefault(remote_ip, deque()).append(time.monotonic())
+        if remote_ip is not None:
+            _admin_recovery_failures.setdefault(remote_ip, deque()).append(time.monotonic())
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator recovery is not available or the recovery token was not accepted.",
@@ -382,7 +393,8 @@ async def recover_admin_account(
         )
 
     # Password reset increments session_version, invalidating every prior session.
-    _admin_recovery_failures.pop(remote_ip, None)
+    if remote_ip is not None:
+        _admin_recovery_failures.pop(remote_ip, None)
     request.session.clear()
     request.session["user_id"] = user.id
     request.session["session_version"] = user.session_version
