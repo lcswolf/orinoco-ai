@@ -14,7 +14,7 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
 
     assert egg["meta"]["version"] == "PTDL_v1"
     assert egg["name"] == "Orinoco AI Assistant"
-    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:stable"]
+    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539"]
     assert "supervisord -n" in egg["startup"]
     assert egg["config"]["stop"] == "^C"
     assert egg["scripts"]["installation"]["container"]
@@ -210,7 +210,7 @@ def test_model_choices_match_confirmed_stable_auto_download_configuration() -> N
     egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
     variables = {item["env_variable"]: item for item in egg["variables"]}
 
-    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:stable"]
+    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539"]
     assert variables["AI_MODEL"]["default_value"] == "qwen2.5:1.5b"
     assert variables["AI_MODEL"]["rules"] == "required|string|in:qwen2.5:0.5b,qwen2.5:1.5b,qwen2.5:3b"
     assert variables["AUTO_DOWNLOAD_MODEL"]["default_value"] == "true"
