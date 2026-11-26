@@ -914,6 +914,7 @@ async function loadPreferences() {
     document.getElementById("preference-voice").value = result.voice;
     document.getElementById("preference-tone").value = result.tone;
     document.getElementById("preference-detail").value = result.answer_detail;
+    document.getElementById("preference-language").value = result.language || "auto";
     document.getElementById("preference-auto-save-memories").checked = result.auto_save_memories;
     feedback.hidden = true;
   } catch (error) {
@@ -971,6 +972,7 @@ document.getElementById("preferences-form").addEventListener("submit", async (ev
         voice: document.getElementById("preference-voice").value,
         tone: document.getElementById("preference-tone").value,
         answer_detail: document.getElementById("preference-detail").value,
+        language: document.getElementById("preference-language").value,
         auto_save_memories: document.getElementById("preference-auto-save-memories").checked,
       }),
     });
