@@ -141,9 +141,14 @@ jobs:
           docker exec orinoco-smoke python -c \
             "from zoneinfo import ZoneInfo; ZoneInfo('Europe/London')"
           docker exec orinoco-smoke python -m orinoco.backups --help >/dev/null
+          # Supervisor is intentionally configured without a control socket,
+          # so inspect the container process table rather than calling supervisorctl.
+          # The disabled scheduler should exit and must not be restarted.
           docker exec orinoco-smoke python -c \
-            "from pathlib import Path; import sys; sys.exit(0 if any(b'-m\\x00orinoco.backup_scheduler\\x00' in p.read_bytes() for p in Path('/proc').glob('[0-9]*/cmdline')) else 1)"
+            "from pathlib import Path; import sys; sys.exit(0 if not any(b'-m\\x00orinoco.backup_scheduler\\x00' in p.read_bytes() for p in Path('/proc').glob('[0-9]*/cmdline')) else 1)"
 
           ready_code=$(curl --silent --output /tmp/orinoco-ready.json --write-out "%{http_code}" http://127.0.0.1:8080/readyz)
+          echo "Readiness endpoint HTTP status: $ready_code"
+          cat /tmp/orinoco-ready.json
           test "$ready_code" = "503"
           grep -q "model_missing" /tmp/orinoco-ready.json

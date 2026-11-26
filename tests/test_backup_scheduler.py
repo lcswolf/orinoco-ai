@@ -157,6 +157,11 @@ def test_supervisor_and_egg_enable_configured_daily_scheduler() -> None:
 
     assert "[program:backup-scheduler]" in supervisor
     assert "command=python -m orinoco.backup_scheduler" in supervisor
+    assert "autorestart=unexpected" in supervisor
+    assert "startsecs=0" in supervisor
+    assert "startretries=5" in supervisor
+    assert variables["ORINOCO_BACKUP_ENABLED"]["default_value"] == "false"
+    assert variables["ORINOCO_BACKUP_ENABLED"]["user_editable"] is False
     assert variables["ORINOCO_BACKUP_TIME"]["default_value"] == "03:00"
     assert variables["ORINOCO_BACKUP_RETENTION_DAYS"]["default_value"] == "14"
     assert variables["ORINOCO_BACKUP_TIME"]["user_editable"] is True
@@ -191,3 +196,17 @@ def test_scheduler_retry_backoff_and_success_date_use_completed_backups() -> Non
 
     state["last_success_at"] = attempted.astimezone(UTC).isoformat()
     assert backup_scheduler._last_success_local_date(state, timezone) == "2026-11-24"
+
+
+def test_scheduler_exits_cleanly_when_disabled(monkeypatch, capsys) -> None:
+    """Panel-managed backups are the default; Orinoco scheduler stays opt-in."""
+    monkeypatch.setenv("ORINOCO_BACKUP_ENABLED", "false")
+    assert backup_scheduler.main() == 0
+    assert "automatic backups are disabled" in capsys.readouterr().out
+
+
+def test_scheduler_rejects_invalid_enabled_flag(monkeypatch, capsys) -> None:
+    """Reject ambiguous scheduler configuration rather than silently enabling it."""
+    monkeypatch.setenv("ORINOCO_BACKUP_ENABLED", "sometimes")
+    assert backup_scheduler.main() == 2
+    assert "must be true or false" in capsys.readouterr().err

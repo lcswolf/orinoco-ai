@@ -201,6 +201,13 @@ def run_backup_cycle(
 
 def main() -> int:
     """Run the daily scheduler until Supervisor stops the process."""
+    enabled = os.environ.get("ORINOCO_BACKUP_ENABLED", "false").strip().lower()
+    if enabled not in {"true", "false"}:
+        print("ORINOCO_BACKUP_ENABLED must be true or false.", file=sys.stderr, flush=True)
+        return 2
+    if enabled != "true":
+        print("Orinoco automatic backups are disabled; use the Pterodactyl backup system or an explicit manual backup when needed.", flush=True)
+        return 0
     try:
         timezone, scheduled_time, retention_days, backup_root = _settings()
     except ValueError as exc:
