@@ -254,6 +254,14 @@
           <p class="settings-feedback" id="user-feedback" role="status" hidden></p>
         </form>
         <div class="user-list" id="admin-user-list" aria-live="polite"></div>
+        <section class="settings-section diagnostics-panel" aria-labelledby="diagnostics-heading">
+          <h3 id="diagnostics-heading">System diagnostics</h3>
+          <p class="settings-description">Run local, read-only checks on Orinoco, its database, storage and model service. These checks do not change your data or download models.</p>
+          <button class="login-submit" id="diagnostics-run" type="button">Run diagnostics</button>
+          <p class="settings-feedback" id="diagnostics-summary" role="status" aria-live="polite">Diagnostics have not been run yet.</p>
+          <div class="diagnostics-results" id="diagnostics-results" aria-live="polite"></div>
+          <p class="settings-description">Support bundle download will be added after the export security checks are complete.</p>
+        </section>
         <div class="settings-section" aria-labelledby="backup-key-heading">
           <h3 id="backup-key-heading">Backup encryption key</h3>
           <p class="settings-description">Generate a new 256-bit key in this browser. It is not sent to Orinoco or stored on the server. Copy it into the hidden ORINOCO_BACKUP_KEY variable in Pterodactyl and keep an independent copy in a password manager. Losing this key means encrypted backups cannot be restored.</p>
