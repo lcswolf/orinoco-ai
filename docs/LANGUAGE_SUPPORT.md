@@ -24,7 +24,7 @@ From the Orinoco repository on the machine running Ollama, run:
 python scripts/benchmark_languages.py --model qwen2.5:1.5b --context 4096
 ```
 
-Replace the model tag with the exact model selected for the test. The script sends the paired prompt set to the local Ollama loopback API, writes a timestamped JSON report, and does not call an external inference service. It is a **model-only baseline** using a compact Orinoco language instruction; it does not exercise the full application, account preference setting, conversation history, or UI. Keep the generated report local unless you have checked it for private content.
+Replace the model tag with the exact model selected for the test. The script sends the paired prompt set to the local Ollama loopback API, includes prior user/assistant turns for the follow-up test, writes a timestamped JSON report, and does not call an external inference service. It is a **model-only baseline** using a compact Orinoco language instruction; it does not exercise the full application, account preference setting, conversation history, or UI. Keep the generated report local unless you have checked it for private content.
 
 For application-level acceptance, also complete the preference and switching checks below against the running Orinoco UI/API. Record the actual model tag, Ollama version, context and hardware in the report table.
 
