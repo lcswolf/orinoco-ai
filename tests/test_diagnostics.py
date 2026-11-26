@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import sqlite3
+import zipfile
 
 import anyio
 import pytest
@@ -103,3 +105,41 @@ def test_run_diagnostics_combines_results(monkeypatch):
 
     assert result["status"] == "warning"
     assert [item["name"] for item in result["checks"]] == ["database", "ollama"]
+
+
+
+def test_support_bundle_excludes_free_form_log_messages_and_is_a_valid_zip(tmp_path, monkeypatch):
+    database = tmp_path / "data" / "orinoco.sqlite3"
+    log_dir = database.parent / "logs"
+    log_dir.mkdir(parents=True)
+    (log_dir / "orinoco.log").write_text(
+        json.dumps({
+            "timestamp": "2026-11-26T12:00:00+00:00",
+            "level": "ERROR",
+            "logger": "orinoco.test",
+            "event_code": "test.failure",
+            "request_id": "abc123",
+            "message": "PRIVATE_CHAT_MESSAGE_DO_NOT_EXPORT",
+            "exception": "password=super-secret",
+        }) + "\\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(diagnostics, "get_database_path", lambda: database)
+
+    async def fake_report():
+        return {"status": "pass", "version": "test", "checks": []}
+
+    monkeypatch.setattr(diagnostics, "run_diagnostics", fake_report)
+    bundle = anyio.run(diagnostics.build_support_bundle)
+
+    archive_path = tmp_path / "support.zip"
+    archive_path.write_bytes(bundle)
+    with zipfile.ZipFile(archive_path) as archive:
+        assert set(archive.namelist()) == {
+            "diagnostics.json", "logs/recent-events.jsonl", "manifest.json"
+        }
+        exported = "\\n".join(archive.read(name).decode("utf-8") for name in archive.namelist())
+        assert "test.failure" in exported
+        assert "PRIVATE_CHAT_MESSAGE_DO_NOT_EXPORT" not in exported
+        assert "super-secret" not in exported
+        assert "exception" not in archive.read("logs/recent-events.jsonl").decode("utf-8")
