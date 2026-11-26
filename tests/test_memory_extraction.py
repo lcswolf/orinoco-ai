@@ -62,6 +62,6 @@ def test_memory_extractor_rejects_prompt_injection_and_more_sensitive_categories
 
 def test_memory_extractor_rejects_sensitive_welsh_but_keeps_safe_welsh_facts() -> None:
     """Sensitive facts are filtered in Welsh while ordinary Welsh preferences remain useful."""
-    raw = """["Mae gen i orbryder.", "Rwy'n Gristion.", "Rwy'n mwynhau cerdded."]"""
+    raw = """["Mae gen i orbryder.", "Rwy'n Gristion.", "Fy mhen-blwydd yw 4 Mai.", "Rwy'n byw yn 12 Heol Santes Fair.", "Rwy'n mwynhau cerdded."]"""
 
     assert extract_memory_candidates(raw) == ["Rwy'n mwynhau cerdded."]
