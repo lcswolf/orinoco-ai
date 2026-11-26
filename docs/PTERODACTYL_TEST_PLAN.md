@@ -131,6 +131,19 @@ The planned small VPS is a constrained target. If memory pressure, OOM terminati
 
 Use the manual browser matrix in [PRE_RELEASE_AUDIT.md](PRE_RELEASE_AUDIT.md) after the app is reachable. Test on real iOS Safari and Android Chrome devices as well as desktop Chrome, Firefox and Edge. Record OS/browser versions, viewport sizes, keyboard/screen-reader checks and defects.
 
+## Welsh and English language acceptance
+
+Complete the [language and local-model evaluation checklist](LANGUAGE_SUPPORT.md) before selecting the default model or marking bilingual support complete.
+
+- [ ] Automatic mode answers equivalent Welsh and English prompts in the matching language.
+- [ ] Switch from Welsh to English and back within one conversation; meaning and context remain intact.
+- [ ] Welsh spelling, names and diacritics are preserved.
+- [ ] English preference replies in English; Welsh preference replies in Welsh.
+- [ ] A direct one-turn language request is honoured without changing the saved preference.
+- [ ] Language preference and memory remain private to each account; changing language does not create a separate memory store.
+- [ ] Welsh sensitive-memory cases are rejected by the local filter; safe Welsh preferences can still be saved.
+- [ ] Score the selected local model in both languages and record the model tag, context, host resources and results. Do not claim model quality based on prompt instructions alone.
+
 ## 10. Evidence and sign-off
 
 Complete this table during the rehearsal:

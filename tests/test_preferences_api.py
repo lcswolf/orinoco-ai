@@ -37,18 +37,34 @@ def test_preferences_api_is_authenticated_csrf_protected_and_per_user(tmp_path, 
         saved = first.put(
             "/api/preferences",
             headers={"X-CSRF-Token": token},
-            json={"voice": "calm", "tone": "direct", "answer_detail": "detailed", "auto_save_memories": False},
+            json={"voice": "calm", "tone": "direct", "answer_detail": "detailed", "language": "cy", "auto_save_memories": False},
         )
+        invalid_language = first.put(
+            "/api/preferences",
+            headers={"X-CSRF-Token": token},
+            json={"voice": "calm", "tone": "direct", "answer_detail": "detailed", "language": "fr"},
+        )
+        # Older clients that omit the language field must not reset the saved choice.
+        legacy_update = first.put(
+            "/api/preferences",
+            headers={"X-CSRF-Token": token},
+            json={"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": False},
+        )
+        language_after_legacy_update = first.get("/api/preferences").json()["language"]
 
     with TestClient(app, base_url="https://testserver") as second:
         _sign_in(second, "preferencetwo", "another-long-password-456")
         other_defaults = second.get("/api/preferences")
 
-    assert defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
+    assert defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "language": "auto", "auto_save_memories": True}
     assert denied.status_code == 403
     assert saved.status_code == 200
-    assert saved.json() == {"voice": "calm", "tone": "direct", "answer_detail": "detailed", "auto_save_memories": False}
-    assert other_defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "auto_save_memories": True}
+    assert saved.json() == {"voice": "calm", "tone": "direct", "answer_detail": "detailed", "language": "cy", "auto_save_memories": False}
+    assert invalid_language.status_code == 422
+    assert legacy_update.status_code == 200
+    assert legacy_update.json()["language"] == "cy"
+    assert language_after_legacy_update == "cy"
+    assert other_defaults.json() == {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "language": "auto", "auto_save_memories": True}
 
 
 def test_admin_persona_api_is_admin_only_and_csrf_protected(tmp_path, monkeypatch) -> None:

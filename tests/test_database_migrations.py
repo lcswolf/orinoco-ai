@@ -39,6 +39,8 @@ def test_legacy_v1_database_is_upgraded_additively(tmp_path) -> None:
 
     assert version == CURRENT_SCHEMA_VERSION
     assert "session_version" in user_columns
+    preference_columns = {row[1] for row in connection.execute("PRAGMA table_info(user_preferences)")}
+    assert "language" in preference_columns
     assert {"users", "conversations", "messages", "memories", "documents", "documents_fts", "user_preferences", "assistant_persona", "used_admin_recovery_tokens"} <= tables
 
 

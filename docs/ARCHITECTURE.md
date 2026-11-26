@@ -12,7 +12,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 - **Web application:** Python/FastAPI. It serves the interface, liveness/readiness endpoints and authenticated account, chat, document and research APIs.
 - **Local inference:** Ollama, running in the same Pterodactyl container under Supervisor. Its API binds only to 127.0.0.1:11434; it is not exposed as a public allocation.
 - **Model storage:** persistent /home/container/data/models directory. The first-run initialiser downloads the configured curated model when automatic download is enabled.
-- **Application database:** SQLite schema v7 stores accounts, per-user response preferences, the administrator-managed core persona, conversations, personal memories and document metadata/extracted text. Access is scoped server-side to the owning user or the authorised shared library.
+- **Application database:** SQLite schema v9 stores accounts, per-user response preferences (including automatic/English/Welsh reply language), the administrator-managed core persona, conversations, personal memories and document metadata/extracted text. Access is scoped server-side to the owning user or the authorised shared library.
   Schema upgrades are versioned and additive; an older image refuses a database with a newer schema. Application rollback must therefore restore the pre-update database backup before starting the older image.
 - **Retrieval layer:** SQLite FTS5 indexes extracted document text and retrieves bounded keyword excerpts from the current user's private documents and the shared library. This is a lightweight keyword system, not vector/semantic search.
 - **Web research adapter:** optional search and URL retrieval. External webpages are untrusted input.
@@ -72,7 +72,7 @@ Relevant excerpts are selected from the signed-in user's own private documents p
 
 The model is a replaceable local inference backend, not the Orinoco persona itself. Persona and user preferences should be configuration stored by the application.
 
-The initial curated choices are Qwen 2.5 0.5B, 1.5B and 3B, with 1.5B as the default. Model selection and downloads must be validated against available disk and memory. Model updates must not erase application data.
+The initial curated choices are Qwen 2.5 0.5B, 1.5B and 3B, with 1.5B as the default. Reply language preference is account-scoped; automatic mode follows the latest user message, while English and Welsh settings establish the preferred response language. The selected model's Welsh/English quality must be measured locally before release. Model selection and downloads must be validated against available disk and memory. Model updates must not erase application data.
 
 Retrieved webpages and documents must be treated as untrusted content. They must not be allowed to override system policy, reveal other users' data or trigger privileged actions.
 

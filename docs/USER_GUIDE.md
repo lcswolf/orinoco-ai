@@ -64,6 +64,16 @@ The following are the main settings currently exposed by the preview Egg.
 
 Keep the Discord and voice settings disabled. These integrations are not implemented yet.
 
+### Welsh and English
+
+Orinoco is designed to understand and reply in both Welsh and English. Open **Account settings → Response preferences → Reply language**:
+
+- **Automatic** (default): reply in the language of your latest message, including natural Welsh/English code-switching.
+- **English**: prefer English replies.
+- **Welsh (Cymraeg)**: prefer natural Welsh replies and preserve Welsh spelling and diacritics.
+
+A direct request to answer in another language takes precedence for that reply. The language choice belongs to your account; it does not create a separate chat or memory store. The selected local model must still pass the bilingual quality checks in [Language support and model evaluation](LANGUAGE_SUPPORT.md). Voice recognition and speech output are future work and will be evaluated separately for each language.
+
 ### Generate and protect the backup key
 
 After signing in as an administrator, open **Account settings → Backup encryption key** and choose **Generate backup key**. Orinoco uses the browser's cryptographically secure random-number generator to create a 256-bit URL-safe base64 key. The key is generated locally in the browser: it is not sent to the Orinoco server, saved in browser storage or written to logs.
@@ -79,7 +89,7 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 
 ## 5. Create the first administrator
 
-**First-admin browser setup is implemented on the feature branch.** Python CI #1031 (259 tests) and container smoke #439 passed; live Panel verification is still pending. The setup steps are:
+**First-admin browser setup is implemented on the feature branch.** Python CI #1022 (259 tests) and container smoke #429 passed; live Panel verification is still pending. The setup steps are:
 
 1. In Pterodactyl, stop the Orinoco server and set the hidden **First Administrator Setup Token** variable to a randomly generated value of at least 32 characters. Do not use a memorable password.
 2. Start/restart Orinoco and open its web address. When the database has no accounts, the first-run setup dialog appears.
@@ -87,9 +97,9 @@ If you configure S3-compatible backup storage, use a private bucket, HTTPS endpo
 4. After success, return to Pterodactyl, clear the setup-token variable and restart Orinoco. The database independently prevents a second bootstrap even if the variable is accidentally left set.
 5. Store the administrator password in a password manager.
 
-The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. The token expires 30 minutes after each application start; restarting Orinoco re-arms the configured token. The database still prevents repeat setup after an administrator exists. It does not expose public registration. These protections passed Python CI [#1031](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355190) (259 tests); container build/smoke [#439](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355223) also passed. Disposable Panel verification remains a release requirement.
+The endpoint also requires the session CSRF token, compares the Panel token in constant time and throttles failed attempts. The token expires 30 minutes after each application start; restarting Orinoco re-arms the configured token. The database still prevents repeat setup after an administrator exists. It does not expose public registration. These protections passed Python CI [#1022](https://github.com/lcswolf/orinoco-ai/actions/runs/45707665093) (259 tests); container build/smoke [#429](https://github.com/lcswolf/orinoco-ai/actions/runs/45707665035) also passed. Disposable Panel verification remains a release requirement.
 
-**Administrator recovery is implemented on the feature branch.** Python CI [#1031](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355190) and container smoke [#439](https://github.com/lcswolf/orinoco-ai/actions/runs/45728355223) passed; live Panel verification is still pending. To arm it, set the hidden **Administrator Recovery Token** variable in Pterodactyl to a random value of at least 32 characters and restart Orinoco. Open the sign-in dialog and choose **Administrator locked out? Recover access**. Enter the token, the existing administrator username and a new password. The token expires 30 minutes after startup; its fingerprint is stored in the database after use, so the same token cannot be replayed after a restart. The password reset revokes every existing session. Closing the recovery dialog clears its token and password fields. After recovery, clear the Panel variable and restart Orinoco. Do not put the token or password in Startup Commands or console logs. See [Panel-first Management](PANEL_MANAGEMENT.md).
+**Administrator recovery is implemented on the feature branch.** Python CI [#1022](https://github.com/lcswolf/orinoco-ai/actions/runs/45707665093) and container smoke [#429](https://github.com/lcswolf/orinoco-ai/actions/runs/45707665035) passed; live Panel verification is still pending. To arm it, set the hidden **Administrator Recovery Token** variable in Pterodactyl to a random value of at least 32 characters and restart Orinoco. Open the sign-in dialog and choose **Administrator locked out? Recover access**. Enter the token, the existing administrator username and a new password. The token expires 30 minutes after startup; its fingerprint is stored in the database after use, so the same token cannot be replayed after a restart. The password reset revokes every existing session. Closing the recovery dialog clears its token and password fields. After recovery, clear the Panel variable and restart Orinoco. Do not put the token or password in Startup Commands or console logs. See [Panel-first Management](PANEL_MANAGEMENT.md).
 
 ## 6. Use the web interface
 

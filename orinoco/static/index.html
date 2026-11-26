@@ -206,7 +206,7 @@
       </div>
       <section class="settings-section" aria-labelledby="preferences-heading">
         <h3 id="preferences-heading">Response preferences</h3>
-        <p class="settings-description">Choose how Orinoco writes to you and how much detail you prefer. These choices affect text replies; audio voice settings will be separate. Preferences are private to your account.</p>
+        <p class="settings-description">Choose the language, style and level of detail for Orinoco's text replies. Automatic language follows your message; voice settings will be separate. Preferences are private to your account.</p>
         <form class="settings-form" id="preferences-form">
           <label for="preference-voice">Voice</label>
           <select id="preference-voice">
@@ -225,6 +225,12 @@
             <option value="concise">Concise</option>
             <option value="balanced">Balanced</option>
             <option value="detailed">Detailed</option>
+          </select>
+          <label for="preference-language">Reply language</label>
+          <select id="preference-language">
+            <option value="auto">Automatic — match my message</option>
+            <option value="en">English</option>
+            <option value="cy">Welsh (Cymraeg)</option>
           </select>
           <label class="checkbox-label" for="preference-auto-save-memories">
             <input id="preference-auto-save-memories" type="checkbox" checked>
