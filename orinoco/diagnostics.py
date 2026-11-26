@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import re
 import shutil
 import sqlite3
 import stat
@@ -16,7 +17,6 @@ import httpx
 
 from orinoco import __version__
 from orinoco.db import get_database_path
-from orinoco.logging_config import redact_text
 
 OLLAMA_API_BASE = "http://127.0.0.1:11434"
 
@@ -154,7 +154,7 @@ def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[
         # Event codes are the useful troubleshooting signal. Free-form message
         # and exception fields are deliberately excluded to prevent user-data leaks.
         event_code = safe.get("event_code")
-        if not isinstance(event_code, str) or len(event_code) > 80:
+        if not isinstance(event_code, str) or not re.fullmatch(r"[a-z0-9_.-]{1,80}", event_code):
             continue
         safe_records.append(json.dumps(safe, ensure_ascii=True, separators=(",", ":")))
     return "\n".join(safe_records) + ("\n" if safe_records else ""), truncated
