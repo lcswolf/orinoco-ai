@@ -347,3 +347,16 @@ h1 em { color: #8bd9bd; font-style: normal; }
 .settings-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .settings-actions .login-submit, .settings-actions .dialog-cancel { flex: 1 1 140px; margin-top: 0; }
 .settings-form input[readonly] { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; overflow-wrap: anywhere; }
+
+
+/* Admin diagnostics results are compact, readable and status-labelled. */
+.diagnostics-panel { margin-top: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(13,23,31,.35); }
+.diagnostics-panel > .login-submit { margin: 4px 0 10px; }
+.diagnostics-results { display: grid; gap: 7px; margin-top: 12px; }
+.diagnostic-result { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 12px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(9,18,24,.35); }
+.diagnostic-result strong { color: #d7e5df; font-size: 11px; text-transform: capitalize; }
+.diagnostic-result p { grid-column: 1 / -1; margin: 0; color: #8ea3a5; font-size: 10px; line-height: 1.5; }
+.diagnostic-state { align-self: start; color: #b8c9b1; font-size: 8px; font-weight: 750; letter-spacing: .7px; }
+.diagnostic-state.fail, .diagnostics-status.fail { color: #e7a092; }
+.diagnostic-state.warning, .diagnostics-status.warning { color: #e5c58b; }
+.diagnostic-state.pass, .diagnostics-status.pass { color: #b9d59e; }

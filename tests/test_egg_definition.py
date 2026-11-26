@@ -67,6 +67,8 @@ def test_web_process_uses_pterodactyl_allocation() -> None:
     assert '--host 0.0.0.0' in script
     assert 'exec python -m uvicorn' in script
     assert '--no-proxy-headers' in script
+    # Uvicorn access logs include raw request URLs and query strings; keep them disabled.
+    assert '--no-access-log' in script
 
 
 def test_ollama_is_loopback_only_and_models_are_persistent() -> None:

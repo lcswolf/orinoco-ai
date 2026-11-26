@@ -17,4 +17,6 @@ echo "Starting Orinoco web application on 0.0.0.0:$PORT"
 # Uvicorn never trusts forwarded headers. Orinoco's login throttle uses X-Forwarded-For only
 # when the connecting peer matches the administrator-configured ORINOCO_TRUSTED_PROXY_IPS allowlist.
 # Until that peer is measured and configured, the edge proxy's per-client limits are primary.
-exec python -m uvicorn orinoco.main:app --host 0.0.0.0 --port "$PORT" --no-proxy-headers
+# Disable Uvicorn's access log: its default request line includes the raw URL/query string,
+# which may contain private search terms or other user-supplied data.
+exec python -m uvicorn orinoco.main:app --host 0.0.0.0 --port "$PORT" --no-proxy-headers --no-access-log
