@@ -1,6 +1,6 @@
 # Diagnostics and Support Bundles
 
-**Status: proposed implementation specification.** This document defines the privacy and operational requirements for diagnostics. It is not a claim that the feature is implemented.
+**Status: implementation in progress.** This document records the privacy and operational requirements for diagnostics. The structured stdout logger and bounded persistent log files are implemented; the diagnostics page and support bundle are not yet implemented.
 
 ## Goals
 
@@ -23,10 +23,14 @@ A Panel-only fallback should also be documented for cases where the web interfac
 
 - Use structured records with UTC timestamp, severity, component, event code and request/correlation ID.
 - Send concise records to stdout/stderr for the Pterodactyl Console and rotate bounded local log files under the persistent data directory.
+- Persistent logs live in the data/logs/orinoco.log directory beside the configured database, with three 1 MiB rotated backups.
+- Log files are UTF-8 and restricted to owner read/write permissions (0600); the log directory is restricted to owner access (0700).
+- Refuse a symlink at the active log-file or log-directory path.
+- Apply the same credential-redaction filter to console and file handlers before records are emitted.
+- If persistent storage is unavailable or read-only, Orinoco continues with console logging and emits a warning; logging failure must not prevent startup.
 - Include stack traces for unexpected server-side exceptions, but pass all text through the redaction layer before persistence or export.
 - Avoid logging request bodies, prompts, model replies, uploaded document contents, memory contents, cookies, authorization headers or credentials.
 - Use stable event codes for common operational failures (database, migration, model startup/download, model request, backup, restore, scheduler, web research and optional integrations).
-- Configure a conservative retention and size cap; logging failure must not crash the application.
 
 ## Support bundle contents
 
@@ -88,7 +92,7 @@ Checks must not trigger model downloads, modify user data, run migrations, perfo
 
 ## Delivery sequence
 
-1. Structured logger, correlation IDs, redaction and bounded rotation.
+1. Structured logger, correlation IDs, redaction and bounded rotation. (In progress; stdout and persistent file logging implemented.)
 2. Diagnostics service and read-only self-checks.
 3. Admin-only diagnostics page and downloadable ZIP.
 4. Adversarial privacy/security tests and Panel-first documentation.
