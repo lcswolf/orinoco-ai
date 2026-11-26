@@ -121,8 +121,8 @@ The Compose file deliberately publishes only the Orinoco web port, and only on h
 The application runs as an unprivileged user inside the image. Before the first start, ask the image which numeric user it uses, then give that user ownership of the host data directory:
 
 ```sh
-ORINOCO_UID=$(docker run --rm --entrypoint id "$ORINOCO_IMAGE" -u)
-ORINOCO_GID=$(docker run --rm --entrypoint id "$ORINOCO_IMAGE" -g)
+ORINOCO_UID=$(docker compose run --rm --no-deps --entrypoint id orinoco -u)
+ORINOCO_GID=$(docker compose run --rm --no-deps --entrypoint id orinoco -g)
 sudo chown -R "$ORINOCO_UID:$ORINOCO_GID" ./data
 ```
 
@@ -141,11 +141,11 @@ docker compose logs -f --tail=200 orinoco
 
 On first start, watch the logs for Ollama and the web application startup messages. With `AUTO_DOWNLOAD_MODEL=false`, model download is intentionally skipped and `/readyz` will report that a model is not ready. This is expected for an application-only first boot.
 
-Check the endpoints from the Docker host:
+Check the endpoints from the Docker host (replace `8000` if you changed `ORINOCO_PORT` in `.env`):
 
 ```sh
-curl -i http://127.0.0.1:${ORINOCO_PORT:-8000}/healthz
-curl -i http://127.0.0.1:${ORINOCO_PORT:-8000}/readyz
+curl -i http://127.0.0.1:8000/healthz
+curl -i http://127.0.0.1:8000/readyz
 ```
 
 A healthy `/healthz` confirms application liveness; it does not mean the model is ready. `/readyz` should become ready after the selected model is installed.
