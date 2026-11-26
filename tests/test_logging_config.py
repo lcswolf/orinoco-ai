@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 import os
@@ -13,6 +14,7 @@ from orinoco.logging_config import (
     JsonFormatter,
     PrivateRotatingFileHandler,
     RedactingFilter,
+    _attach_redaction_filter_to_existing_handlers,
     redact_text,
     reset_request_id,
     set_request_id,
@@ -138,3 +140,26 @@ def test_private_rotating_handler_restricts_existing_file_mode(tmp_path) -> None
         assert stat.S_IMODE(path.stat().st_mode) == 0o600
     finally:
         handler.close()
+
+
+def test_preconfigured_non_propagating_logger_handlers_redact_secrets() -> None:
+    logger = logging.getLogger("orinoco.test.preconfigured.nonprop")
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    logger.handlers.clear()
+    logger.propagate = False
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    try:
+        _attach_redaction_filter_to_existing_handlers()
+        logger.error("request failed token=%s", "named-handler-secret")
+        output = stream.getvalue()
+        assert "named-handler-secret" not in output
+        assert "[REDACTED]" in output
+        # Re-running setup must not stack duplicate filters.
+        _attach_redaction_filter_to_existing_handlers()
+        assert sum(isinstance(item, RedactingFilter) for item in handler.filters) == 1
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+        logger.propagate = True
