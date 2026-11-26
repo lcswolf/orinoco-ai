@@ -34,9 +34,14 @@ Create a directory for the installation and enter it:
 mkdir -p ~/orinoco
 cd ~/orinoco
 mkdir -p data
+
+# Download the Compose template and environment example from the repository.
+curl -fsSLo compose.yaml https://raw.githubusercontent.com/lcswolf/orinoco-ai/main/compose.yaml
+curl -fsSLo .env.example https://raw.githubusercontent.com/lcswolf/orinoco-ai/main/.env.example
+cp .env.example .env
 ```
 
-Create a `.env` file from the example below. Set `ORINOCO_IMAGE` to the exact immutable image tag published for the release you intend to run. Do not guess a tag or rely on the mutable `:stable` tag for a production deployment.
+The commands above download the current templates and create your private `.env` copy. Set `ORINOCO_IMAGE` to the exact immutable image tag published for the release you intend to run. Do not guess a tag or rely on the mutable `:stable` tag for a production deployment.
 
 ```dotenv
 # Replace this with the exact immutable image tag from the release notes.
