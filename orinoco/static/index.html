@@ -260,7 +260,9 @@
           <button class="login-submit" id="diagnostics-run" type="button">Run diagnostics</button>
           <p class="settings-feedback" id="diagnostics-summary" role="status" aria-live="polite">Diagnostics have not been run yet.</p>
           <div class="diagnostics-results" id="diagnostics-results" aria-live="polite"></div>
-          <p class="settings-description">Support bundle download will be added after the export security checks are complete.</p>
+          <p class="settings-description">The bundle contains version and health information plus a small set of event codes. It excludes conversations, memories, documents, database contents and free-form log messages. Review it before sharing.</p>
+          <button class="dialog-cancel" id="diagnostics-download" type="button">Download support bundle</button>
+          <p class="settings-feedback" id="diagnostics-download-feedback" role="status" hidden></p>
         </section>
         <div class="settings-section" aria-labelledby="backup-key-heading">
           <h3 id="backup-key-heading">Backup encryption key</h3>
