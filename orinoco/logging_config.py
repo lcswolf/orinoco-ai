@@ -109,6 +109,17 @@ def _prepare_log_directory(directory: Path) -> None:
     os.chmod(directory, 0o700)
 
 
+def _attach_redaction_filter_to_existing_handlers() -> None:
+    """Protect named loggers configured by the server before Orinoco starts."""
+    redactor = RedactingFilter()
+    for candidate in logging.root.manager.loggerDict.values():
+        if not isinstance(candidate, logging.Logger):
+            continue
+        for handler in candidate.handlers:
+            if not any(isinstance(item, RedactingFilter) for item in handler.filters):
+                handler.addFilter(redactor)
+
+
 def configure_logging() -> None:
     """Configure redacted stdout and bounded persistent logs for Pterodactyl."""
     root = logging.getLogger()
@@ -142,6 +153,10 @@ def configure_logging() -> None:
         )
         console.flush()
 
+    # Uvicorn and other server components may configure named, non-propagating
+    # loggers before the application imports. Their handlers do not pass through
+    # the root handler, so apply the same redaction boundary directly to them.
+    _attach_redaction_filter_to_existing_handlers()
     root._orinoco_logging_configured = True  # type: ignore[attr-defined]
 
 
