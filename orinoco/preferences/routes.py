@@ -14,11 +14,12 @@ router = APIRouter(prefix="/api/preferences", tags=["preferences"])
 
 
 class PreferencesRequest(BaseModel):
-    """Whitelisted voice, tone and answer-detail choices for one account."""
+    """Whitelisted language, voice, tone and answer-detail choices for one account."""
 
     voice: str = Field(pattern="^(bright|calm|professional)$")
     tone: str = Field(pattern="^(friendly|direct|playful)$")
     answer_detail: str = Field(pattern="^(concise|balanced|detailed)$")
+    language: str | None = Field(default=None, pattern="^(auto|en|cy)$")
     auto_save_memories: bool | None = None
 
 
@@ -56,6 +57,7 @@ async def save_preferences(
             voice=payload.voice,
             tone=payload.tone,
             answer_detail=payload.answer_detail,
+            language=(current["language"] if payload.language is None else payload.language),
             auto_save_memories=(current["auto_save_memories"] if payload.auto_save_memories is None else payload.auto_save_memories),
             database_path=get_database_path(),
         )
