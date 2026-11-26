@@ -32,5 +32,7 @@ jobs:
           pip-audit -r requirements.lock
       - name: Check frontend JavaScript syntax
         run: node --check orinoco/static/app.js
+      - name: Compile Python source and scripts
+        run: python -m compileall -q orinoco scripts tests
       - name: Run tests
         run: python -m pytest -q
