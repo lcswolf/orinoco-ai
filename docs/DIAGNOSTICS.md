@@ -41,7 +41,7 @@ Include only bounded, allowlisted diagnostics:
 - Health/readiness status and component check outcomes.
 - Sanitized configuration summary: feature enabled/disabled flags, selected model name, context setting, timezone and configured storage paths represented safely.
 - A bounded sample of recent structured event metadata (timestamp, level, logger, event code and request ID). Free-form messages and exception text are deliberately excluded from the ZIP.
-- Recent backup job status and timestamps, without archive contents, keys, bucket credentials or private object URLs.
+- Backup scheduler history is not included in this first iteration; it will be added after its data and privacy boundaries are reviewed.
 - Disk availability for relevant data paths when supported.
 - A manifest describing bundle creation time, included files, truncation and redaction policy.
 
@@ -71,7 +71,7 @@ Checks should be read-only, time-bounded and report useful explanations:
 - Ollama process/API reachable; configured model present; model readiness state.
 - Required persistent directories exist and are writable.
 - Disk space for data and model storage where the platform exposes it.
-- Backup scheduler state, last attempt, last success/failure and local backup availability.
+- Backup scheduler state and last success/failure (planned follow-up; not yet surfaced by the current diagnostics panel).
 - Optional integrations only when enabled; report disabled integrations as skipped, not failed.
 - Application liveness/readiness and process supervisor status where available.
 
