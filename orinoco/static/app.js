@@ -1401,3 +1401,38 @@ if (diagnosticsRunButton) {
     }
   });
 }
+
+
+// Support bundles are downloaded only after an explicit administrator action.
+const diagnosticsDownloadButton = document.getElementById("diagnostics-download");
+if (diagnosticsDownloadButton) {
+  diagnosticsDownloadButton.addEventListener("click", async () => {
+    const feedback = document.getElementById("diagnostics-download-feedback");
+    diagnosticsDownloadButton.disabled = true;
+    feedback.hidden = false;
+    feedback.className = "settings-feedback";
+    feedback.textContent = "Preparing a privacy-filtered support bundle…";
+    try {
+      const response = await fetch("/api/admin/diagnostics/support-bundle", {
+        headers: { Accept: "application/zip" },
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error(response.status === 403 ? "Administrator access is required." : "The support bundle could not be generated.");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "orinoco-support-bundle.zip";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      feedback.textContent = "Support bundle prepared. Review its contents before sharing.";
+    } catch (error) {
+      feedback.textContent = error.message || "The support bundle could not be generated.";
+      feedback.className = "settings-feedback error";
+    } finally {
+      diagnosticsDownloadButton.disabled = false;
+    }
+  });
+}
