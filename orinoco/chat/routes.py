@@ -151,6 +151,11 @@ _SENSITIVE_MEMORY_TERMS = (
 _EMAIL_PATTERN = re.compile(r"\b[^\s@]+@[^\s@]+\.[^\s@]+\b")
 _PHONE_PATTERN = re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)")
 _ADDRESS_PATTERN = re.compile(r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr|close|court|ct|crescent|way|place|pl|terrace|ter|heol|ffordd|stryd|rhodfa|l[oô]n|cae|clos|teras)\b", re.IGNORECASE)
+_WELSH_ADDRESS_PATTERN = re.compile(
+    r"\b\d{1,6}\s+(?:heol|ffordd|stryd|rhodfa|l[oô]n|lon|clos|cae|teras)"
+    r"\s+[A-Za-zÀ-ÿ'’-]+(?:\s+[A-Za-zÀ-ÿ'’-]+){0,4}\b",
+    re.IGNORECASE,
+)
 _UK_POSTCODE_PATTERN = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b", re.IGNORECASE)
 _DOB_PATTERN = re.compile(r"\b(?:date of birth|dob|born on|my birthday is|dyddiad geni|fy mhen-blwydd|ganwyd ar)\b", re.IGNORECASE)
 
@@ -201,6 +206,7 @@ def extract_memory_candidates(raw: str) -> list[str]:
             _EMAIL_PATTERN.search(candidate)
             or _PHONE_PATTERN.search(candidate)
             or _ADDRESS_PATTERN.search(candidate)
+            or _WELSH_ADDRESS_PATTERN.search(candidate)
             or _UK_POSTCODE_PATTERN.search(candidate)
             or _DOB_PATTERN.search(candidate)
         ):
