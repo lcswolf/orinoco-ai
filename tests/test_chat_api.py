@@ -445,6 +445,7 @@ def test_chat_prompt_uses_admin_persona_and_private_response_preferences(tmp_pat
         voice="calm",
         tone="direct",
         answer_detail="detailed",
+        language="cy",
         database_path=database,
     )
     update_assistant_persona(
@@ -479,6 +480,8 @@ def test_chat_prompt_uses_admin_persona_and_private_response_preferences(tmp_pat
     assert "calm and measured" in system
     assert "direct and straightforward" in system
     assert "thorough explanations" in system
+    assert "Reply in natural Welsh by default" in system
+    assert "preserve Welsh diacritics" in system
     assert "Never claim access to another user's chats" in system
 
 
