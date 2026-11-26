@@ -101,12 +101,19 @@ def _log_directory() -> Path:
 
 
 def _prepare_log_directory(directory: Path) -> None:
-    """Create a private, real directory for logs; never accept a symlink."""
+    """Create a private log directory and secure it through a no-follow descriptor."""
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-    if directory.is_symlink() or not directory.is_dir():
-        raise OSError("Orinoco log directory must be a real directory")
-    os.chmod(directory, 0o700)
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    descriptor = os.open(directory, flags)
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISDIR(opened.st_mode):
+            raise OSError("Orinoco log path must be a real directory")
+        os.fchmod(descriptor, 0o700)
+    finally:
+        os.close(descriptor)
 
 
 def _attach_redaction_filter_to_existing_handlers() -> None:
