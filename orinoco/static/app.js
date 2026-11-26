@@ -1356,3 +1356,48 @@ settingsDialog.addEventListener("close", () => {
   document.getElementById("backup-key-warning").hidden = true;
 });
 
+
+
+// Administrator diagnostics use a read-only endpoint and render server text as textContent.
+const diagnosticsRunButton = document.getElementById("diagnostics-run");
+if (diagnosticsRunButton) {
+  diagnosticsRunButton.addEventListener("click", async () => {
+    const summary = document.getElementById("diagnostics-summary");
+    const results = document.getElementById("diagnostics-results");
+    diagnosticsRunButton.disabled = true;
+    diagnosticsRunButton.textContent = "Checking…";
+    summary.textContent = "Running local checks. This may take a few seconds.";
+    summary.className = "settings-feedback";
+    results.replaceChildren();
+    try {
+      const response = await fetch("/api/admin/diagnostics", {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error(response.status === 403 ? "Administrator access is required." : "Diagnostics could not be completed.");
+      const report = await response.json();
+      const overall = String(report.status || "unknown").toUpperCase();
+      summary.textContent = "Overall status: " + overall + " · Orinoco " + String(report.version || "unknown");
+      summary.className = "settings-feedback diagnostics-status " + String(report.status || "unknown");
+      for (const check of report.checks || []) {
+        const item = document.createElement("article");
+        item.className = "diagnostic-result";
+        const heading = document.createElement("strong");
+        heading.textContent = String(check.name || "Check").replaceAll("_", " ");
+        const state = document.createElement("span");
+        state.className = "diagnostic-state " + String(check.status || "unknown");
+        state.textContent = String(check.status || "unknown").toUpperCase();
+        const detail = document.createElement("p");
+        detail.textContent = String(check.summary || "No details available.");
+        item.append(heading, state, detail);
+        results.append(item);
+      }
+    } catch (error) {
+      summary.textContent = error.message || "Diagnostics could not be completed.";
+      summary.className = "settings-feedback error";
+    } finally {
+      diagnosticsRunButton.disabled = false;
+      diagnosticsRunButton.textContent = "Run diagnostics again";
+    }
+  });
+}
