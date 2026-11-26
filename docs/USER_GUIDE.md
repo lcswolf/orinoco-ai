@@ -58,9 +58,9 @@ The following are the main settings currently exposed by the preview Egg.
 | Enable Web Search | Enable the SearXNG research feature | `true` only when configured |
 | SearXNG URL | Administrator-configured search service endpoint | Blank until configured |
 | Timezone | Timezone used by services and backup schedule | `Europe/London` |
-| Backup Encryption Key | Key for encrypted backups | Required; generate and store securely |
-| Daily Backup Time | Local time for scheduled backup | `03:00` |
-| Local Backup Retention | Days of local backup retention | `14` |
+| Backup Encryption Key | Key for encrypted backups | Optional until encrypted backups are enabled; generate and store securely |
+| Automatic Backup Scheduler | Enables Orinoco's own scheduled backup job | `false` by default; Pterodactyl backups may be used instead |\n| Daily Backup Time | Local time for scheduled backup, when enabled | `03:00` |
+| Local Backup Retention | Days of local backup retention, when enabled | `14` |
 
 Keep the Discord and voice settings disabled. These integrations are not implemented yet.
 
@@ -140,10 +140,10 @@ Web search is not available when the service endpoint is blank or the feature is
 
 ## 7. Backups and recovery
 
-Orinoco supports encrypted local backups, verification, confirmed restore and optional S3-compatible upload.
+Orinoco supports encrypted local backups, verification, confirmed restore and optional S3-compatible upload. Its own automatic scheduler is **disabled by default** so administrators can rely on Pterodactyl's backup scheduling if preferred.
 
-- The scheduled backup normally runs at **03:00** in the configured timezone.
-- Local backups are retained for **14 days** by default.
+- If enabled, the scheduler normally runs at **03:00** in the configured timezone.
+- If enabled, local backups are retained for **14 days** by default.
 - The backup includes application data and private documents, but not Egg/environment variables or Ollama model weights.
 - Keep the encryption key and any environment-supplied session secret separately.
 - A backup stored only on the VPS is not an off-site backup.
