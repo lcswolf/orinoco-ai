@@ -121,7 +121,7 @@ def test_support_bundle_excludes_free_form_log_messages_and_is_a_valid_zip(tmp_p
             "request_id": "abc123",
             "message": "PRIVATE_CHAT_MESSAGE_DO_NOT_EXPORT",
             "exception": "password=super-secret",
-        }) + "\\n",
+        }) + "\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(diagnostics, "get_database_path", lambda: database)
