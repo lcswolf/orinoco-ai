@@ -59,7 +59,8 @@ The following are the main settings currently exposed by the preview Egg.
 | SearXNG URL | Administrator-configured search service endpoint | Blank until configured |
 | Timezone | Timezone used by services and backup schedule | `Europe/London` |
 | Backup Encryption Key | Key for encrypted backups | Optional until encrypted backups are enabled; generate and store securely |
-| Automatic Backup Scheduler | Enables Orinoco's own scheduled backup job | `false` by default; Pterodactyl backups may be used instead |\n| Daily Backup Time | Local time for scheduled backup, when enabled | `03:00` |
+| Automatic Backup Scheduler | Enables Orinoco's own scheduled backup job | `false` by default; Pterodactyl backups may be used instead |
+| Daily Backup Time | Local time for scheduled backup, when enabled | `03:00` |
 | Local Backup Retention | Days of local backup retention, when enabled | `14` |
 
 Keep the Discord and voice settings disabled. These integrations are not implemented yet.
