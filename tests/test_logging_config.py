@@ -15,6 +15,7 @@ from orinoco.logging_config import (
     PrivateRotatingFileHandler,
     RedactingFilter,
     _attach_redaction_filter_to_existing_handlers,
+    _prepare_log_directory,
     redact_text,
     reset_request_id,
     set_request_id,
@@ -163,3 +164,16 @@ def test_preconfigured_non_propagating_logger_handlers_redact_secrets() -> None:
         logger.removeHandler(handler)
         handler.close()
         logger.propagate = True
+
+
+def test_log_directory_is_restricted_and_symlink_is_refused(tmp_path) -> None:
+    directory = tmp_path / "logs"
+    _prepare_log_directory(directory)
+    assert stat.S_IMODE(directory.stat().st_mode) == 0o700
+
+    target = tmp_path / "real-logs"
+    target.mkdir()
+    linked = tmp_path / "linked-logs"
+    linked.symlink_to(target, target_is_directory=True)
+    with pytest.raises(OSError):
+        _prepare_log_directory(linked)
