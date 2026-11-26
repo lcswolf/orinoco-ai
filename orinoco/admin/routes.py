@@ -5,6 +5,7 @@ from __future__ import annotations
 import hmac
 
 from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.responses import Response
 
 from orinoco.auth.sessions import get_session_user
 from pydantic import BaseModel, Field
@@ -158,3 +159,26 @@ async def read_diagnostics(request: Request) -> dict[str, object]:
     from orinoco.diagnostics import run_diagnostics
 
     return await run_diagnostics()
+
+
+
+@router.get("/diagnostics/support-bundle")
+async def download_support_bundle(request: Request) -> Response:
+    """Generate a bounded, privacy-filtered support ZIP for administrators."""
+    _require_admin(request)
+    from orinoco.diagnostics import build_support_bundle
+
+    try:
+        bundle = await build_support_bundle()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="The support bundle could not be generated safely.") from exc
+    return Response(
+        content=bundle,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="orinoco-support-bundle.zip"',
+            "Cache-Control": "no-store, private",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
