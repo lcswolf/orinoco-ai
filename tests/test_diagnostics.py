@@ -138,7 +138,7 @@ def test_support_bundle_excludes_free_form_log_messages_and_is_a_valid_zip(tmp_p
         assert set(archive.namelist()) == {
             "diagnostics.json", "logs/recent-events.jsonl", "manifest.json"
         }
-        exported = "\\n".join(archive.read(name).decode("utf-8") for name in archive.namelist())
+        exported = "\n".join(archive.read(name).decode("utf-8") for name in archive.namelist())
         assert "test.failure" in exported
         assert "PRIVATE_CHAT_MESSAGE_DO_NOT_EXPORT" not in exported
         assert "super-secret" not in exported
@@ -158,13 +158,13 @@ def test_support_bundle_restricts_all_exported_log_metadata(tmp_path):
             "request_id": "safe_id-123",
             "timestamp": "2026-11-26T12:00:00+00:00",
             "message": "must never be copied",
-        }) + "\\n" + json.dumps({
-            "event_code": "bad\\nevent",
-            "level": "ERROR\\nINJECTED",
-            "logger": "attacker\\nforged",
-            "request_id": "id\\nforged",
-            "timestamp": "2026-11-26T12:00:00\\nforged",
-        }) + "\\n",
+        }) + "\n" + json.dumps({
+            "event_code": "bad\nevent",
+            "level": "ERROR\nINJECTED",
+            "logger": "attacker\nforged",
+            "request_id": "id\nforged",
+            "timestamp": "2026-11-26T12:00:00\nforged",
+        }) + "\n",
         encoding="utf-8",
     )
 
@@ -186,7 +186,7 @@ def test_support_log_export_refuses_symlink_file_and_directory(tmp_path):
     real_dir = tmp_path / "real"
     real_dir.mkdir()
     real_log = real_dir / "orinoco.log"
-    real_log.write_text(json.dumps({"event_code": "safe.event"}) + "\\n", encoding="utf-8")
+    real_log.write_text(json.dumps({"event_code": "safe.event"}) + "\n", encoding="utf-8")
 
     linked_file = real_dir / "linked.log"
     linked_file.symlink_to(real_log)
