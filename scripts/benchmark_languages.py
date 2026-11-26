@@ -70,11 +70,19 @@ CASES = [
     {
         "id": "follow_up",
         "language": "en",
+        "history": [
+            {"role": "user", "content": "Explain why the sky looks blue in simple terms."},
+            {"role": "assistant", "content": "The sky looks blue because air scatters blue sunlight more than other colours."},
+        ],
         "prompt": "Now make that explanation shorter.",
     },
     {
         "id": "follow_up",
         "language": "cy",
+        "history": [
+            {"role": "user", "content": "Eglurwch pam mae'r awyr yn edrych yn las mewn termau syml."},
+            {"role": "assistant", "content": "Mae'r awyr yn edrych yn las oherwydd bod yr aer yn gwasgaru golau glas yr haul yn fwy na lliwiau eraill."},
+        ],
         "prompt": "Nawr gwnewch yr eglurhad hwnnw'n fyrrach.",
     },
     {
@@ -112,12 +120,16 @@ def local_endpoint(value: str) -> str:
     return value.rstrip("/")
 
 
-def ask_ollama(endpoint: str, model: str, prompt: str, context: int, timeout: int) -> str:
+def ask_ollama(
+    endpoint: str, model: str, prompt: str, context: int, timeout: int,
+    history: list[dict[str, str]] | None = None,
+) -> str:
     payload = {
         "model": model,
         "stream": False,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
+            *(history or []),
             {"role": "user", "content": prompt},
         ],
         "options": {"num_ctx": context},
@@ -169,7 +181,7 @@ def main() -> int:
     for index, case in enumerate(CASES, start=1):
         print(f"[{index}/{len(CASES)}] {case['id']} ({case['language']})", flush=True)
         try:
-            answer = ask_ollama(endpoint, args.model, case["prompt"], args.context, args.timeout)
+            answer = ask_ollama(endpoint, args.model, case["prompt"], args.context, args.timeout, case.get("history"))
             results.append({**case, "response": answer, "error": None})
         except (urllib.error.URLError, TimeoutError, RuntimeError, json.JSONDecodeError) as exc:
             results.append({**case, "response": None, "error": str(exc)})
