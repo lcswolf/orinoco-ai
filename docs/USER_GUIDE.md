@@ -64,6 +64,16 @@ The following are the main settings currently exposed by the preview Egg.
 
 Keep the Discord and voice settings disabled. These integrations are not implemented yet.
 
+### Welsh and English
+
+Orinoco is designed to understand and reply in both Welsh and English. Open **Account settings → Response preferences → Reply language**:
+
+- **Automatic** (default): reply in the language of your latest message, including natural Welsh/English code-switching.
+- **English**: prefer English replies.
+- **Welsh (Cymraeg)**: prefer natural Welsh replies and preserve Welsh spelling and diacritics.
+
+A direct request to answer in another language takes precedence for that reply. The language choice belongs to your account; it does not create a separate chat or memory store. The selected local model must still pass the bilingual quality checks in [Language support and model evaluation](LANGUAGE_SUPPORT.md). Voice recognition and speech output are future work and will be evaluated separately for each language.
+
 ### Generate and protect the backup key
 
 After signing in as an administrator, open **Account settings → Backup encryption key** and choose **Generate backup key**. Orinoco uses the browser's cryptographically secure random-number generator to create a 256-bit URL-safe base64 key. The key is generated locally in the browser: it is not sent to the Orinoco server, saved in browser storage or written to logs.
