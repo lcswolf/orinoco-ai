@@ -23,6 +23,7 @@ def test_user_preferences_have_safe_defaults_and_are_account_scoped(tmp_path) ->
         "voice": "bright",
         "tone": "friendly",
         "answer_detail": "balanced",
+        "language": "auto",
         "auto_save_memories": True,
     }
     updated = update_user_preferences(
@@ -33,7 +34,7 @@ def test_user_preferences_have_safe_defaults_and_are_account_scoped(tmp_path) ->
         database_path=database,
     )
 
-    assert updated == {"voice": "calm", "tone": "direct", "answer_detail": "detailed", "auto_save_memories": True}
+    assert updated == {"voice": "calm", "tone": "direct", "answer_detail": "detailed", "language": "auto", "auto_save_memories": True}
     assert get_user_preferences(first.id, database_path=database) == updated
     assert get_user_preferences(second.id, database_path=database)["voice"] == "bright"
 
@@ -44,6 +45,7 @@ def test_user_preferences_have_safe_defaults_and_are_account_scoped(tmp_path) ->
         ("voice", "pirate"),
         ("tone", "hostile"),
         ("answer_detail", "infinite"),
+        ("language", "fr"),
     ],
 )
 def test_user_preferences_reject_unsupported_values(tmp_path, field, value) -> None:
@@ -51,7 +53,7 @@ def test_user_preferences_reject_unsupported_values(tmp_path, field, value) -> N
     database = tmp_path / "orinoco.sqlite3"
     initialise_database(database)
     user = create_user("prefuser", "a-long-test-password-123", database_path=database)
-    values = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced"}
+    values = {"voice": "bright", "tone": "friendly", "answer_detail": "balanced", "language": "auto"}
     values[field] = value
 
     with pytest.raises(ValueError, match="Unsupported"):
