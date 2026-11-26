@@ -160,7 +160,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True, help="Exact local Ollama model tag.")
     parser.add_argument("--url", default="http://127.0.0.1:11434", help="Loopback Ollama API URL.")
-    parser.add_argument("--context", type=int, default=4096, help="Ollama context length.")
+    parser.add_argument("--context", type=int, default=2048, help="Ollama context length (matches the initial deployment target).")
     parser.add_argument("--timeout", type=int, default=600, help="Per-prompt timeout in seconds.")
     parser.add_argument("--output", type=Path, help="Output JSON path (default: timestamped file).")
     args = parser.parse_args()
