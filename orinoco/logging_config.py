@@ -17,20 +17,17 @@ from typing import Any
 _request_id: contextvars.ContextVar[str] = contextvars.ContextVar("orinoco_request_id", default="-")
 
 _SECRET_PATTERNS = (
-    re.compile(r"(?i)(bearer\\s+)[A-Za-z0-9._~+/-]+=*"),
-    re.compile(r"(?i)((?:password|passwd|token|secret|api[_-]?key|backup[_-]?key|authorization|cookie)\\s*[=:]\\s*)[^\\s,;]+"),
-    re.compile(r"(?i)(https?://)[^/@\\s]+:[^/@\\s]+@"),
+    (re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/-]+=*"), r"\1[REDACTED]"),
+    (re.compile(r"(?i)((?:password|passwd|token|secret|api[_-]?key|backup[_-]?key|authorization|cookie)\s*[=:]\s*)[^\s,;]+"), r"\1[REDACTED]"),
+    (re.compile(r"(?i)(https?://)[^/@\s]+:[^/@\s]+@"), r"\1[REDACTED]@"),
 )
 
 
 def redact_text(value: str) -> str:
     """Redact common credential forms from operational messages and tracebacks."""
     redacted = value
-    for pattern in _SECRET_PATTERNS:
-        if pattern.pattern.startswith("(?i)(https"):
-            redacted = pattern.sub(r"\\1[REDACTED]@", redacted)
-        else:
-            redacted = pattern.sub(r"\\1[REDACTED]", redacted)
+    for pattern, replacement in _SECRET_PATTERNS:
+        redacted = pattern.sub(replacement, redacted)
     return redacted
 
 
