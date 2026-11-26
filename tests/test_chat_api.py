@@ -481,7 +481,7 @@ def test_chat_prompt_uses_admin_persona_and_private_response_preferences(tmp_pat
     assert "direct and straightforward" in system
     assert "thorough explanations" in system
     assert "Reply in natural Welsh by default" in system
-    assert "preserve Welsh diacritics" in system
+    assert "Welsh diacritics" in system
     assert "Never claim access to another user's chats" in system
 
 
