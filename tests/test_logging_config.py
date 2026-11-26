@@ -51,3 +51,12 @@ def test_filter_redacts_formatted_message_arguments() -> None:
     record = logging.LogRecord("orinoco.test", logging.WARNING, __file__, 1, "token=%s", ("secret-value",), None)
     RedactingFilter().filter(record)
     assert "secret-value" not in record.getMessage()
+
+
+def test_filter_redacts_exception_text_populated_by_another_handler() -> None:
+    record = logging.LogRecord("orinoco.test", logging.ERROR, __file__, 1, "operation failed", (), None)
+    record.exc_text = "RuntimeError: token=already-formatted-secret"
+    RedactingFilter().filter(record)
+    payload = json.loads(JsonFormatter().format(record))
+    assert "already-formatted-secret" not in payload["exception"]
+    assert "[REDACTED]" in payload["exception"]
