@@ -6,16 +6,17 @@
 
 ## Release gate before the maintenance window
 
+- [ ] Confirm the GHCR package is set to Public and that an anonymous image pull succeeds; a successful publish workflow alone does not prove public pull access.
 - [x] The Orinoco image is published to GHCR. Immutable tag: `ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539`. Published OCI index digest: `sha256:98dac555b4efad1da9b730a6b09a30df5a8b25a57520fc0227590f7dd7885ff0`.
 - [ ] The matching `egg/egg-orinoco.json` has been reviewed against the published image and imported into a dedicated Orinoco Nest on the live Panel. This remains an outstanding release gate.
 - [ ] The test owner can access the Pterodactyl administrator UI and has permission to create a test server and assign a free allocation.
 - [ ] A free, dedicated TCP allocation is identified. Do not reuse the game server's port.
 - [ ] The test server has a separate persistent data directory/volume managed by Pterodactyl. Do not attach or reuse the game server's files.
-- [ ] A secure, unique bootstrap token (at least 32 random characters) and backup encryption key are ready to enter as hidden server variables. Keep both in an off-server password manager; never paste them into chat, logs or a startup command.
+- [ ] A secure, unique bootstrap token (at least 32 random characters) is ready as a hidden Panel variable. The backup encryption key is optional for this initial smoke test; configure it later if encrypted backups are being tested. Keep secrets in an off-server password manager; never paste them into chat, logs or a startup command.
 - [ ] The owner has confirmed the game server can be stopped for the full test window and restarted afterwards.
 - [ ] Any provider-level snapshot/backup desired before the test has been taken. This is optional but recommended; do not assume a Pterodactyl server backup protects the whole VPS.
 
-**Do not start the one-hour window while the image is unpublished or the Egg is still marked preview-only.** The current container CI workflow builds and smoke-tests an image but explicitly uses `push: false`; a successful CI build is not a published image that Wings can pull.
+**Do not start the one-hour window until anonymous GHCR pull access is verified and the Egg has been imported successfully into the live Panel.** The Egg is a staging preview until live import, startup, persistence and recovery have been checked.
 
 ## Before stopping the game server
 
@@ -33,12 +34,12 @@ The host has only 2 GiB total RAM, shared with Ubuntu, Docker and Wings. This is
 | Setting | First application boot | Optional model experiment |
 |---|---:|---:|
 | Container memory | Start conservatively; leave host headroom | Increase only if measured free RAM allows |
-| AI model | `qwen2.5:0.5b` | `qwen2.5:0.5b` |
+| AI model (`AI_MODEL`) | Override the Egg default `qwen2.5:1.5b` with `qwen2.5:0.5b` | `qwen2.5:0.5b` |
 | Automatic model download | `false` | `true`, after app-only checks pass |
 | Model context | `1024` | `1024` |
 | AI concurrency | `1` | `1` |
-| Automatic memory saving | `false` for initial smoke test | Enable after account/privacy checks |
-| Web search | Disabled | Disabled |
+| Automatic memory saving (`AUTO_SAVE_MEMORIES`) | `false` for initial smoke test | Enable after account/privacy checks |
+| Web search (`ENABLE_WEB_SEARCH`) | `false` | `false` |
 | Discord / voice | Disabled | Disabled |
 | Backup schedule | Leave disabled or outside the test window | Configure after backup key is verified |
 
@@ -118,4 +119,4 @@ Record each as Pass / Fail / Not tested, with a short note:
 - This test does not validate Discord or voice; those modules are not ready for live acceptance.
 - This test does not establish that the 2 GiB VPS can host Orinoco and the game server concurrently.
 - A green GitHub container build is not equivalent to a GHCR-published image or a successful Panel/Wings deployment.
-- The current Egg and Panel documentation remain explicitly preview-only until live import, startup, persistence, shutdown and recovery have been verified.
+- The Egg and Panel workflow remain staging-only until live import, startup, persistence, shutdown and recovery have been verified.
