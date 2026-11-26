@@ -4,8 +4,19 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import stat
 
-from orinoco.logging_config import JsonFormatter, RedactingFilter, redact_text, reset_request_id, set_request_id
+import pytest
+
+from orinoco.logging_config import (
+    JsonFormatter,
+    PrivateRotatingFileHandler,
+    RedactingFilter,
+    redact_text,
+    reset_request_id,
+    set_request_id,
+)
 
 
 def test_redact_text_removes_common_credentials() -> None:
@@ -60,3 +71,70 @@ def test_filter_redacts_exception_text_populated_by_another_handler() -> None:
     payload = json.loads(JsonFormatter().format(record))
     assert "already-formatted-secret" not in payload["exception"]
     assert "[REDACTED]" in payload["exception"]
+
+
+def test_private_rotating_handler_writes_redacted_json_with_private_permissions(tmp_path) -> None:
+    path = tmp_path / "orinoco.log"
+    handler = PrivateRotatingFileHandler(path, maxBytes=1024, backupCount=2, encoding="utf-8")
+    handler.addFilter(RedactingFilter())
+    handler.setFormatter(JsonFormatter())
+    logger = logging.getLogger("orinoco.test.file")
+    logger.handlers.clear()
+    logger.propagate = False
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    try:
+        logger.error("token=%s", "disk-secret")
+        handler.flush()
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        assert "disk-secret" not in path.read_text(encoding="utf-8")
+        assert "[REDACTED]" in payload["message"]
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+        logger.propagate = True
+
+
+def test_private_rotating_handler_rotates_with_bounded_backups(tmp_path) -> None:
+    path = tmp_path / "orinoco.log"
+    handler = PrivateRotatingFileHandler(path, maxBytes=120, backupCount=2, encoding="utf-8")
+    handler.setFormatter(JsonFormatter())
+    logger = logging.getLogger("orinoco.test.rotation")
+    logger.handlers.clear()
+    logger.propagate = False
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    try:
+        for index in range(20):
+            logger.info("diagnostic event %s with a bounded message", index)
+        handler.flush()
+        assert path.exists()
+        assert (tmp_path / "orinoco.log.1").exists()
+        assert (tmp_path / "orinoco.log.2").exists()
+        assert not (tmp_path / "orinoco.log.3").exists()
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+        logger.propagate = True
+
+
+def test_private_rotating_handler_refuses_symlink(tmp_path) -> None:
+    target = tmp_path / "outside.txt"
+    target.write_text("do not overwrite", encoding="utf-8")
+    link = tmp_path / "orinoco.log"
+    link.symlink_to(target)
+    with pytest.raises(OSError):
+        PrivateRotatingFileHandler(link, maxBytes=1024, backupCount=1, encoding="utf-8")
+    assert target.read_text(encoding="utf-8") == "do not overwrite"
+
+
+def test_private_rotating_handler_restricts_existing_file_mode(tmp_path) -> None:
+    path = tmp_path / "orinoco.log"
+    path.write_text("old log", encoding="utf-8")
+    os.chmod(path, 0o644)
+    handler = PrivateRotatingFileHandler(path, maxBytes=1024, backupCount=1, encoding="utf-8")
+    try:
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    finally:
+        handler.close()
