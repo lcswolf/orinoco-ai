@@ -668,3 +668,25 @@ def test_panel_admin_recovery_token_expires_after_thirty_minutes(tmp_path, monke
         )
 
     assert response.status_code == 403
+
+
+def test_bootstrap_throttle_does_not_globally_lock_out_unknown_clients(monkeypatch) -> None:
+    """An untrusted/shared proxy identity must not become one global failure bucket."""
+    from collections import OrderedDict
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setattr(auth_routes, "_bootstrap_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "_resolve_client_ip", lambda request: None)
+    assert auth_routes._check_bootstrap_rate(_request_with_peer("127.0.0.1")) is None
+    assert auth_routes._bootstrap_failures == OrderedDict()
+
+
+def test_admin_recovery_throttle_does_not_globally_lock_out_unknown_clients(monkeypatch) -> None:
+    """Recovery must not let one caller exhaust a shared unknown-client bucket."""
+    from collections import OrderedDict
+    from orinoco.auth import routes as auth_routes
+
+    monkeypatch.setattr(auth_routes, "_admin_recovery_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "_resolve_client_ip", lambda request: None)
+    assert auth_routes._check_admin_recovery_rate(_request_with_peer("127.0.0.1")) is None
+    assert auth_routes._admin_recovery_failures == OrderedDict()
