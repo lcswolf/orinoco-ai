@@ -136,7 +136,7 @@ _SENSITIVE_MEMORY_TERMS = (
     "cerdyn credyd", "cyfrif banc", "cod didoli", "rhif cyfrif", "cyflog",
     "incwm", "cynilion", "morgais", "benthyciad", "dyled", "pensiwn",
     "meddygol", "diagnosis", "meddyginiaeth", "cyflwr iechyd", "iechyd meddwl",
-    "salwch", "clefyd", "diabetes", "canser", "asthma", "iselder", "gorbryder",
+    "salwch", "clefyd", "diabetes", "canser", "asthma", "iselder", "gorbryder", "orbryder",
     "anabledd", "pwysedd gwaed", "colesterol", "therapi", "symptom",
     "presgripsiwn", "llawdriniaeth", "meddyg", "ysbyty", "clinig", "anaf",
     "torri fy mraich", "torri fy nghoes", "torri asgwrn", "caethiwed",
