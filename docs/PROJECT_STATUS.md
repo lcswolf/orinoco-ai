@@ -36,6 +36,7 @@ This page separates confirmed project decisions from implementation work. A plan
 - CI dependency vulnerability audit and weekly Dependabot monitoring for Python packages and GitHub Actions. GitHub Actions are pinned to immutable commit SHAs; Python runtime and development dependencies are now compiled into SHA-256 hash-locked requirements files; CI and the Docker image install them with `--require-hashes`.
 - Operator runbook for manual image updates, one-shot backup/restore commands and rollback sequencing; backup-verified update preparation and explicit SQLite migration CLI.
 - Panel-first administrator setup and recovery on the draft feature branch: token-gated first-admin creation, expiring one-time recovery with session revocation, and a browser-only backup-key generator. Python CI #1022 passed 259 tests and container build/smoke #429 passed; live Panel/browser checks are still outstanding.
+- Welsh/English support is tracked in [issue #7](https://github.com/lcswolf/orinoco-ai/issues/7). The language-preference implementation is being developed on `feature/welsh-english-language-support`; migration, prompt, UI, memory-filter and bilingual tests are in progress. Model-quality evaluation must be performed locally with the selected Ollama model; no bilingual performance claim is made yet.
 - Automatic migration recovery: when an existing database migration or its post-migration integrity checks fail, the CLI attempts to restore the verified pre-migration backup; a regression test covers the failure path.
 - Automated Python tests, frontend JavaScript syntax validation and dependency vulnerability audit.
 - Egg/runtime consistency regression checks: active Egg environment variables must be referenced by runtime code, and install-script persistent paths must match the model and database storage roots.
@@ -77,12 +78,13 @@ The latest completed Python CI for the Panel-first feature branch [#1022](https:
 0. Complete the Panel-first management release gate: first-admin setup, one-time administrator recovery, browser-only backup-key generation and the Panel Startup Command runbook audit are implemented on the feature branch. Python CI #1022 (259 tests) and container smoke #429 passed. Verify the full workflow on a disposable Panel 1.13.0 server, including real-browser secret clearing and a restore/rollback drill. Track acceptance in [Panel-first Management](PANEL_MANAGEMENT.md).
 
 
-1. Keep the fixed Debian snapshot timestamp explicit and update it deliberately during security maintenance, then rerun container build and smoke checks.
-2. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
-3. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
-4. Perform a real encrypted backup/restore and update/rollback drill on the disposable Pterodactyl server.
-5. Browser-test the mobile navigation, narrow-screen layout and account settings on iOS, Android and desktop.
-6. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
+1. Complete Welsh/English support on the feature branch: validate the language preference and prompt, bilingual tests and Welsh-sensitive-memory filtering; then run the documented quality benchmark against the chosen local model before finalising the default. Track acceptance in [Language Support](LANGUAGE_SUPPORT.md) and [issue #7](https://github.com/lcswolf/orinoco-ai/issues/7).
+2. Keep the fixed Debian snapshot timestamp explicit and update it deliberately during security maintenance, then rerun container build and smoke checks.
+3. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
+4. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
+5. Perform a real encrypted backup/restore and update/rollback drill on the disposable Pterodactyl server.
+6. Browser-test the mobile navigation, narrow-screen layout and account settings on iOS, Android and desktop.
+7. Publish a versioned stable image only after the live deployment and recovery release gates pass; Discord and voice follow later.
 
 ## Resource assumptions
 
