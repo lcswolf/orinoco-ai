@@ -46,6 +46,10 @@ class RedactingFilter(logging.Filter):
 
             record.exc_text = redact_text("".join(traceback.format_exception(*record.exc_info)))
             record.exc_info = None
+        elif record.exc_text:
+            # Another formatter/handler may have populated exc_text already.
+            # Sanitize it too; otherwise it can bypass the exc_info branch.
+            record.exc_text = redact_text(record.exc_text)
         record.request_id = _request_id.get()
         return True
 
