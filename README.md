@@ -4,7 +4,7 @@
 
 Orinoco is designed to give individuals, communities and hosting teams a friendly assistant they can run and manage themselves. It uses Ollama for local language-model inference and a custom web interface built for Orinoco.
 
-> **Project status: active development / staging preview.** Core application features are implemented, and a container image has been published to GitHub Container Registry. Public anonymous pull access and live Pterodactyl installation are still to be verified. Orinoco is not production-ready.
+> **Project status: active development / staging preview.** Core application features are implemented, and a container image has been published to GitHub Container Registry. Public anonymous pull access, standalone Compose deployment and live Pterodactyl installation are still to be verified. Orinoco is not production-ready.
 
 ## What Orinoco is aiming to provide
 
@@ -15,7 +15,7 @@ Orinoco is designed to give individuals, communities and hosting teams a friendl
 - **Optional web research** through an administrator-configured SearXNG service.
 - **Welsh and English support**, including per-user reply-language preferences.
 - **Administrator controls** for accounts, the shared assistant persona and operational settings.
-- **Pterodactyl-oriented operations**, with a custom Egg and a Panel-first day-to-day management goal.
+- **Flexible deployment:** standalone Docker Compose or Pterodactyl Panel using the same Orinoco image.
 - **Encrypted backups and recovery tooling**, with optional S3-compatible off-site uploads.
 
 Discord text integration and voice features are planned, not currently available. See [Project Status](docs/PROJECT_STATUS.md) for the implementation breakdown.
@@ -34,12 +34,13 @@ Discord text integration and voice features are planned, not currently available
 Start with the [Documentation Index](docs/README.md).
 
 - New users and operators: [User and Setup Guide](docs/USER_GUIDE.md)
+- **Standalone Docker users:** [Docker Compose installation guide](docs/DOCKER_COMPOSE.md) and the root [compose.yaml](compose.yaml) / [.env.example](.env.example)
 - Pterodactyl operators: [Pterodactyl Egg notes](docs/PTERODACTYL_EGG.md) and [Test VPS Runbook](docs/TEST_VPS_RUNBOOK.md)
 - Developers: [Development Guide](docs/DEVELOPMENT.md) and [Contributing](CONTRIBUTING.md)
 - Technical overview: [Architecture](docs/ARCHITECTURE.md)
 - Current capabilities and release gates: [Project Status](docs/PROJECT_STATUS.md)
 
-**Important:** the setup guide is a preview, not a production deployment recipe. Do not deploy to a live multi-user service until the release gates in Project Status have been completed.
+**Important:** the setup guides are previews, not production deployment recipes. Do not deploy to a live multi-user service until the release gates in Project Status have been completed.
 
 ## Container image
 
@@ -48,7 +49,7 @@ The project has published an immutable test image:
 - `ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539`
 - OCI index digest: `sha256:98dac555b4efad1da9b7306a09a30df5a8b25a57520fc0227590f7dd7885ff0`
 
-The `stable` tag is also published, but release operators should use the exact immutable tag/digest recorded for the release being tested. Anonymous/public pull access has not yet been independently verified. The image has not yet passed a live Pterodactyl Panel 1.13.0 import and deployment test.
+The `:stable` tag is also published, but release operators should use the exact immutable tag/digest recorded for the release being tested. Anonymous/public pull access has not yet been independently verified. The currently published image may lag behind merged source changes; a merge does not automatically publish a new image. Standalone Compose and live Pterodactyl installation each require their own staging verification.
 
 ## Repository map
 
@@ -57,6 +58,7 @@ The `stable` tag is also published, but release operators should use the exact i
 | `orinoco/` | FastAPI application and feature modules |
 | `orinoco/static/` | Web interface assets |
 | `docker/` | Container image and supervised startup |
+| `compose.yaml`, `.env.example` | Standalone Docker Compose template |
 | `egg/` | Pterodactyl Egg definition |
 | `tests/` | Automated tests |
 | `scripts/` | Developer and evaluation utilities |
@@ -64,7 +66,7 @@ The `stable` tag is also published, but release operators should use the exact i
 
 ## Security and privacy
 
-Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. Keep Ollama, the database and application data private. A hidden Pterodactyl variable is not a secure secret vault: processes inside the container can read environment variables.
+Do not commit passwords, tokens, API keys, private conversations, personal memories, uploaded documents, databases, backups or encryption keys. Keep Ollama, the database and application data private. A hidden Pterodactyl variable is not a secure secret vault: processes inside the container can read environment variables. Protect standalone Docker `.env` files in the same way.
 
 Read [SECURITY.md](SECURITY.md) before exposing an instance to a network or handling other people's data. Report vulnerabilities privately using GitHub's private vulnerability reporting where available.
 

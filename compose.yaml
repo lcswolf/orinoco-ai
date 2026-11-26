@@ -1,0 +1,29 @@
+services:
+  orinoco:
+    image: ${ORINOCO_IMAGE:?Set ORINOCO_IMAGE in .env to an immutable release tag}
+    container_name: orinoco
+    restart: unless-stopped
+    init: true
+    ports:
+      # Localhost only. Put a trusted HTTPS reverse proxy in front for remote access.
+      - "127.0.0.1:${ORINOCO_PORT:-8000}:8000"
+    volumes:
+      - ./data:/home/container/data
+    environment:
+      STARTUP: "supervisord -n -c /opt/orinoco/docker/supervisord.conf"
+      SERVER_PORT: "8000"
+      TIMEZONE: ${TIMEZONE:-Europe/London}
+      TZ: ${TIMEZONE:-Europe/London}
+      OLLAMA_MODELS: /home/container/data/models
+      OLLAMA_NO_CLOUD: "1"
+      AI_MODEL: ${AI_MODEL:-qwen2.5:0.5b}
+      AUTO_DOWNLOAD_MODEL: ${AUTO_DOWNLOAD_MODEL:-false}
+      MODEL_CONTEXT: ${MODEL_CONTEXT:-1024}
+      AI_CONCURRENCY: "1"
+      AUTO_SAVE_MEMORIES: ${AUTO_SAVE_MEMORIES:-false}
+      ENABLE_WEB_SEARCH: ${ENABLE_WEB_SEARCH:-false}
+      SEARXNG_URL: ${SEARXNG_URL:-}
+      ORINOCO_DATABASE_PATH: /home/container/data/orinoco.sqlite3
+      ORINOCO_BOOTSTRAP_TOKEN: ${ORINOCO_BOOTSTRAP_TOKEN:-}
+      ORINOCO_BACKUP_ENABLED: ${ORINOCO_BACKUP_ENABLED:-false}
+      ORINOCO_BACKUP_KEY: ${ORINOCO_BACKUP_KEY:-}
