@@ -1,6 +1,6 @@
 # Orinoco AI User and Setup Guide
 
-**Status: preview guide.** Orinoco's application and container are under active development. The Docker image has not been published and the Pterodactyl Egg has not yet been imported and tested on a live Panel. Use this guide for planning and for a future test installation only; do not treat the steps as a production-ready deployment until the release gate in [Project Status](PROJECT_STATUS.md) is cleared.
+**Status: preview guide.** Orinoco's application and container are under active development. A test image has been published to GHCR, but anonymous/public pull access and the Pterodactyl Egg import have not yet been verified on a live Panel. Use this guide for planning and controlled staging only; it is not a production-ready deployment guide. Check [Project Status](PROJECT_STATUS.md) before each installation.
 
 This guide is intended to cover the complete user journey. The operating goal is Panel-first management: after the VPS, Pterodactyl Panel and Wings are ready, routine Orinoco setup and operation should not require SSH or Docker commands. See [Panel-first Management](PANEL_MANAGEMENT.md) for the requirements and current gaps.
 
@@ -38,9 +38,9 @@ Do this only after a release image has been published and its release notes say 
 1. In Pterodactyl, open **Admin → Nests** and create a dedicated **Orinoco AI** Nest.
 2. Import `egg/egg-orinoco.json` from this repository.
 3. Create a server using the imported Orinoco Egg.
-4. Select the exact Docker image tag named in the release notes. Do not guess a tag or rely on an unpublished `:stable` image.
+4. Select the exact immutable Docker image tag and digest recorded in the current test/release notes. Do not guess a tag. The published `:stable` tag is mutable and should not be used as the sole release identifier.
 5. Assign the web allocation and enough disk/RAM for the model and persistent data.
-6. Set the required backup encryption key and review the other Egg variables before starting.
+6. Review the Egg variables before starting. The Orinoco backup scheduler is optional and disabled by default; configure a backup encryption key only if you intend to use Orinoco's encrypted backup features.
 7. Start the server and watch the console for Ollama startup, model download and web-service readiness messages.
 
 The live import, first start, image pull, and Pterodactyl console behaviour are still release-gated and must be tested on a disposable server first. Detailed Egg notes are in [Pterodactyl Egg](PTERODACTYL_EGG.md).
@@ -58,9 +58,10 @@ The following are the main settings currently exposed by the preview Egg.
 | Enable Web Search | Enable the SearXNG research feature | `true` only when configured |
 | SearXNG URL | Administrator-configured search service endpoint | Blank until configured |
 | Timezone | Timezone used by services and backup schedule | `Europe/London` |
-| Backup Encryption Key | Key for encrypted backups | Required; generate and store securely |
-| Daily Backup Time | Local time for scheduled backup | `03:00` |
-| Local Backup Retention | Days of local backup retention | `14` |
+| Backup Encryption Key | Key for encrypted backups | Optional until encrypted backups are enabled; generate and store securely |
+| Automatic Backup Scheduler | Enables Orinoco's own scheduled backup job | `false` by default; Pterodactyl backups may be used instead |
+| Daily Backup Time | Local time for scheduled backup, when enabled | `03:00` |
+| Local Backup Retention | Days of local backup retention, when enabled | `14` |
 
 Keep the Discord and voice settings disabled. These integrations are not implemented yet.
 
@@ -140,10 +141,10 @@ Web search is not available when the service endpoint is blank or the feature is
 
 ## 7. Backups and recovery
 
-Orinoco supports encrypted local backups, verification, confirmed restore and optional S3-compatible upload.
+Orinoco supports encrypted local backups, verification, confirmed restore and optional S3-compatible upload. Its own automatic scheduler is **disabled by default** so administrators can rely on Pterodactyl's backup scheduling if preferred.
 
-- The scheduled backup normally runs at **03:00** in the configured timezone.
-- Local backups are retained for **14 days** by default.
+- If enabled, the scheduler normally runs at **03:00** in the configured timezone.
+- If enabled, local backups are retained for **14 days** by default.
 - The backup includes application data and private documents, but not Egg/environment variables or Ollama model weights.
 - Keep the encryption key and any environment-supplied session secret separately.
 - A backup stored only on the VPS is not an off-site backup.
@@ -178,10 +179,10 @@ For security issues, follow [Security](../SECURITY.md). For technical details an
 
 ## 10. Current limitations
 
-- The public image and live Pterodactyl install have not yet been release-verified.
+- The published test image still needs anonymous GHCR pull verification and a live Pterodactyl install/import test.
 - The first VPS deployment and real resource measurements remain outstanding.
 - Discord and voice are planned but not available.
 - S3 upload is implemented; convenient remote-download restore and remote bucket retention automation remain outstanding.
 - The current initial design assumes a single web worker for process-local generation and rate limits.
 
-Always consult [Project Status](PROJECT_STATUS.md) and the release notes for the latest verified capabilities before installing or updating.
+Always consult [Project Status](PROJECT_STATUS.md), [Test VPS Runbook](TEST_VPS_RUNBOOK.md) and the release notes for the latest verified capabilities before installing or updating.
