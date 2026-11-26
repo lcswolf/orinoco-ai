@@ -1,6 +1,6 @@
 # Diagnostics and Support Bundles
 
-**Status: implementation in progress.** This document records the privacy and operational requirements for diagnostics. The structured stdout logger and bounded persistent log files are implemented; the diagnostics page and support bundle are not yet implemented.
+**Status: implementation in progress.** Structured stdout and bounded persistent logs, read-only diagnostics checks, an administrator diagnostics panel and a privacy-filtered support ZIP are implemented in the current draft PR. Fresh CI and security review are still required; live Pterodactyl verification remains outstanding.
 
 ## Goals
 
@@ -12,9 +12,9 @@ No diagnostic data is sent automatically. There is no external telemetry service
 
 1. The Pterodactyl Console displays concise startup, warning and error messages.
 2. The Orinoco administrator opens **Administration → Diagnostics**.
-3. The page shows service health, readiness, recent error counts and the last successful/failed backup status.
+3. The page shows database, model-service, storage and disk-space checks with pass/warning/fail explanations.
 4. **Run checks** performs bounded, read-only checks and reports pass/warning/fail with a short explanation.
-5. **Download support bundle** creates a timestamped ZIP locally. The administrator downloads it and can attach it to a support conversation.
+5. **Download support bundle** creates a bounded ZIP in memory containing diagnostics, a manifest and allowlisted event metadata. The administrator downloads it and can review it before sharing.
 6. The page explains what the bundle contains and reminds the administrator to review it before sharing.
 
 A Panel-only fallback should also be documented for cases where the web interface is unavailable: the operator can retrieve bounded, redacted logs through the Pterodactyl Console/File Manager. Do not require Docker exec or SSH for routine diagnosis.
@@ -40,7 +40,7 @@ Include only bounded, allowlisted diagnostics:
 - Database schema version and a read-only database integrity/availability result; never the database file itself.
 - Health/readiness status and component check outcomes.
 - Sanitized configuration summary: feature enabled/disabled flags, selected model name, context setting, timezone and configured storage paths represented safely.
-- Recent redacted application logs and bounded startup/Panel-console diagnostic excerpts where available.
+- A bounded sample of recent structured event metadata (timestamp, level, logger, event code and request ID). Free-form messages and exception text are deliberately excluded from the ZIP.
 - Recent backup job status and timestamps, without archive contents, keys, bucket credentials or private object URLs.
 - Disk availability for relevant data paths when supported.
 - A manifest describing bundle creation time, included files, truncation and redaction policy.
@@ -94,8 +94,8 @@ Checks must not trigger model downloads, modify user data, run migrations, perfo
 
 1. Structured logger, correlation IDs, redaction and bounded rotation. (In progress; stdout and persistent file logging implemented.)
 2. Diagnostics service and read-only self-checks.
-3. Admin-only diagnostics page and downloadable ZIP.
-4. Adversarial privacy/security tests and Panel-first documentation.
+3. Admin-only diagnostics panel and downloadable ZIP. (Implemented; awaiting fresh CI/security review.)
+4. Adversarial privacy/security tests and Panel-first documentation. (Initial ZIP tests added; broader review remains.)
 5. Live disposable Pterodactyl test, including web UI unavailable fallback.
 
 Do not mark the feature complete until the support ZIP has been inspected for secrets and private content and the complete workflow has been exercised on a disposable Panel instance.
