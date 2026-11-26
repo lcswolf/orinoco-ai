@@ -185,7 +185,7 @@ def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[
             safe["timestamp"] = timestamp
 
         safe_records.append(json.dumps(safe, ensure_ascii=True, separators=(",", ":")))
-    return "\\n".join(safe_records) + ("\\n" if safe_records else ""), truncated
+    return "\n".join(safe_records) + ("\n" if safe_records else ""), truncated
 
 async def build_support_bundle() -> bytes:
     """Build a bounded in-memory ZIP containing diagnostics and safe event metadata."""
