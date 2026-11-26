@@ -107,6 +107,8 @@ def local_endpoint(value: str) -> str:
         raise ValueError("Ollama URL must use http://localhost, 127.0.0.1 or [::1].")
     if parsed.username or parsed.password:
         raise ValueError("Do not put credentials in the Ollama URL.")
+    if parsed.path not in ("", "/") or parsed.query or parsed.fragment:
+        raise ValueError("Use the Ollama API origin only; paths, queries and fragments are not allowed.")
     return value.rstrip("/")
 
 
@@ -126,7 +128,14 @@ def ask_ollama(endpoint: str, model: str, prompt: str, context: int, timeout: in
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    class RejectRedirects(urllib.request.HTTPRedirectHandler):
+        """Keep loopback requests from being redirected to a remote host."""
+
+        def redirect_request(self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str) -> None:
+            return None
+
+    opener = urllib.request.build_opener(RejectRedirects())
+    with opener.open(request, timeout=timeout) as response:
         result: dict[str, Any] = json.loads(response.read().decode("utf-8"))
     message = result.get("message", {})
     answer = message.get("content")
