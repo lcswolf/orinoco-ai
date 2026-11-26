@@ -3,8 +3,8 @@ name: Tests
 on:
   push:
     branches: [main]
+  # Run tests for stacked feature branches as well as PRs targeting main.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
