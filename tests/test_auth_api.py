@@ -703,6 +703,7 @@ def test_production_bootstrap_failures_without_trusted_proxy_do_not_share_bucket
     monkeypatch.setenv("ORINOCO_BOOTSTRAP_TOKEN", "a-valid-panel-bootstrap-token-with-strong-entropy")
     monkeypatch.delenv("ORINOCO_TRUSTED_PROXY_IPS", raising=False)
     monkeypatch.setattr(auth_routes, "_bootstrap_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "_resolve_client_ip", lambda request: None)
     initialise_database(database)
 
     with TestClient(app, base_url="https://testserver") as client:
@@ -735,6 +736,7 @@ def test_production_recovery_failures_without_trusted_proxy_do_not_share_bucket(
     monkeypatch.setenv("ORINOCO_ADMIN_RECOVERY_TOKEN", "a-valid-panel-recovery-token-with-strong-entropy")
     monkeypatch.delenv("ORINOCO_TRUSTED_PROXY_IPS", raising=False)
     monkeypatch.setattr(auth_routes, "_admin_recovery_failures", OrderedDict())
+    monkeypatch.setattr(auth_routes, "_resolve_client_ip", lambda request: None)
     initialise_database(database)
     create_user("recoveradmin", "an-old-admin-password-123", role="admin", database_path=database)
 
