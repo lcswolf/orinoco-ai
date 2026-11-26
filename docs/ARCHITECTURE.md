@@ -82,6 +82,15 @@ Encrypted backup tooling creates a SQLite online snapshot, uploaded document tre
 
 Application, Egg/image and model updates are separate operations. A manual Pterodactyl update/rollback runbook is documented in `UPDATING.md`. The `orinoco.updates` CLI creates and verifies a pre-update backup, optionally uploads it to the configured S3-compatible bucket, and requires a verified backup before applying additive SQLite migrations. Automated image switching and a live upgrade/rollback drill remain outstanding. Updates must verify the release, create and verify a backup, apply migrations, run health checks and preserve the previous image for rollback.
 
+## Configuration and lifecycle requirements
+
+The product is intended to grow through administrator-managed configuration rather than separate editions. Optional modules should be independently enableable/disableable from the Orinoco administrator interface and/or Pterodactyl variables, according to the responsibility of each setting. Disabling a module must stop its background work and routes as well as hide its user interface; stored data and settings should be preserved unless an administrator explicitly deletes them. Configuration changes should be validated, show dependency information and take effect through a controlled restart.
+
+The administrator interface and advanced settings must remain separate from the ordinary user experience. Standard users should see only the features enabled for them and their own account data. Backend authorization is mandatory; hiding an administrator control in the browser is not a security boundary.
+
+The assistant identity is intended to be model-independent. A persistent administrator-managed profile is planned for the assistant's name, purpose, creator/organisation, background, core uses and communication style. It must remain separate from per-user preferences and from application-owned privacy, safety and permission guardrails. See the identity configuration design when it is merged into the main branch.
+
+Hardware-aware startup configuration is also a core requirement: detect the resources actually available to the container (including CPU and memory limits), then select safe inference thread and request-concurrency defaults. Preserve administrator-selected models and module preferences; warn rather than silently replace a model that no longer fits. Performance history and benchmarking are planned to support comparisons between VPS sizes. These behaviours are design requirements, not claims of current implementation.
 ## Remaining operational decisions
 
 - Remote object-storage lifecycle/retention policy and restore-from-remote convenience.
