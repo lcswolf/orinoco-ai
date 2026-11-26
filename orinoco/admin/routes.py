@@ -149,3 +149,12 @@ async def save_assistant_persona(
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/diagnostics")
+async def read_diagnostics(request: Request) -> dict[str, object]:
+    """Run bounded, read-only operational checks for administrators."""
+    _require_admin(request)
+    from orinoco.diagnostics import run_diagnostics
+
+    return await run_diagnostics()
