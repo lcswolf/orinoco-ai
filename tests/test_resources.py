@@ -72,12 +72,20 @@ def test_unlimited_cgroup_memory_does_not_look_like_a_real_limit(tmp_path: Path)
     assert profile.memory_current_bytes is None
 
 
-def test_falls_back_to_affinity_and_host_cpu_count_when_cgroups_are_unavailable(tmp_path: Path) -> None:
+def test_falls_back_to_affinity_and_host_cpu_count_when_cgroups_are_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     assert detect_resources(
         cgroup_root=tmp_path,
         host_cpu_count=6,
         affinity_cpu_count=3,
     ).cpu_count == 3
+
+    def unavailable_affinity(_: int) -> set[int]:
+        raise OSError("affinity is unavailable")
+
+    monkeypatch.setattr("orinoco.resources.os.sched_getaffinity", unavailable_affinity)
     assert detect_resources(
         cgroup_root=tmp_path,
         host_cpu_count=6,
