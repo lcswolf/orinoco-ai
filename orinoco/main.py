@@ -74,11 +74,14 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.middleware("http")
 async def request_body_limit(request, call_next):
-    """Reject oversized declared request bodies before FastAPI parses them.
+    """Reject oversized declared and streamed request bodies before route parsing."""
+    try:
+        max_bytes = int(os.environ.get("ORINOCO_MAX_REQUEST_BODY_BYTES", str(12 * 1024 * 1024)))
+    except ValueError:
+        return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
+    if max_bytes < 1024:
+        return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
 
-    The reverse proxy must also enforce a body limit for chunked requests that
-    do not carry Content-Length; the application check is defence in depth.
-    """
     raw_length = request.headers.get("content-length")
     if raw_length is not None:
         try:
@@ -87,17 +90,24 @@ async def request_body_limit(request, call_next):
             return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
         if content_length < 0:
             return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header."})
-        try:
-            max_bytes = int(os.environ.get("ORINOCO_MAX_REQUEST_BODY_BYTES", str(12 * 1024 * 1024)))
-        except ValueError:
-            return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
-        if max_bytes < 1024:
-            return JSONResponse(status_code=500, content={"detail": "Request body limit is misconfigured."})
         if content_length > max_bytes:
             return JSONResponse(
                 status_code=413,
                 content={"detail": "The request body exceeds the configured size limit."},
             )
+    elif request.method not in {"GET", "HEAD"}:
+        # Chunked bodies have no Content-Length. Buffer only up to the configured
+        # cap, then replay the bounded body to downstream FastAPI parsing.
+        body = bytearray()
+        async for chunk in request.stream():
+            if len(body) + len(chunk) > max_bytes:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": "The request body exceeds the configured size limit."},
+                )
+            body.extend(chunk)
+        request._body = bytes(body)
+
     return await call_next(request)
 
 
