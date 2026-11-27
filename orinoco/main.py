@@ -24,6 +24,7 @@ from orinoco.auth.routes import router as auth_router
 from orinoco.auth.sessions import get_session_secret, secure_cookie_enabled
 from orinoco.logging_config import configure_logging, current_request_id, reset_request_id, set_request_id
 from orinoco.resources import get_resource_profile, resolve_ai_threads
+from orinoco.identity import activate_pending_identity
 
 configure_logging()
 logger = logging.getLogger("orinoco.http")
@@ -117,6 +118,26 @@ async def security_headers(request, call_next):
         "font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'",
     )
     return response
+
+
+@app.on_event("startup")
+async def activate_identity_profile() -> None:
+    """Promote a validated pending identity profile, retaining safe defaults on failure."""
+    try:
+        profile = activate_pending_identity()
+        logger.info(
+            "Assistant identity loaded (version %s, name %s)",
+            profile["active_version"],
+            profile["active"]["name"],
+            extra={"event_code": "identity.loaded"},
+        )
+    except Exception as exc:
+        # Identity is optional style configuration; a failure must not stop startup.
+        logger.warning(
+            "Assistant identity activation failed (%s); retaining application defaults",
+            type(exc).__name__,
+            extra={"event_code": "identity.activation_failed"},
+        )
 
 
 @app.get("/", include_in_schema=False)
