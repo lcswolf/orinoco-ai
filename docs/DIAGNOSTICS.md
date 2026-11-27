@@ -14,7 +14,7 @@ No diagnostic data is sent automatically. There is no external telemetry service
 2. The Orinoco administrator opens **Administration → Diagnostics**.
 3. The page shows database, model-service, storage and disk-space checks with pass/warning/fail explanations.
 4. **Run checks** performs bounded, read-only checks and reports pass/warning/fail with a short explanation.
-5. **Download support bundle** creates a bounded ZIP in memory containing diagnostics, a manifest and allowlisted event metadata. The administrator downloads it and can review it before sharing.
+5. **Download support bundle** sends a CSRF-protected POST request and creates a bounded ZIP in memory containing diagnostics, a manifest and allowlisted event metadata. The administrator downloads it and can review it before sharing.
 6. The page explains what the bundle contains and reminds the administrator to review it before sharing.
 
 A Panel-only fallback should also be documented for cases where the web interface is unavailable: the operator can retrieve bounded, redacted logs through the Pterodactyl Console/File Manager. Do not require Docker exec or SSH for routine diagnosis.
@@ -54,7 +54,7 @@ Never include:
 ## Security requirements
 
 - Admin-only endpoints and UI; enforce authorization server-side on every request.
-- CSRF protection for state-changing/generation actions.
+- CSRF protection for state-changing/generation actions, including the support-bundle POST endpoint.
 - Build bundles from an explicit allowlist, never by archiving a user-supplied path or the whole data directory.
 - Resolve paths beneath a fixed diagnostics root; reject symlinks and non-regular files.
 - Use atomic temporary-file creation, restrictive permissions, bounded concurrent generation and automatic cleanup/expiry.
