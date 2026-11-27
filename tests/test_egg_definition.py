@@ -23,6 +23,7 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
         "AI_MODEL",
         "AUTO_DOWNLOAD_MODEL",
         "MODEL_CONTEXT",
+        "AI_THREADS",
         "AUTO_SAVE_MEMORIES",
         "ORINOCO_DATABASE_PATH",
         "AI_CONCURRENCY",
@@ -299,3 +300,12 @@ def test_model_init_stops_after_three_failed_pulls(tmp_path: Path) -> None:
     assert result.ollama_log.count("pull:") == 3
     assert "failed after 3 attempts" in result.stderr
     assert "readyz will remain HTTP 503" in result.stderr
+
+
+def test_ai_threads_default_to_auto_and_are_admin_only() -> None:
+    egg = json.loads((ROOT / "egg" / "egg-orinoco.json").read_text(encoding="utf-8"))
+    variable = next(v for v in egg["variables"] if v["env_variable"] == "AI_THREADS")
+    assert variable["default_value"] == "0"
+    assert variable["user_viewable"] is False
+    assert variable["user_editable"] is False
+    assert variable["rules"] == "required|integer|min:0|max:64"
