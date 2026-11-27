@@ -96,12 +96,20 @@ def get_identity(*, database_path=None) -> dict[str, object]:
             "SELECT active_json, pending_json, active_version, pending_version, updated_at "
             "FROM assistant_identity WHERE id = 1"
         ).fetchone()
+    try:
+        active = validate_identity(json.loads(row["active_json"]))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        active = DEFAULT_IDENTITY.copy()
+    try:
+        pending = validate_identity(json.loads(row["pending_json"])) if row["pending_json"] else None
+    except (ValueError, TypeError, json.JSONDecodeError):
+        pending = None
     return {
-        "active": json.loads(row["active_json"]),
-        "pending": json.loads(row["pending_json"]) if row["pending_json"] else None,
+        "active": active,
+        "pending": pending,
         "active_version": int(row["active_version"]),
-        "pending_version": int(row["pending_version"]) if row["pending_version"] is not None else None,
-        "status": "pending_restart" if row["pending_json"] else "active",
+        "pending_version": int(row["pending_version"]) if pending is not None and row["pending_version"] is not None else None,
+        "status": "pending_restart" if pending is not None else "active",
         "updated_at": str(row["updated_at"]),
     }
 
