@@ -68,13 +68,14 @@ Search queries are sent to that SearXNG instance and any upstream search provide
 
 ## Request and document storage limits
 
-The application rejects declared HTTP request bodies larger than
-`ORINOCO_MAX_REQUEST_BODY_BYTES` (12 MiB by default) before FastAPI parses
-them. Configure the reverse proxy as well: use an approximately 11 MiB request
-body limit for the document-upload route and enforce a global limit for all
-other routes. The proxy limit is essential for chunked requests that omit
-`Content-Length`; the application middleware is defence in depth, not a
-replacement for edge enforcement.
+The application rejects HTTP request bodies larger than
+`ORINOCO_MAX_REQUEST_BODY_BYTES` (12 MiB by default) before route parsing.
+Declared `Content-Length` values are checked immediately; streamed requests
+without that header are buffered only up to the configured cap and rejected
+when they exceed it. Configure the reverse proxy as well: use an approximately
+11 MiB request body limit for the document-upload route and enforce a global
+limit for all other routes. Edge enforcement remains important for bandwidth
+and connection protection; the application limit is defence in depth.
 
 The chat route also reserves a bounded in-flight slot before building context. By default, one request can use the model while up to eight additional chat requests are admitted; further requests receive HTTP 503 with `Retry-After: 5` instead of waiting in an unbounded in-memory queue. Set `ORINOCO_MAX_PENDING_GENERATIONS` from 0 to 32 in the Egg to change the additional in-flight allowance. A value of 0 allows only one chat request at a time. This is process-local and is intended for the initial single-worker VPS; multiple workers need a shared queue/limiter.
 

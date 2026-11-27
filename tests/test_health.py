@@ -115,6 +115,21 @@ def test_oversized_declared_request_body_is_rejected_before_parsing(monkeypatch)
     assert "size limit" in response.json()["detail"]
 
 
+def test_oversized_chunked_request_body_is_rejected(monkeypatch) -> None:
+    """The app also enforces the body cap when a request omits Content-Length."""
+    monkeypatch.setenv("ORINOCO_MAX_REQUEST_BODY_BYTES", "1024")
+
+    # A generator makes httpx stream the request rather than precomputing its
+    # Content-Length, exercising the chunked/no-length middleware path.
+    response = client.post(
+        "/api/auth/logout",
+        content=(chunk for chunk in (b"x" * 600, b"y" * 600)),
+    )
+
+    assert response.status_code == 413
+    assert "size limit" in response.json()["detail"]
+
+
 def test_container_resources_are_detected_at_application_startup() -> None:
     """The web application caches resource limits before serving requests."""
     assert main.RESOURCE_PROFILE.cpu_count >= 1
