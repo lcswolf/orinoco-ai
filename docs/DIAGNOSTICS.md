@@ -1,6 +1,6 @@
 # Diagnostics and Support Bundles
 
-**Status: implementation in progress.** Structured stdout and bounded persistent logs, read-only diagnostics checks, an administrator diagnostics panel and a privacy-filtered support ZIP are implemented in the current draft PR. Fresh CI and security review are still required; live Pterodactyl verification remains outstanding.
+**Status: implemented in the repository; live deployment acceptance outstanding.** Structured stdout and bounded persistent logs, read-only diagnostics checks, an administrator-only diagnostics panel and a privacy-filtered support ZIP are present in `main` and covered by automated tests. The support bundle is built locally and contains allowlisted diagnostic results and event metadata; it deliberately excludes free-form log messages and exception text. A security review and live Pterodactyl/browser verification are still required.
 
 ## Goals
 
@@ -92,10 +92,10 @@ Checks must not trigger model downloads, modify user data, run migrations, perfo
 
 ## Delivery sequence
 
-1. Structured logger, correlation IDs, redaction and bounded rotation. (In progress; stdout and persistent file logging implemented.)
-2. Diagnostics service and read-only self-checks.
-3. Admin-only diagnostics panel and downloadable ZIP. (Implemented; awaiting fresh CI/security review.)
-4. Adversarial privacy/security tests and Panel-first documentation. (Initial ZIP tests added; broader review remains.)
-5. Live disposable Pterodactyl test, including web UI unavailable fallback.
+1. Structured logger, correlation IDs, redaction and bounded rotation. (Implemented; verify operational behaviour on a disposable Panel instance.)
+2. Diagnostics service and read-only self-checks. (Implemented and covered by automated tests.)
+3. Admin-only diagnostics panel and downloadable ZIP. (Implemented and covered by automated tests.)
+4. Adversarial privacy/security review and Panel-first documentation. (Initial tests cover ZIP contents, metadata allowlisting and symlink rejection; broader review remains.)
+5. Live disposable Pterodactyl test, including the web-UI-unavailable fallback. (Outstanding.)
 
 Do not mark the feature complete until the support ZIP has been inspected for secrets and private content and the complete workflow has been exercised on a disposable Panel instance.
