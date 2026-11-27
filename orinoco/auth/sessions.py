@@ -11,6 +11,30 @@ from fastapi import HTTPException, Request
 from orinoco.db import User, get_database_path, get_user_by_id, initialise_database
 
 
+def _restrict_session_secret_permissions(secret_path: Path) -> None:
+    """Keep the persisted signing key private, failing closed in production."""
+    production = (
+        os.environ.get("ORINOCO_ENV", "development").strip().lower() == "production"
+    )
+    try:
+        secret_path.chmod(0o600)
+    except OSError:
+        if not production:
+            return
+
+    if production:
+        try:
+            permissions = secret_path.stat().st_mode & 0o777
+        except OSError as exc:
+            raise RuntimeError(
+                "Could not verify permissions on the persistent Orinoco session secret."
+            ) from exc
+        if permissions & 0o077:
+            raise RuntimeError(
+                "The persistent Orinoco session secret is not private; refusing to start in production."
+            )
+
+
 def get_session_secret() -> str:
     """Load the configured signing secret or create a persistent, owner-readable secret file."""
     configured = os.environ.get("ORINOCO_SECRET_KEY")
@@ -44,10 +68,7 @@ def get_session_secret() -> str:
                 secret = secret_file.read().strip()
             if len(secret) < 32:
                 raise RuntimeError("The persisted Orinoco session secret is invalid")
-            try:
-                secret_path.chmod(0o600)
-            except OSError:
-                pass
+            _restrict_session_secret_permissions(secret_path)
             return secret
 
         secret = secrets.token_urlsafe(48)
@@ -55,10 +76,7 @@ def get_session_secret() -> str:
             secret_file.write(secret)
             secret_file.flush()
             os.fsync(secret_file.fileno())
-        try:
-            secret_path.chmod(0o600)
-        except OSError:
-            pass
+        _restrict_session_secret_permissions(secret_path)
         return secret
     except OSError:
         if os.environ.get("ORINOCO_ENV", "development").lower() == "production":
