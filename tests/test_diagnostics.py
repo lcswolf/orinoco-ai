@@ -105,6 +105,8 @@ def test_run_diagnostics_combines_results(monkeypatch):
 
     assert result["status"] == "warning"
     assert [item["name"] for item in result["checks"]] == ["database", "ollama"]
+    assert result["resources"]["cpu_count"] >= 1
+    assert result["resources"]["ai_threads"] >= 1
 
 
 
