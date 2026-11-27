@@ -198,9 +198,10 @@ async def read_diagnostics(request: Request) -> dict[str, object]:
 
 
 
-@router.get("/diagnostics/support-bundle")
+@router.post("/diagnostics/support-bundle")
 async def download_support_bundle(request: Request) -> Response:
     """Generate a bounded, privacy-filtered support ZIP for administrators."""
+    _require_csrf(request)
     _require_admin(request)
     from orinoco.diagnostics import build_support_bundle
 
