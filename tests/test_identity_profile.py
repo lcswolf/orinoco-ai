@@ -48,6 +48,23 @@ def test_identity_validation_rejects_invalid_values(changes):
         validate_identity({**DEFAULT_IDENTITY, **changes})
 
 
+@pytest.mark.parametrize("url", [
+    "https://",
+    "https:///missing-host",
+    "https://user:password@example.com",
+    "https://example.com:99999",
+    "https://[not-a-valid-ipv6-host]/",
+])
+def test_identity_rejects_malformed_project_urls(url):
+    with pytest.raises(ValueError):
+        validate_identity({**DEFAULT_IDENTITY, "project_url": url})
+
+
+def test_identity_accepts_valid_https_project_url():
+    profile = validate_identity({**DEFAULT_IDENTITY, "project_url": "https://example.com:8443/project"})
+    assert profile["project_url"] == "https://example.com:8443/project"
+
+
 def test_identity_api_is_admin_only_and_requires_csrf_for_writes(tmp_path, monkeypatch):
     database = tmp_path / "orinoco.sqlite3"
     monkeypatch.setenv("ORINOCO_DATABASE_PATH", str(database))
