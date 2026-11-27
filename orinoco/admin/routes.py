@@ -10,6 +10,7 @@ from fastapi.responses import Response
 from orinoco.auth.sessions import get_session_user
 from pydantic import BaseModel, Field
 
+from orinoco.identity import get_identity, save_pending_identity
 from orinoco.db import (
     AccountError,
     User,
@@ -36,6 +37,24 @@ class UserStatusRequest(BaseModel):
     """Validated active/suspended state requested by an administrator."""
     active: bool
 
+
+class AssistantIdentityRequest(BaseModel):
+    """Complete administrator-managed identity profile."""
+    name: str = Field(max_length=80)
+    creator: str = Field(max_length=120)
+    organisation: str = Field(max_length=120)
+    purpose: str = Field(max_length=500)
+    background: str = Field(max_length=1000)
+    introduction: str = Field(max_length=500)
+    project_url: str = Field(max_length=2048)
+    core_personality: str = Field(max_length=1200)
+    humour_level: int = Field(ge=0, le=100, strict=True)
+    warmth: int = Field(ge=0, le=100, strict=True)
+    formality: int = Field(ge=0, le=100, strict=True)
+    patience: int = Field(ge=0, le=100, strict=True)
+    response_length: str
+    language_policy: str
+    advanced_guidance: str = Field(max_length=2000)
 
 class AssistantPersonaRequest(BaseModel):
     """Administrator-managed core persona and humour level."""
@@ -126,6 +145,23 @@ async def update_user_status(
         raise HTTPException(status_code=404, detail="User not found.")
     return {"updated": True, "active": payload.active}
 
+
+@router.get("/identity")
+async def read_assistant_identity(request: Request) -> dict[str, object]:
+    """Return active and pending identity metadata to administrators only."""
+    _require_admin(request)
+    return get_identity(database_path=get_database_path())
+
+
+@router.put("/identity")
+async def save_assistant_identity(payload: AssistantIdentityRequest, request: Request) -> dict[str, object]:
+    """Save a validated identity profile for activation on the next restart."""
+    _require_csrf(request)
+    _require_admin(request)
+    try:
+        return save_pending_identity(payload.model_dump(), database_path=get_database_path())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 @router.get("/persona")
 async def read_assistant_persona(request: Request) -> dict[str, object]:
