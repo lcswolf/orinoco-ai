@@ -32,7 +32,7 @@ The initial target is Ubuntu 24.04 LTS on a separate VPS. Pterodactyl Panel 1.13
 
 The initial layout uses one Pterodactyl server/container. Supervisor manages Ollama, first-run model initialisation and the web application. Components may be split into separate managed services later if that proves more reliable.
 
-The current image pins Ollama 0.40.18 and configures CPU inference, a single loaded model, one parallel request, a 2048-token default context and a short model keep-alive. These defaults are intended to limit memory use on the proposed 6 GiB VPS and must be measured under real load.
+The current image pins Ollama 0.40.18 and configures CPU inference, a single loaded model, one parallel request, a 2048-token default context and a short model keep-alive. These defaults are intended to limit memory use on the proposed 6 GiB VPS and must be measured under real load. The resource-detection implementation adds startup discovery of effective CPU affinity, cpuset and cgroup v1/v2 CPU quota, plus cgroup memory limit/current usage. `AI_THREADS=0` selects the detected CPU count for Ollama's per-request `num_thread`; a positive administrator-only value may reduce but not exceed that allocation. Memory is reported in diagnostics, but the selected model and context are never silently changed.
 
 SearXNG may be hosted separately to reduce memory pressure. It is optional and must be configured explicitly.
 

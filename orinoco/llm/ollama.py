@@ -9,6 +9,8 @@ from typing import Any
 
 import httpx
 
+from orinoco.resources import resolve_ai_threads
+
 
 class OllamaError(RuntimeError):
     """Raised when the local Ollama service cannot complete a chat request."""
@@ -156,6 +158,7 @@ class OllamaClient:
 
         self.model = resolved_model
         self.context_length = resolved_context
+        self.num_threads = resolve_ai_threads()
         self._client = httpx.AsyncClient(
             base_url=resolved_url.rstrip("/"),
             timeout=timeout,
@@ -190,7 +193,7 @@ class OllamaClient:
                     "model": self.model,
                     "messages": fitted_messages,
                     "stream": False,
-                    "options": {"num_ctx": self.context_length, "num_predict": 512},
+                    "options": {"num_ctx": self.context_length, "num_predict": 512, "num_thread": self.num_threads},
                 },
             )
             response.raise_for_status()

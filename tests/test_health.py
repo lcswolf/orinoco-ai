@@ -113,3 +113,10 @@ def test_oversized_declared_request_body_is_rejected_before_parsing(monkeypatch)
 
     assert response.status_code == 413
     assert "size limit" in response.json()["detail"]
+
+
+def test_container_resources_are_detected_at_application_startup() -> None:
+    """The web application caches resource limits before serving requests."""
+    assert main.RESOURCE_PROFILE.cpu_count >= 1
+    assert main.AI_THREAD_COUNT >= 1
+    assert main.AI_THREAD_COUNT <= main.RESOURCE_PROFILE.cpu_count

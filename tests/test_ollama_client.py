@@ -9,7 +9,10 @@ import pytest
 from orinoco.llm.ollama import OllamaClient, OllamaError
 
 
-def test_chat_sends_non_streaming_request_and_returns_content() -> None:
+def test_chat_sends_non_streaming_request_and_returns_content(monkeypatch) -> None:
+    from orinoco.llm import ollama as ollama_module
+
+    monkeypatch.setattr(ollama_module, "resolve_ai_threads", lambda: 2)
     seen: dict[str, object] = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -35,7 +38,7 @@ def test_chat_sends_non_streaming_request_and_returns_content() -> None:
     assert isinstance(payload, dict)
     assert payload["model"] == "qwen2.5:1.5b"
     assert payload["stream"] is False
-    assert payload["options"] == {"num_ctx": 2048, "num_predict": 512}
+    assert payload["options"] == {"num_ctx": 2048, "num_predict": 512, "num_thread": 2}
 
 
 def test_chat_rejects_unsupported_roles_before_network_call() -> None:
