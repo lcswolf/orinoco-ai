@@ -66,6 +66,12 @@ def _positive_int(value: str | None) -> int | None:
     return parsed if parsed > 0 else None
 
 
+def _nonnegative_int(value: str | None) -> int | None:
+    if value is None or not value.isdigit():
+        return None
+    return int(value)
+
+
 def _cpu_quota_count(root: Path) -> int | None:
     """Read cgroup v2 or v1 CPU quota and round down to avoid oversubscription."""
     fields = (_read(root / "cpu.max") or "").split()
@@ -86,12 +92,12 @@ def _cpu_quota_count(root: Path) -> int | None:
 def _memory_values(root: Path) -> tuple[int | None, int | None]:
     """Read cgroup v2 or v1 memory limit and current usage, ignoring unlimited sentinels."""
     limit = _positive_int(_read(root / "memory.max"))
-    current = _positive_int(_read(root / "memory.current"))
+    current = _nonnegative_int(_read(root / "memory.current"))
     if limit is not None and limit < (1 << 60):
         return limit, current
 
     limit = _positive_int(_read(root / "memory" / "memory.limit_in_bytes"))
-    current = _positive_int(_read(root / "memory" / "memory.usage_in_bytes"))
+    current = _nonnegative_int(_read(root / "memory" / "memory.usage_in_bytes"))
     if limit is not None and limit < (1 << 60):
         return limit, current
     return None, None
