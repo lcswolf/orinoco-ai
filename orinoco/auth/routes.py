@@ -322,7 +322,7 @@ _ADMIN_RECOVERY_ARMED_AT = time.monotonic()
 _admin_recovery_failures: OrderedDict[str, deque[float]] = OrderedDict()
 
 
-def _check_admin_recovery_rate(request: Request) -> str:
+def _check_admin_recovery_rate(request: Request) -> str | None:
     """Throttle failed recovery attempts without storing submitted credentials."""
     remote_ip = _resolve_client_ip(request)
     # A shared/unknown proxy identity would let one caller lock out everyone.
@@ -386,7 +386,8 @@ async def recover_admin_account(
             detail="The new password did not meet the account requirements.",
         ) from exc
     if user is None:
-        _admin_recovery_failures.setdefault(remote_ip, deque()).append(time.monotonic())
+        if remote_ip is not None:
+            _admin_recovery_failures.setdefault(remote_ip, deque()).append(time.monotonic())
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator recovery is not available or the recovery token was not accepted.",
