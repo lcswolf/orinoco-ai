@@ -1,6 +1,6 @@
 # Project Status
 
-**Overall status: early implementation — custom interface, local model runtime, authentication, private chat, personal memory and document-library milestones committed.**
+**Overall status: active development / staging preview — the custom interface, local model runtime, authentication, private chat, personal memory, document library, administrator identity profile and container-aware resource detection are implemented. Live deployment and release gates remain outstanding.**
 
 This page separates confirmed project decisions from implementation work. A planned feature is not considered implemented until code, tests and documentation exist.
 
@@ -19,6 +19,8 @@ This page separates confirmed project decisions from implementation work. A plan
 - Per-user personal memories with automatic extraction, review, correction and deletion; automatic extraction can be disabled independently by each user.
 - Per-user response voice, tone, answer-detail and automatic-memory opt-out preferences, stored privately and applied to local chat prompts.
 - Administrator-managed shared core personality and configurable humour level (default 65%).
+- Administrator-managed, model-independent identity profile covering assistant name, creator, organisation, purpose, background, introduction, project URL, personality, humour, warmth, formality, patience, response length, language policy and advanced style guidance. Changes are saved as pending and activated on application startup; identity text is contextual guidance and cannot override protected safety or privacy rules.
+- Container-aware resource detection for cgroup v1/v2 CPU and memory limits, process CPU affinity, available memory and usage; Ollama inference thread selection respects detected CPU limits and a bounded `AI_THREADS` administrator override.
 - Memory and document reference context is supplied separately from system instructions and treated as untrusted data.
 - Private document uploads with per-account storage, bounded text extraction, download and deletion.
 - Administrator-managed shared document library, read-only to standard users.
@@ -46,10 +48,9 @@ This page separates confirmed project decisions from implementation work. A plan
 - Configurable per-user personal-memory count cap (100 by default), with atomic quota enforcement and graceful automatic-extraction behaviour when full.
 - Network deployment design for Caddy public TLS, Nginx loopback edge limits, HTTPS public-IP access and private Tailscale Serve; Uvicorn forwarded-header trust is disabled by default.
 
-The latest completed main-branch checks are on commit `7eb1a9d` after the recovery-throttle follow-up: [Python tests and dependency audit #1144](https://github.com/lcswolf/orinoco-ai/actions/runs/45915730696) passed, and [container build/smoke #534](https://github.com/lcswolf/orinoco-ai/actions/runs/45915730704) passed. This includes the existing Welsh/English, diagnostics, first-admin setup and recovery code. The local Welsh/English model-quality benchmark has not yet been run. A test image is published to GHCR; anonymous/public pull access and live Panel import remain unverified.
+The latest completed main-branch checks at the time of this status update are on commit `c155f0c` (administrator-managed identity profile): [Python tests and dependency audit #1160](https://github.com/lcswolf/orinoco-ai/actions/runs/46005234136) passed, and [container build/smoke #550](https://github.com/lcswolf/orinoco-ai/actions/runs/46005234211) passed. These checks ran against the merged `main` commit. The local Welsh/English model-quality benchmark has not yet been run. The published GHCR test image may lag behind `main`; anonymous/public pull access and live Panel import remain unverified.
 
-- Container-aware CPU/RAM detection and adaptive inference-thread selection are being implemented on `feature/container-resource-detection`. This first step detects cgroup v1/v2 CPU and memory limits and applies a safe CPU thread count; GPU detection, memory-based model-fit recommendations and performance history remain future work.
-- A full administrator-managed, model-independent identity profile (name, purpose, creator, background, personality and behaviour) is designed in the identity-configuration work; the existing core-persona and humour controls are only the current foundation.
+- GPU detection, memory-based model-fit recommendations and performance history remain future resource-awareness work. The current implementation detects CPU and memory limits and adapts inference thread selection; it does not automatically select a model or context length based on RAM.
 - The Orinoco-managed automatic backup scheduler is intended to be optional and disabled by default; Pterodactyl's own backup system remains a valid primary backup mechanism.
 
 ## Confirmed direction
@@ -84,7 +85,7 @@ The latest completed main-branch checks are on commit `7eb1a9d` after the recove
 
 
 1. Run the documented Welsh/English quality benchmark against the chosen local Ollama model before finalising the default. The language preference, prompt, UI, schema migration and Welsh privacy checks are implemented; live model quality and real-browser verification remain outstanding. Track acceptance in [Language Support](LANGUAGE_SUPPORT.md) and [issue #7](https://github.com/lcswolf/orinoco-ai/issues/7).
-2. Finish and validate container-aware resource detection, including cgroup v1/v2 CPU and memory limits, and confirm Ollama thread selection on different container allocations. Do not automatically change the selected model or context until model-fit measurements justify it.
+2. Extend resource-awareness only after measuring model fit and inference performance; do not automatically change the selected model or context until measurements justify it.
 3. Keep the fixed Debian snapshot timestamp explicit and update it deliberately during security maintenance, then rerun container build and smoke checks.
 4. Apply the Caddy/Nginx network design on the actual Leaseweb VPS, including Docker/Wings firewall rules, subdomain and IP certificate issuance, edge limits and private Tailscale Serve.
 5. Validate the Egg on a disposable server in Panel 1.13.0 and test the proxy-to-allocation path.
@@ -102,4 +103,4 @@ The intended update channel is stable. Releases should be versioned, documented 
 
 ## Next deployment-readiness gate
 
-A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. A test image has been published, but anonymous GHCR pull verification and live Panel/VPS testing have not yet been completed. Python runtime and development dependencies are hash-locked, verified by clean hash-required installs and a clean vulnerability audit. The container smoke test passed on commit `9b0541ff` with the base-image digest pinned. The Debian snapshot source configuration passed container build and smoke run #399.
+A disposable live-test runbook is prepared at [docs/PTERODACTYL_TEST_PLAN.md](PTERODACTYL_TEST_PLAN.md). It covers the Panel 1.13.0 import, Wings lifecycle, direct IP-and-port access, model startup, persistent data, account isolation, encrypted backup/restore, migration rollback, reverse proxy/TLS and Tailscale. A test image has been published, but anonymous GHCR pull verification and live Panel/VPS testing have not yet been completed. Python runtime and development dependencies are hash-locked, verified by clean hash-required installs and a clean vulnerability audit. Container build and smoke checks have passed on the latest merged main commit recorded above; each merge must continue to receive fresh main-branch checks.
