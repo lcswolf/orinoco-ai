@@ -23,9 +23,22 @@ from orinoco.chat.routes import router as chat_router
 from orinoco.auth.routes import router as auth_router
 from orinoco.auth.sessions import get_session_secret, secure_cookie_enabled
 from orinoco.logging_config import configure_logging, current_request_id, reset_request_id, set_request_id
+from orinoco.resources import get_resource_profile, resolve_ai_threads
 
 configure_logging()
 logger = logging.getLogger("orinoco.http")
+
+# Detect container limits once as the web application starts. The same cached
+# profile is used by inference requests and the administrator diagnostics view.
+RESOURCE_PROFILE = get_resource_profile()
+AI_THREAD_COUNT = resolve_ai_threads(RESOURCE_PROFILE)
+logger.info(
+    "Container resources detected: %s CPU(s), %s inference thread(s), memory limit %s bytes",
+    RESOURCE_PROFILE.cpu_count,
+    AI_THREAD_COUNT,
+    RESOURCE_PROFILE.memory_limit_bytes,
+    extra={"event_code": "resources.detected"},
+)
 
 OLLAMA_API_BASE = "http://127.0.0.1:11434"
 DEFAULT_MODEL = os.environ.get("AI_MODEL", "qwen2.5:1.5b")
