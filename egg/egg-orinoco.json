@@ -55,6 +55,15 @@
       "rules": "required|integer|min:1024|max:8192"
     },
     {
+      "name": "AI Threads",
+      "description": "Maximum CPU threads used for local model inference. Zero automatically detects the container CPU quota and affinity; a positive value can lower the detected count but cannot exceed it.",
+      "env_variable": "AI_THREADS",
+      "default_value": "0",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|integer|min:0|max:64"
+    },
+    {
       "name": "Automatically Save Memories",
       "description": "Allow Orinoco to extract a small number of durable, non-sensitive personal memories after a chat. Users can review, edit and delete their own memories.",
       "env_variable": "AUTO_SAVE_MEMORIES",
