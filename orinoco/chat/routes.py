@@ -501,7 +501,7 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
         + "\nAdministrator's core persona guidance (style only): "
         + str(persona["core_persona"])
         + identity_guidance
-        + f"\nHumour setting: {int(persona['humour_level'])}/100 ({int(persona['humour_level'])}% humour); keep humour kind, light and situational."
+        + f"\nHumour setting: {int(identity['humour_level'])}/100 ({int(identity['humour_level'])}% humour); keep humour kind, light and situational."
         + f"\nThis account's response preferences: {voice_guidance}; {tone_guidance}; {detail_guidance}."
         + f"\nReply language preference: {language_guidance}"
         + "\n\n" + SYSTEM_GUARDRAILS
