@@ -1,4 +1,4 @@
-""""Tests for persistent signing-secret configuration."""
+"""Tests for persistent signing-secret configuration."""
 
 from pathlib import Path
 
@@ -20,7 +20,9 @@ def test_session_secret_is_created_persistently_with_private_permissions(tmp_pat
     assert secret_path.stat().st_mode & 0o777 == 0o600
 
 
-def test_production_rejects_existing_session_secret_with_unverifiable_permissions(tmp_path, monkeypatch) -> None:
+def test_production_rejects_existing_session_secret_with_unverifiable_permissions(
+    tmp_path, monkeypatch
+) -> None:
     secret_path = tmp_path / "private" / "session.secret"
     secret_path.parent.mkdir()
     secret_path.write_text("existing-session-secret-value-long-enough", encoding="utf-8")
