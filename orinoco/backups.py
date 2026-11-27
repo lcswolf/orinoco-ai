@@ -33,6 +33,9 @@ MAGIC = b"ORINOCO-BACKUP-1\n"
 CHUNK_SIZE = 1024 * 1024
 MAX_ARCHIVE_FILES = 100_000
 MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
+# Bound ciphertext and pre-authentication plaintext staging. Allow tar headers,
+# gzip overhead and a small margin beyond the archive's aggregate member limit.
+MAX_ENCRYPTED_BACKUP_BYTES = MAX_ARCHIVE_BYTES + MAX_ARCHIVE_FILES * 1024 + 16 * 1024 * 1024
 MAX_MANIFEST_BYTES = 1024 * 1024
 MAX_SESSION_SECRET_BYTES = 4 * 1024
 MAX_DOCUMENT_FILE_BYTES = 10 * 1024 * 1024
@@ -103,6 +106,8 @@ def _encrypt_file(source: Path, destination: Path, key: bytes) -> None:
 def _decrypt_file(source: Path, destination: Path, key: bytes) -> None:
     """Authenticate and decrypt a backup incrementally before it can be restored."""
     size = source.stat().st_size
+    if size > MAX_ENCRYPTED_BACKUP_BYTES:
+        raise BackupError("Backup exceeds the encrypted file safety limit.")
     header_size = len(MAGIC) + 12
     if size < header_size + 16:
         raise BackupError("Backup file is too small or incomplete.")

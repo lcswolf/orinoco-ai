@@ -76,6 +76,20 @@ def test_restore_requires_explicit_confirmation(tmp_path, monkeypatch) -> None:
         backups.restore_backup(backup)
 
 
+def test_decrypt_rejects_oversized_backup_before_creating_plaintext(tmp_path) -> None:
+    """Reject oversized ciphertext from its metadata before staging any plaintext."""
+    source = tmp_path / "oversized.oribak"
+    # Sparse allocation exercises the size guard without consuming disk space.
+    with source.open("wb") as handle:
+        handle.truncate(backups.MAX_ENCRYPTED_BACKUP_BYTES + 1)
+    destination = tmp_path / "decrypted.tar.gz"
+
+    with pytest.raises(backups.BackupError, match="encrypted file safety limit"):
+        backups._decrypt_file(source, destination, b"x" * 32)
+
+    assert not destination.exists()
+
+
 def test_backup_detects_tampered_ciphertext(tmp_path, monkeypatch) -> None:
     configure_backup_paths(monkeypatch, tmp_path)
     backup = backups.create_backup()
