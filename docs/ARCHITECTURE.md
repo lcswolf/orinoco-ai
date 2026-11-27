@@ -16,7 +16,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
   Schema upgrades are versioned and additive; an older image refuses a database with a newer schema. Application rollback must therefore restore the pre-update database backup before starting the older image.
 - **Retrieval layer:** SQLite FTS5 indexes extracted document text and retrieves bounded keyword excerpts from the current user's private documents and the shared library. This is a lightweight keyword system, not vector/semantic search.
 - **Web research adapter:** optional search and URL retrieval. External webpages are untrusted input.
-- **Discord adapter:** optional text integration, with per-channel participation settings.
+- **Discord adapter:** planned integration; when implemented, text participation should be configurable per channel (mention-only or natural participation). Discord text and voice are not currently available in `main`.
 - **Voice components:** future, opt-in speech recognition and speech output. Listening must start only after an explicit user action.
 - **Operations layer:** process supervision, health checks, logs, backups, restore and controlled updates.
 
