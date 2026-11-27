@@ -17,6 +17,7 @@ import httpx
 
 from orinoco import __version__
 from orinoco.db import get_database_path
+from orinoco.resources import get_resource_profile, resolve_ai_threads
 
 OLLAMA_API_BASE = "http://127.0.0.1:11434"
 
@@ -102,9 +103,14 @@ async def run_diagnostics() -> dict[str, Any]:
     overall = "fail" if any(item["status"] == "fail" for item in checks) else (
         "warning" if any(item["status"] == "warning" for item in checks) else "pass"
     )
+    profile = get_resource_profile()
     return {
         "status": overall,
         "version": __version__,
+        "resources": {
+            **profile.as_dict(),
+            "ai_threads": resolve_ai_threads(profile),
+        },
         "checks": checks,
     }
 
