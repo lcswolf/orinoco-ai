@@ -286,6 +286,30 @@
           <p class="settings-feedback" id="backup-key-warning" role="status" hidden></p>
         </div>
       </section>
+  <section class="settings-section" id="admin-identity-tools" hidden aria-labelledby="identity-heading">
+    <h3 id="identity-heading">Identity &amp; Behaviour</h3>
+    <p class="settings-description">Define who Orinoco is and how it communicates. Changes are saved as pending and become active after the next restart. Protected safety and privacy rules cannot be changed here.</p>
+    <form class="settings-form" id="identity-form">
+      <label for="identity-name">Assistant name</label><input id="identity-name" maxlength="80" required>
+      <label for="identity-creator">Built by / creator</label><input id="identity-creator" maxlength="120">
+      <label for="identity-organisation">Organisation</label><input id="identity-organisation" maxlength="120">
+      <label for="identity-purpose">Purpose</label><textarea id="identity-purpose" maxlength="500" rows="2" required></textarea>
+      <label for="identity-background">Background</label><textarea id="identity-background" maxlength="1000" rows="2"></textarea>
+      <label for="identity-introduction">Introduction</label><textarea id="identity-introduction" maxlength="500" rows="2"></textarea>
+      <label for="identity-url">Project website (HTTPS only)</label><input id="identity-url" type="url" maxlength="2048" placeholder="https://example.com">
+      <label for="identity-personality">Core personality</label><textarea id="identity-personality" maxlength="1200" rows="3" required></textarea>
+      <label for="identity-humour">Humour <output id="identity-humour-value">65%</output></label><input id="identity-humour" type="range" min="0" max="100" value="65">
+      <label for="identity-warmth">Warmth <output id="identity-warmth-value">75%</output></label><input id="identity-warmth" type="range" min="0" max="100" value="75">
+      <label for="identity-formality">Formality <output id="identity-formality-value">35%</output></label><input id="identity-formality" type="range" min="0" max="100" value="35">
+      <label for="identity-patience">Patience <output id="identity-patience-value">80%</output></label><input id="identity-patience" type="range" min="0" max="100" value="80">
+      <label for="identity-response-length">Response length</label><select id="identity-response-length"><option value="concise">Concise</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select>
+      <label for="identity-language-policy">Language policy</label><select id="identity-language-policy"><option value="follow_user">Follow the user's language (Welsh or English)</option><option value="welsh_default">Welsh by default</option><option value="english_default">English by default</option></select>
+      <details><summary>Advanced personality guidance</summary><label for="identity-advanced">Additional style guidance (never overrides protected rules)</label><textarea id="identity-advanced" maxlength="2000" rows="4"></textarea></details>
+      <button class="login-submit" id="identity-submit" type="submit">Save identity for next restart</button>
+      <p class="settings-feedback" id="identity-status" role="status">Loading identity profile…</p>
+      <p class="settings-feedback" id="identity-feedback" role="status" hidden></p>
+    </form>
+  </section>
   <section class="settings-section" id="admin-persona-tools" hidden aria-labelledby="persona-heading">
     <h3 id="persona-heading">Core assistant personality</h3>
     <p class="settings-description">Set the shared personality guidance for Orinoco. This applies to all accounts; each person can still choose their own voice, tone and answer detail.</p>

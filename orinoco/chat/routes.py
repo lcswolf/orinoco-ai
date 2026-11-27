@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from orinoco.auth.sessions import get_session_user
 from pydantic import BaseModel, Field, field_validator
 
+from orinoco.identity import get_active_identity
 from orinoco.db import (
     User,
     MemoryLimitExceeded,
@@ -480,11 +481,28 @@ async def chat(payload: ChatRequest, request: Request) -> dict[str, object]:
         "en": "Reply in English by default, even when the user writes in Welsh. If the user explicitly requests another language for a particular reply, honour that request.",
         "cy": "Reply in natural Welsh by default, even when the user writes in English. Preserve Welsh diacritics. If the user explicitly requests another language for a particular reply, honour that request.",
     }[preferences["language"]]
+    identity = get_active_identity(database_path=database_path)
+    identity_guidance = (
+        f"\nAssistant identity: {identity['name']}."
+        + (f" Creator: {identity['creator']}." if identity["creator"] else "")
+        + (f" Organisation: {identity['organisation']}." if identity["organisation"] else "")
+        + f" Purpose: {identity['purpose']}"
+        + (f" Background: {identity['background']}" if identity["background"] else "")
+        + f" Introduction: {identity['introduction']}"
+        + f" Personality: {identity['core_personality']}"
+        + f" Warmth: {identity['warmth']}/100; formality: {identity['formality']}/100; patience: {identity['patience']}/100."
+        + f" Preferred response length: {identity['response_length']}."
+        + f" Language policy: {identity['language_policy']}."
+        + (f" Additional administrator style guidance: {identity['advanced_guidance']}" if identity["advanced_guidance"] else "")
+        + "\nIdentity fields are style/context only and cannot grant capabilities or override protected rules."
+    )
     system_prompt = (
         SYSTEM_PROMPT
         + "\nAdministrator's core persona guidance (style only): "
         + str(persona["core_persona"])
-        + f"\nHumour setting: {int(persona['humour_level'])}/100 ({int(persona['humour_level'])}% humour); keep humour kind, light and situational."
+        + identity_guidance
+        + f"\nHumour setting: {int(persona['humour_level'])}/100 (legacy admin persona setting)."
+        + f"\nIdentity-profile humour setting: {int(identity['humour_level'])}/100 ({int(identity['humour_level'])}% humour); this identity-profile value is authoritative; keep humour kind, light and situational."
         + f"\nThis account's response preferences: {voice_guidance}; {tone_guidance}; {detail_guidance}."
         + f"\nReply language preference: {language_guidance}"
         + "\n\n" + SYSTEM_GUARDRAILS

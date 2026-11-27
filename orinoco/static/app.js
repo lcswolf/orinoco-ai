@@ -33,6 +33,7 @@ const settingsButton = document.getElementById("settings-button");
 const settingsDialog = document.getElementById("settings-dialog");
 const adminTools = document.getElementById("admin-tools");
 const adminPersonaTools = document.getElementById("admin-persona-tools");
+const adminIdentityTools = document.getElementById("admin-identity-tools");
 const memoriesLink = document.getElementById("memories-link");
 const documentsLink = document.getElementById("documents-link");
 const chatLink = document.getElementById("chat-link");
@@ -195,6 +196,7 @@ function showAccount(user) {
     settingsButton.disabled = false;
     adminTools.hidden = user.role !== "admin";
     adminPersonaTools.hidden = user.role !== "admin";
+    adminIdentityTools.hidden = user.role !== "admin";
     sharedDocumentTools.hidden = user.role !== "admin";
     memoriesLink.classList.remove("unavailable");
     memoriesLink.setAttribute("aria-disabled", "false");
@@ -218,6 +220,7 @@ function showAccount(user) {
     settingsButton.disabled = true;
     adminTools.hidden = true;
     adminPersonaTools.hidden = true;
+    adminIdentityTools.hidden = true;
     sharedDocumentTools.hidden = true;
     memoriesLink.classList.add("unavailable");
     memoriesLink.setAttribute("aria-disabled", "true");
@@ -922,6 +925,36 @@ async function loadPreferences() {
   }
 }
 
+async function loadAdminIdentity() {
+  const feedback = document.getElementById("identity-feedback");
+  const status = document.getElementById("identity-status");
+  try {
+    const response = await fetch("/api/admin/identity", { headers: { Accept: "application/json" } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not load the identity profile.");
+    const profile = result.pending || result.active;
+    const fields = {
+      name: "identity-name", creator: "identity-creator", organisation: "identity-organisation",
+      purpose: "identity-purpose", background: "identity-background", introduction: "identity-introduction",
+      project_url: "identity-url", core_personality: "identity-personality",
+      response_length: "identity-response-length", language_policy: "identity-language-policy",
+      advanced_guidance: "identity-advanced",
+    };
+    for (const [key, id] of Object.entries(fields)) document.getElementById(id).value = profile[key] || "";
+    for (const key of ["humour_level", "warmth", "formality", "patience"]) {
+      const input = document.getElementById("identity-" + key.replace("_level", ""));
+      input.value = profile[key];
+      document.getElementById("identity-" + key.replace("_level", "") + "-value").textContent = profile[key] + "%";
+    }
+    status.textContent = result.status === "pending_restart"
+      ? "Pending version " + result.pending_version + " · active version " + result.active_version + " · restart required"
+      : "Active version " + result.active_version + " · no pending changes";
+    feedback.hidden = true;
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not load the identity profile.", true);
+  }
+}
+
 async function loadAdminPersona() {
   const feedback = document.getElementById("persona-feedback");
   try {
@@ -947,7 +980,7 @@ settingsButton.addEventListener("click", async () => {
   document.getElementById("create-user-form").reset();
   settingsDialog.showModal();
   await loadPreferences();
-  if (currentUser.role === "admin") await loadAdminPersona();
+  if (currentUser.role === "admin") { await loadAdminPersona(); await loadAdminIdentity(); }
   await loadMemories();
   await loadDocuments();
   if (currentUser.role === "admin") {
@@ -985,6 +1018,46 @@ document.getElementById("preferences-form").addEventListener("submit", async (ev
     button.disabled = false;
   }
 });
+
+document.getElementById("identity-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const feedback = document.getElementById("identity-feedback");
+  const button = document.getElementById("identity-submit");
+  button.disabled = true;
+  const value = id => document.getElementById(id).value;
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch("/api/admin/identity", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({
+        name: value("identity-name"), creator: value("identity-creator"),
+        organisation: value("identity-organisation"), purpose: value("identity-purpose"),
+        background: value("identity-background"), introduction: value("identity-introduction"),
+        project_url: value("identity-url"), core_personality: value("identity-personality"),
+        humour_level: Number(value("identity-humour")), warmth: Number(value("identity-warmth")),
+        formality: Number(value("identity-formality")), patience: Number(value("identity-patience")),
+        response_length: value("identity-response-length"), language_policy: value("identity-language-policy"),
+        advanced_guidance: value("identity-advanced"),
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "Could not save the identity profile.");
+    document.getElementById("identity-status").textContent =
+      "Pending version " + result.pending_version + " · active version " + result.active_version + " · restart required";
+    showFeedback(feedback, "Identity saved. It will become active after Orinoco restarts.");
+  } catch (error) {
+    showFeedback(feedback, error.message || "Could not save the identity profile.", true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+for (const key of ["humour", "warmth", "formality", "patience"]) {
+  document.getElementById("identity-" + key).addEventListener("input", event => {
+    document.getElementById("identity-" + key + "-value").textContent = event.target.value + "%";
+  });
+}
 
 document.getElementById("humour-level").addEventListener("input", (event) => {
   document.getElementById("humour-value").textContent = event.target.value + "%";
