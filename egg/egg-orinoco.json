@@ -290,7 +290,7 @@
     },
     {
       "name": "ORINOCO_MAX_REQUEST_BODY_BYTES",
-      "description": "Maximum declared HTTP request body size (default 12 MiB). Configure the reverse proxy to reject oversized and chunked request bodies too.",
+      "description": "Maximum HTTP request body size (default 12 MiB), including streamed requests without Content-Length. Configure the reverse proxy to enforce limits too.",
       "env_variable": "ORINOCO_MAX_REQUEST_BODY_BYTES",
       "default_value": "12582912",
       "user_viewable": true,
