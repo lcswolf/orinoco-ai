@@ -64,7 +64,10 @@ def test_standard_user_cannot_access_admin_api(tmp_path, monkeypatch) -> None:
         sign_in(client, "normaluser", "a-long-user-password-456")
         response = client.get("/api/admin/users")
         diagnostics_response = client.get("/api/admin/diagnostics")
-        bundle_response = client.get("/api/admin/diagnostics/support-bundle")
+        bundle_response = client.post(
+            "/api/admin/diagnostics/support-bundle",
+            headers={"X-CSRF-Token": csrf(client)},
+        )
 
     assert response.status_code == 403
     assert diagnostics_response.status_code == 403
@@ -150,8 +153,15 @@ def test_admin_can_download_support_bundle(tmp_path, monkeypatch) -> None:
 
     with TestClient(app, base_url="https://testserver") as client:
         sign_in(client, "adminuser", "a-long-admin-password-123")
-        response = client.get("/api/admin/diagnostics/support-bundle")
+        missing_csrf = client.post("/api/admin/diagnostics/support-bundle")
+        legacy_get = client.get("/api/admin/diagnostics/support-bundle")
+        response = client.post(
+            "/api/admin/diagnostics/support-bundle",
+            headers={"X-CSRF-Token": csrf(client)},
+        )
 
+    assert missing_csrf.status_code == 403
+    assert legacy_get.status_code == 405
     assert response.status_code == 200
     assert response.content == b"safe-test-zip"
     assert response.headers["content-type"] == "application/zip"
