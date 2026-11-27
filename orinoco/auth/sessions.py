@@ -1,4 +1,4 @@
-""""Persistent signing secret and secure cookie settings."""
+"""Persistent signing secret and secure cookie settings."""
 
 from __future__ import annotations
 
@@ -13,7 +13,9 @@ from orinoco.db import User, get_database_path, get_user_by_id, initialise_datab
 
 def _restrict_session_secret_permissions(secret_path: Path) -> None:
     """Keep the persisted signing key private, failing closed in production."""
-    production = os.environ.get("ORINOCO_ENV", "development").strip().lower() == "production"
+    production = (
+        os.environ.get("ORINOCO_ENV", "development").strip().lower() == "production"
+    )
     try:
         secret_path.chmod(0o600)
     except OSError:
@@ -24,7 +26,9 @@ def _restrict_session_secret_permissions(secret_path: Path) -> None:
         try:
             permissions = secret_path.stat().st_mode & 0o777
         except OSError as exc:
-            raise RuntimeError("Could not verify permissions on the persistent Orinoco session secret.") from exc
+            raise RuntimeError(
+                "Could not verify permissions on the persistent Orinoco session secret."
+            ) from exc
         if permissions & 0o077:
             raise RuntimeError(
                 "The persistent Orinoco session secret is not private; refusing to start in production."
