@@ -1488,8 +1488,10 @@ if (diagnosticsDownloadButton) {
     feedback.className = "settings-feedback";
     feedback.textContent = "Preparing a privacy-filtered support bundle…";
     try {
+      const csrf = await getCsrfToken();
       const response = await fetch("/api/admin/diagnostics/support-bundle", {
-        headers: { Accept: "application/zip" },
+        method: "POST",
+        headers: { Accept: "application/zip", "X-CSRF-Token": csrf },
         credentials: "same-origin",
       });
       if (!response.ok) throw new Error(response.status === 403 ? "Administrator access is required." : "The support bundle could not be generated.");
