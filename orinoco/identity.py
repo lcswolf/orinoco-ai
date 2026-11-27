@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 from orinoco.db import _database, get_database_path
 
@@ -40,6 +41,22 @@ _ENUMS = {
 _SLIDERS = {"humour_level", "warmth", "formality", "patience"}
 
 
+def _valid_project_url(value: str) -> bool:
+    """Accept absolute HTTPS URLs with a hostname and no embedded credentials."""
+    try:
+        parsed = urlsplit(value)
+        # Accessing .port also validates malformed and out-of-range port numbers.
+        _ = parsed.port
+        return (
+            parsed.scheme.lower() == "https"
+            and bool(parsed.hostname)
+            and parsed.username is None
+            and parsed.password is None
+        )
+    except ValueError:
+        return False
+
+
 def validate_identity(payload: dict[str, object]) -> dict[str, object]:
     """Validate a complete profile; reject unknown keys and unsafe URL schemes."""
     if not isinstance(payload, dict) or set(payload) != set(DEFAULT_IDENTITY):
@@ -52,8 +69,8 @@ def validate_identity(payload: dict[str, object]) -> dict[str, object]:
         cleaned = value.strip()
         if key in {"name", "purpose", "core_personality"} and not cleaned:
             raise ValueError(f"{key} cannot be blank.")
-        if key == "project_url" and cleaned and not cleaned.startswith("https://"):
-            raise ValueError("Project URL must be an HTTPS URL.")
+        if key == "project_url" and cleaned and not _valid_project_url(cleaned):
+            raise ValueError("Project URL must be a valid absolute HTTPS URL without embedded credentials.")
         result[key] = cleaned
     for key, choices in _ENUMS.items():
         value = payload[key]
