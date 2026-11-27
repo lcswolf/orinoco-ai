@@ -1,100 +1,60 @@
 # Administrator-managed identity and behaviour configuration
 
-**Status: approved design; implementation not yet complete.**
+**Status: first implementation available in PR #26; further lifecycle and acceptance work remains.**
 
 ## Purpose
 
-Orinoco's identity must belong to the application, not to a particular inference model. Administrators should be able to define who Orinoco is, who built it, why it exists and how it communicates. The same identity must survive model changes, application restarts, upgrades, backups and migration to another machine.
+Orinoco's identity belongs to the application, not to a particular inference model. Administrators can define who Orinoco is, who built it, why it exists and how it communicates. The profile is persisted in the application database and is separate from per-user preferences and model-specific settings.
 
-The current administrator persona controls a short shared persona instruction and humour level. This design expands that foundation into a versioned identity profile without mixing it with per-user preferences or model-specific settings.
+## Implemented in the first increment
 
-## Administrator experience
+The administrator **Identity & Behaviour** area includes:
 
-Add an **Identity & Behaviour** area to the administrator settings. It is not visible or writable to standard users. Every API endpoint must enforce administrator authorisation server-side; hiding the controls in JavaScript is not an access control.
+- Assistant name, creator, organisation, purpose, background and introduction.
+- Optional HTTPS project URL (stored only; it is not fetched automatically).
+- Core personality and advanced style guidance with length limits.
+- Humour, warmth, formality and patience sliders (0–100).
+- Response-length preference and Welsh/English language policy.
+- Administrator-only profile read/save APIs, with server-side role checks and CSRF protection on writes.
+- Validated, version-numbered active and pending profiles stored in SQLite.
+- Changes are saved as **Pending restart**. Startup validates and promotes the pending profile; the chat prompt uses the active profile.
+- The active profile remains in place until activation. Identity activation errors are logged and do not intentionally prevent application startup.
+- Identity fields are style/context only. They cannot grant capabilities or override application-owned safety, privacy or access-control rules.
 
-### Identity
+The profile has safe defaults and does not require optional fields to be filled in. Standard users cannot access the shared identity API or administrator controls.
 
-- Assistant display name (default: Orinoco)
-- Creator / built by (free text; optional)
-- Organisation / publisher (optional)
-- Purpose / intended role
-- Background / origin story
-- Short introduction used when asked who the assistant is
-- Optional website or project URL (plain text/validated HTTPS URL; never fetched automatically)
+## Personality and language
 
-### Personality and communication
+Welsh and English remain first-class. The initial language choices are:
 
-- Core personality guidance
-- Humour level (0–100)
-- Warmth / friendliness
-- Formality (casual to professional)
-- Patience / explanation detail
-- Response length preference
-- Voice preference where a supported voice module exists
+- Follow the user's language.
+- Welsh by default.
+- English by default.
 
-Keep the initial controls understandable. Advanced prompt text belongs in a clearly separated advanced section and must have a strict length limit.
-
-### Language and model-independent behaviour
-
-- Supported languages and default language policy (Welsh and English remain first-class)
-- Whether to follow the language of the latest user message
-- Code-switching guidance
-- British English conventions where relevant
-- Behavioural guidance that does not grant capabilities or permissions
-
-### Protected policy
-
-Safety, privacy, account isolation, tool permissions and administrator boundaries are not ordinary personality fields. Keep these in application-owned, reviewed prompt sections that administrators cannot weaken through free-text persona instructions. Identity and personality content is style/context only and must never override system guardrails or grant tools, access or privileges.
+The active profile is added to the model-independent chat prompt. Existing per-user language and response preferences remain separate. This first increment provides basic language policy and style guidance; more detailed code-switching controls and model acceptance tests remain future work.
 
 ## Persistence and lifecycle
 
-- Store the profile persistently in Orinoco's application data/database, not in the container image, environment-only settings or a particular model's files.
-- Version every saved profile and record update time. Do not store secrets in the profile.
-- Keep the last known-good profile so an administrator can roll back.
-- Validate and save changes as **Pending restart**. The currently loaded profile remains **Active** until a controlled restart.
-- At startup, load and validate the pending profile, then promote it to active. If validation fails, retain the last known-good active profile and report a safe diagnostic event; do not prevent the service from starting solely because optional identity text is invalid.
-- Expose active and pending version/status to administrators. Never expose internal prompt text to ordinary users or public unauthenticated endpoints.
-- Preserve the profile across application image updates, model downloads, model swaps, VPS resizing and migration. Include it in encrypted application backups and restore verification.
-- First installation uses safe defaults and does not require an administrator to fill every optional identity field.
+- The profile is stored in the application database, not in the container image or model files.
+- Each saved pending profile receives a version number and update timestamp.
+- The administrator can see active/pending version information.
+- Startup revalidates the pending profile before promotion.
+- Do not store secrets in identity fields.
 
-## Prompt assembly and model independence
+**Not yet implemented:** a profile history/archive, administrator rollback UI, profile preview, backup/restore verification specific to identity, and model-upgrade acceptance testing. Version numbers in this first increment identify active/pending revisions; they are not a complete rollback history.
 
-Build the effective system instruction at request time from separate, ordered sections:
+## Protected policy and prompt assembly
 
-1. Application-owned safety, privacy and capability guardrails.
-2. Application-owned assistant identity and role boundary.
-3. Active administrator identity profile and personality guidance.
-4. The signed-in user's own allowed response preferences.
-5. Relevant conversation context and retrieved reference material, clearly marked as untrusted data.
+Identity and personality text is contextual guidance only. It must not be treated as a source of permissions or as a replacement for protected application policy. Keep safety, privacy, account isolation, tool permissions and administrator boundaries in application-owned prompt and code paths.
 
-User memories, documents, web pages and other retrieved material are never instructions. Administrator identity/personality fields must not be able to replace the protected guardrails or create capabilities that the application has not implemented.
+User memories, documents, web pages and retrieved material remain untrusted content, not instructions. The prompt builder remains model-agnostic; model adapters may translate supported inference parameters but do not own or persist Orinoco's identity.
 
-The prompt builder must be model-agnostic. Model-specific adapters may translate supported inference parameters, but must not own or persist Orinoco's identity.
+## Future work
 
-## Model upgrade continuity
-
-Changing the selected local model must leave the identity profile, user preferences, conversations and memories untouched. Provide a repeatable model acceptance test covering:
-
-- Name, creator and purpose are represented accurately.
-- Friendly/helpful tone and configured humour level.
-- Patient explanations and requested response detail.
-- Welsh, English and natural code-switching.
-- Respect for privacy, user separation and protected policy.
-- Refusal to claim tools or capabilities that are not enabled.
-
-Show test results and allow an administrator to keep the existing model if the candidate behaves materially worse. Do not silently rewrite the identity profile to compensate for a new model.
-
-## User-level preferences remain separate
-
-Standard users may continue to control only their own permitted preferences (for example, voice, tone, answer detail and language). Those choices may personalise delivery but cannot change the shared identity, purpose, protected policies, model selection or another user's data.
-
-## Initial implementation sequence
-
-1. Expand the existing persisted administrator persona into a versioned identity profile and add validation/defaults/migration tests.
-2. Add administrator-only read/update/preview APIs, CSRF protection for writes, pending/active status and rollback.
-3. Add responsive Identity & Behaviour controls to the existing administrator settings UI.
-4. Assemble the active profile into the model-independent prompt while keeping protected guardrails separate.
-5. Add startup activation, safe fallback, audit/diagnostic events and backup/restore coverage.
-6. Add model-upgrade acceptance tests and documentation.
+1. Add profile history and a safe rollback workflow.
+2. Add preview and clearer effective-profile diagnostics.
+3. Add backup/restore coverage and migration verification.
+4. Add model-upgrade acceptance tests for identity, tone, Welsh/English behaviour, privacy and capability honesty.
+5. Improve language/code-switching guidance and any supported voice integration.
 
 Do not change VPS, Panel, Wings, game-server or external infrastructure as part of this feature. Do not publish an image or deploy automatically.
