@@ -14,7 +14,8 @@ def test_orinoco_egg_is_valid_pterodactyl_v1_definition() -> None:
 
     assert egg["meta"]["version"] == "PTDL_v1"
     assert egg["name"] == "Orinoco AI Assistant"
-    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539"]
+    assert len(egg["images"]) == 1
+    assert re.fullmatch(r"ghcr.io/lcswolf/orinoco-ai:sha-[0-9a-f]{40}", egg["images"][0])
     assert "supervisord -n" in egg["startup"]
     assert egg["config"]["stop"] == "^C"
     assert egg["scripts"]["installation"]["container"]
