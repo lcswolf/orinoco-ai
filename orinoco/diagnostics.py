@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import platform
 import re
 import shutil
 import sqlite3
@@ -20,10 +21,51 @@ from orinoco.db import get_database_path
 from orinoco.resources import detect_resources, resolve_ai_threads
 
 OLLAMA_API_BASE = "http://127.0.0.1:11434"
+_MODEL_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}")
+_COMMIT_SHA = re.compile(r"[a-f0-9]{7,40}")
+_TIMEZONE = re.compile(r"[A-Za-z0-9_+/-]{1,64}")
 
 
 def _result(name: str, status: str, summary: str, **details: Any) -> dict[str, Any]:
     return {"name": name, "status": status, "summary": summary, **details}
+
+
+def _safe_runtime_metadata() -> dict[str, str | None]:
+    """Return a small runtime fingerprint without hostnames or arbitrary environment data."""
+    commit = os.environ.get("ORINOCO_COMMIT", "").strip().lower()
+    return {
+        "python_version": platform.python_version(),
+        "platform": platform.system(),
+        "architecture": platform.machine(),
+        "commit": commit if _COMMIT_SHA.fullmatch(commit) else None,
+    }
+
+
+def _safe_configuration_summary() -> dict[str, str | int | bool | None]:
+    """Expose only validated, non-secret operational settings from an explicit allowlist."""
+    model = os.environ.get("AI_MODEL", "").strip()
+    context = os.environ.get("MODEL_CONTEXT", "").strip()
+    timezone_name = os.environ.get("TIMEZONE", "").strip()
+    safe_model = model if _MODEL_NAME.fullmatch(model) else None
+    safe_context: int | None = None
+    if context.isdigit() and len(context) <= 6 and 1 <= int(context) <= 131072:
+        safe_context = int(context)
+    safe_timezone = timezone_name if _TIMEZONE.fullmatch(timezone_name) else None
+
+    summary: dict[str, str | int | bool | None] = {
+        "selected_model": safe_model,
+        "model_context": safe_context,
+        "timezone": safe_timezone,
+    }
+    for key, output_name in (
+        ("AUTO_DOWNLOAD_MODEL", "auto_download_model"),
+        ("AUTO_SAVE_MEMORIES", "auto_save_memories"),
+        ("ENABLE_WEB_SEARCH", "web_search_enabled"),
+        ("ORINOCO_BACKUP_ENABLED", "automatic_backups_enabled"),
+    ):
+        value = os.environ.get(key, "").strip().lower()
+        summary[output_name] = value == "true" if value in {"true", "false"} else None
+    return summary
 
 
 def check_database() -> dict[str, Any]:
@@ -55,7 +97,7 @@ def check_storage() -> list[dict[str, Any]]:
         try:
             exists = path.is_dir()
             writable = exists and os.access(path, os.W_OK)
-            status = "pass" if exists and writable else ("warning" if exists else "warning")
+            status = "pass" if exists and writable else "warning"
             summary = "Directory exists and is writable." if exists and writable else (
                 "Directory exists but is not writable." if exists else "Directory has not been created yet."
             )
@@ -109,13 +151,14 @@ async def run_diagnostics() -> dict[str, Any]:
     return {
         "status": overall,
         "version": __version__,
+        "runtime": _safe_runtime_metadata(),
+        "configuration": _safe_configuration_summary(),
         "resources": {
             **profile.as_dict(),
             "ai_threads": resolve_ai_threads(profile),
         },
         "checks": checks,
     }
-
 
 
 def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[str, bool]:
@@ -194,6 +237,7 @@ def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[
 
         safe_records.append(json.dumps(safe, ensure_ascii=True, separators=(",", ":")))
     return "\n".join(safe_records) + ("\n" if safe_records else ""), truncated
+
 
 async def build_support_bundle() -> bytes:
     """Build a bounded in-memory ZIP containing diagnostics and safe event metadata."""
