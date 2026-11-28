@@ -185,7 +185,7 @@ def _safe_recent_log_events(path: Path, limit_bytes: int = 256 * 1024) -> tuple[
             safe["logger"] = logger
 
         request_id = record.get("request_id")
-        if isinstance(request_id, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", request_id):
+        if isinstance(request_id, str) and re.fullmatch(r"[a-f0-9]{32}", request_id):
             safe["request_id"] = request_id
 
         timestamp = record.get("timestamp")
