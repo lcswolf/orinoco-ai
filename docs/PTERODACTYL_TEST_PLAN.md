@@ -17,7 +17,7 @@ Do not begin the live test until every item below is true:
 - [ ] The image's source commit, image digest and build/smoke workflow run are recorded.
 - [ ] The Egg JSON has been imported into a dedicated test Nest and reviewed before server creation.
 - [ ] A spare allocation is available and its port is recorded.
-- [ ] A unique backup encryption key has been generated using the documented CLI and stored outside the test server. Never commit it or paste it into an issue or log.
+- [ ] If backup/restore is included in this test window, a unique backup encryption key has been generated using the browser generator and stored outside the test server. For the initial app-only smoke test, leave backup features disabled and the key blank. Never commit or paste a key into an issue or log.
 - [ ] The test operator has a way to access the Panel, Wings logs and host/container logs.
 - [ ] The test server contains no valuable user data. Confirm that deleting the test server and its volume is acceptable.
 
