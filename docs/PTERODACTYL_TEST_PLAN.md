@@ -1,8 +1,10 @@
 # Orinoco Pterodactyl deployment test plan
 
-**Status: prepared; execution blocked until a disposable test host and matching image are available.**
+**Status: prepared; live execution requires a disposable Panel host and an image built from the exact source commit being tested.**
 
 This runbook is for the first live validation of the Orinoco PTDL_v1 Egg on Pterodactyl Panel 1.13.0. It is deliberately separate from the automated container smoke test: CI can validate the image and scripts, but it cannot prove that a real Panel, Wings daemon, allocation, server volume, proxy or host behaves correctly.
+
+> **Image/source preflight (2026-11-28):** The checked-in Egg is structurally valid and pins an immutable image, but that image is not built from today's `main`. Egg import and variable review can be done ahead of time; wait for the approved current-main image before creating/starting the test server. Publishing a replacement image is a separate approval-gated action.
 
 Do not use a production server or real personal data for this rehearsal. Do not publish an image or deploy to a public VPS as part of repository preparation.
 
@@ -11,11 +13,11 @@ Do not use a production server or real personal data for this rehearsal. Do not 
 Do not begin the live test until every item below is true:
 
 - [ ] A disposable Linux host is available with a supported Pterodactyl Panel 1.13.0 and Wings installation.
-- [ ] The exact Orinoco image under test has been built and made available to that host. The current Egg references `ghcr.io/lcswolf/orinoco-ai:stable`, but that tag must not be assumed to exist or to match the source commit.
+- [ ] The exact Orinoco image under test has been built and made available to that host. The Egg currently pins `ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539`. That image corresponds to an older source snapshot: current `main` (`03c7de09b4d82980cddd4e8b3cbf49c34c4c753b`) is 33 commits ahead and includes later runtime changes. Do not use the pinned image to claim current-main acceptance. Build/publish a new immutable image from the approved current SHA before starting the server.
 - [ ] The image's source commit, image digest and build/smoke workflow run are recorded.
 - [ ] The Egg JSON has been imported into a dedicated test Nest and reviewed before server creation.
 - [ ] A spare allocation is available and its port is recorded.
-- [ ] A unique backup encryption key has been generated using the documented CLI and stored outside the test server. Never commit it or paste it into an issue or log.
+- [ ] If backup/restore is included in this test window, a unique backup encryption key has been generated using the browser generator and stored outside the test server. For the initial app-only smoke test, leave backup features disabled and the key blank. Never commit or paste a key into an issue or log.
 - [ ] The test operator has a way to access the Panel, Wings logs and host/container logs.
 - [ ] The test server contains no valuable user data. Confirm that deleting the test server and its volume is acceptable.
 
@@ -28,8 +30,8 @@ If the Panel, Wings or image is not ready, stop here. Do not work around an unav
 3. Confirm the Egg is recognised as PTDL_v1 and that all variables render with the intended defaults and descriptions.
 4. Check that the image reference matches the exact image digest selected for this rehearsal.
 5. Create a disposable server using the Egg and assign one available allocation.
-6. Set the required backup encryption key through the Panel's protected variable interface. Do not place the key in startup commands or public notes.
-7. Keep the default curated model at `qwen2.5:1.5b`, automatic model download enabled, context 2048 and concurrency 1 for the first baseline.
+6. For the initial app smoke test, leave backup features disabled and the backup key blank. Configure a unique backup key only when the backup/restore portion is explicitly being tested; never place it in startup commands or public notes.
+7. For a low-memory first boot, override the Egg defaults: `AI_MODEL=qwen2.5:0.5b`, `AUTO_DOWNLOAD_MODEL=false`, `MODEL_CONTEXT=1024` and `AI_CONCURRENCY=1`. Start app-only first; attempt model download only after app and Panel checks pass and available RAM/disk have been measured.
 8. Record the server UUID, allocation, image digest and configuration with secrets redacted.
 
 **Pass condition:** Egg imports without schema errors; server is created with the intended image, startup command, variables and allocation. No secret is exposed in the normal user-visible variable list or logs.
