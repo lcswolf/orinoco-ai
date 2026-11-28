@@ -260,3 +260,11 @@ def test_diagnostics_omits_malformed_or_secret_like_environment_values(monkeypat
     assert "super-secret" not in exported
     assert "password=" not in exported
     assert "token=" not in exported
+
+
+def test_diagnostics_context_parser_bounds_oversized_values(monkeypatch):
+    monkeypatch.setenv("MODEL_CONTEXT", "9" * 5000)
+
+    summary = diagnostics._safe_configuration_summary()
+
+    assert summary["model_context"] is None
