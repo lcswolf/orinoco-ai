@@ -48,7 +48,7 @@ def _safe_configuration_summary() -> dict[str, str | int | bool | None]:
     timezone_name = os.environ.get("TIMEZONE", "").strip()
     safe_model = model if _MODEL_NAME.fullmatch(model) else None
     safe_context: int | None = None
-    if context.isdigit() and 1 <= int(context) <= 131072:
+    if context.isdigit() and len(context) <= 6 and 1 <= int(context) <= 131072:
         safe_context = int(context)
     safe_timezone = timezone_name if _TIMEZONE.fullmatch(timezone_name) else None
 
