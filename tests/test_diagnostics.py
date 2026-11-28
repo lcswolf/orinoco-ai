@@ -205,3 +205,58 @@ def test_support_log_export_rejects_unbounded_limits(tmp_path):
 
     with pytest.raises(ValueError):
         diagnostics._safe_recent_log_events(log_file, limit_bytes=2 * 1024 * 1024)
+
+
+
+def test_diagnostics_exports_only_validated_runtime_and_configuration(monkeypatch):
+    monkeypatch.setenv("ORINOCO_COMMIT", "deadbeef1234567")
+    monkeypatch.setenv("AI_MODEL", "qwen2.5:0.5b")
+    monkeypatch.setenv("MODEL_CONTEXT", "1024")
+    monkeypatch.setenv("TIMEZONE", "Europe/London")
+    monkeypatch.setenv("AUTO_DOWNLOAD_MODEL", "false")
+    monkeypatch.setenv("AUTO_SAVE_MEMORIES", "false")
+    monkeypatch.setenv("ENABLE_WEB_SEARCH", "true")
+    monkeypatch.setenv("ORINOCO_BACKUP_ENABLED", "false")
+
+    runtime = diagnostics._safe_runtime_metadata()
+    configuration = diagnostics._safe_configuration_summary()
+
+    assert runtime["commit"] == "deadbeef1234567"
+    assert runtime["python_version"]
+    assert runtime["platform"]
+    assert runtime["architecture"]
+    assert configuration == {
+        "selected_model": "qwen2.5:0.5b",
+        "model_context": 1024,
+        "timezone": "Europe/London",
+        "auto_download_model": False,
+        "auto_save_memories": False,
+        "web_search_enabled": True,
+        "automatic_backups_enabled": False,
+    }
+
+
+def test_diagnostics_omits_malformed_or_secret_like_environment_values(monkeypatch):
+    monkeypatch.setenv("ORINOCO_COMMIT", "token=super-secret")
+    monkeypatch.setenv("AI_MODEL", "password=super-secret")
+    monkeypatch.setenv("MODEL_CONTEXT", "999999999")
+    monkeypatch.setenv("TIMEZONE", "secret value")
+    monkeypatch.setenv("AUTO_DOWNLOAD_MODEL", "perhaps")
+    monkeypatch.setenv("AUTO_SAVE_MEMORIES", "false")
+    monkeypatch.setenv("ENABLE_WEB_SEARCH", "true")
+    monkeypatch.setenv("ORINOCO_BACKUP_ENABLED", "false")
+
+    report = {
+        "runtime": diagnostics._safe_runtime_metadata(),
+        "configuration": diagnostics._safe_configuration_summary(),
+    }
+    exported = json.dumps(report)
+
+    assert report["runtime"]["commit"] is None
+    assert report["configuration"]["selected_model"] is None
+    assert report["configuration"]["model_context"] is None
+    assert report["configuration"]["timezone"] is None
+    assert report["configuration"]["auto_download_model"] is None
+    assert "super-secret" not in exported
+    assert "password=" not in exported
+    assert "token=" not in exported
