@@ -36,10 +36,10 @@ A Panel-only fallback should also be documented for cases where the web interfac
 
 Include only bounded, allowlisted diagnostics:
 
-- Orinoco version/commit, image/runtime version, Python version, platform and architecture.
+- Orinoco version, validated source commit when supplied by the deployment, Python version, operating-system family and architecture. Image digests and image build metadata are not currently available to the application exporter.
 - Database schema version and a read-only database integrity/availability result; never the database file itself.
 - Health/readiness status and component check outcomes.
-- Sanitized configuration summary: feature enabled/disabled flags, selected model name, context setting, timezone and configured storage paths represented safely.
+- Sanitized configuration summary: validated feature enabled/disabled flags, selected model name, context setting and timezone. Invalid values are omitted; raw environment values, credentials and filesystem paths are not exported.
 - A bounded sample of recent structured event metadata (timestamp, level, logger, event code and request ID). Free-form messages and exception text are deliberately excluded from the ZIP.
 - Backup scheduler history is not included in this first iteration; it will be added after its data and privacy boundaries are reviewed.
 - Disk availability for relevant data paths when supported.
