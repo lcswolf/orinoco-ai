@@ -11,6 +11,7 @@ This page is the documentation starting point. If you are new to Orinoco, begin 
 | Install with standalone Docker Compose | [Docker Compose installation](DOCKER_COMPOSE.md) |
 | Import and configure the Pterodactyl Egg | [Pterodactyl Egg](PTERODACTYL_EGG.md) |
 | Run the controlled first Pterodactyl deployment test | [Test VPS Runbook](TEST_VPS_RUNBOOK.md) |
+| Run the disposable standalone Linode acceptance test | [Linode Disposable Test](LINODE_DISPOSABLE_TEST.md) |
 | Understand the application and deployment design | [Architecture](ARCHITECTURE.md) |
 | Understand Panel-first management and its limits | [Panel Management](PANEL_MANAGEMENT.md) |
 | Configure public/private network access | [Network Deployment](NETWORK_DEPLOYMENT.md) |
