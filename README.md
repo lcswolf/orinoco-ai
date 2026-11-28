@@ -44,12 +44,12 @@ Start with the [Documentation Index](docs/README.md).
 
 ## Container image
 
-The project has published an immutable test image:
+Last recorded published test image (not current `main`):
 
 - `ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539`
 - OCI index digest: `sha256:98dac555b4efad1da9b7306a09a30df5a8b25a57520fc0227590f7dd7885ff0`
 
-The `:stable` tag is also published, but release operators should use the exact immutable tag/digest recorded for the release being tested. Anonymous/public pull access has not yet been independently verified. The currently published image may lag behind merged source changes; a merge does not automatically publish a new image. Standalone Compose and live Pterodactyl installation each require their own staging verification.
+This image predates the current `main` commit (`8c95909`) and does not include all merged changes. The `:stable` tag is also recorded as published, but anonymous/public pull access has not been independently verified. A merge does not automatically publish an image; do not treat this test tag as a current release. Image publication remains a separate approval-gated action. Standalone Compose and live Pterodactyl installation each require their own staging verification.
 
 ## Repository map
 

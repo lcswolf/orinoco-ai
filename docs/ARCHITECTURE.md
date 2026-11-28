@@ -16,7 +16,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
   Schema upgrades are versioned and additive; an older image refuses a database with a newer schema. Application rollback must therefore restore the pre-update database backup before starting the older image.
 - **Retrieval layer:** SQLite FTS5 indexes extracted document text and retrieves bounded keyword excerpts from the current user's private documents and the shared library. This is a lightweight keyword system, not vector/semantic search.
 - **Web research adapter:** optional search and URL retrieval. External webpages are untrusted input.
-- **Discord adapter:** optional text integration, with per-channel participation settings.
+- **Discord adapter:** planned integration; when implemented, text participation should be configurable per channel (mention-only or natural participation). Discord text and voice are not currently available in `main`.
 - **Voice components:** future, opt-in speech recognition and speech output. Listening must start only after an explicit user action.
 - **Operations layer:** process supervision, health checks, logs, backups, restore and controlled updates.
 
@@ -24,7 +24,7 @@ Orinoco should be a private, multi-user assistant that can run on modest VPS har
 
 The interface is being built specifically for Orinoco rather than embedding Open WebUI. The interface uses lightweight static assets served by FastAPI, with no separate JavaScript framework or Node build service. Its visual identity uses an original Womble-inspired woodland helper mascot, woodland greens and warm brass accents, with UK-friendly copy and Europe/London defaults. It includes a responsive workspace layout, Orinoco greeting, service status, authenticated chat, saved conversations with owner-only deletion, account settings, personal memories, document libraries and the research workspace.
 
-The current interface supports authenticated chat, owner-only conversation deletion, per-user response voice/tone/detail preferences, administrator-managed core persona and humour settings, password changes, personal memory controls and document uploads. The approved expansion into a persistent, versioned administrator-managed identity profile (name, creator, purpose, background, personality and behaviour) is specified in [Identity & Behaviour Configuration](IDENTITY_CONFIGURATION.md); that broader feature is not yet implemented. Pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
+The current interface supports authenticated chat, owner-only conversation deletion, per-user response voice/tone/detail preferences, administrator-managed core persona and humour settings, password changes, personal memory controls and document uploads. The persistent, administrator-managed identity profile is implemented: identity and behaviour fields are stored separately from user preferences, changes are saved as pending and activate on application startup. The profile is contextual guidance only and cannot override application-owned privacy, safety or permission rules. See [Identity & Behaviour Configuration](IDENTITY_CONFIGURATION.md). Pagination and streaming can be added later. Server-side authorisation is required for every account-specific operation.
 
 ## Deployment proposal
 
@@ -88,7 +88,7 @@ The product is intended to grow through administrator-managed configuration rath
 
 The administrator interface and advanced settings must remain separate from the ordinary user experience. Standard users should see only the features enabled for them and their own account data. Backend authorization is mandatory; hiding an administrator control in the browser is not a security boundary.
 
-The assistant identity is intended to be model-independent. A persistent administrator-managed profile is planned for the assistant's name, purpose, creator/organisation, background, core uses and communication style. It must remain separate from per-user preferences and from application-owned privacy, safety and permission guardrails. See the identity configuration design when it is merged into the main branch.
+The assistant identity is model-independent and is implemented through the persistent administrator-managed profile described above. It remains separate from per-user preferences and application-owned privacy, safety and permission guardrails. The profile activates on application startup after an administrator saves changes.
 
 Hardware-aware startup configuration is also a core requirement: detect the resources actually available to the container (including CPU and memory limits), then select safe inference thread and request-concurrency defaults. Preserve administrator-selected models and module preferences; warn rather than silently replace a model that no longer fits. Performance history and benchmarking are planned to support comparisons between VPS sizes. These behaviours are design requirements, not claims of current implementation.
 ## Remaining operational decisions
