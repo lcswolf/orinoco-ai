@@ -2,9 +2,9 @@
 
 **Status: prepared; live execution requires a disposable Panel host and an image built from the exact source commit being tested.**
 
-This runbook is for the first live validation of the Orinoco PTDL_v1 Egg on Pterodactyl Panel 1.13.0.
+This runbook is for the first live validation of the Orinoco PTDL_v1 Egg on Pterodactyl Panel 1.13.0. It is deliberately separate from the automated container smoke test: CI can validate the image and scripts, but it cannot prove that a real Panel, Wings daemon, allocation, server volume, proxy or host behaves correctly.
 
-> **Image/source preflight (2026-11-28):** The checked-in Egg is structurally valid and pins an immutable image, but that image is not built from today's `main`. Egg import and variable review can be done ahead of time; wait for the approved current-main image before creating/starting the test server. Publishing a replacement image is a separate approval-gated action. It is deliberately separate from the automated container smoke test: CI can validate the image and scripts, but it cannot prove that a real Panel, Wings daemon, allocation, server volume, proxy or host behaves correctly.
+> **Image/source preflight (2026-11-28):** The checked-in Egg is structurally valid and pins an immutable image, but that image is not built from today's `main`. Egg import and variable review can be done ahead of time; wait for the approved current-main image before creating/starting the test server. Publishing a replacement image is a separate approval-gated action.
 
 Do not use a production server or real personal data for this rehearsal. Do not publish an image or deploy to a public VPS as part of repository preparation.
 
