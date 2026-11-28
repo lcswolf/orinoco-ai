@@ -53,6 +53,9 @@ ORINOCO_PORT=8000
 # Generate a unique random token for first-administrator setup.
 ORINOCO_BOOTSTRAP_TOKEN=REPLACE_WITH_AT_LEAST_32_RANDOM_CHARACTERS
 
+# Leave blank until you have measured the reverse-proxy peer address.
+ORINOCO_TRUSTED_PROXY_IPS=
+
 TIMEZONE=Europe/London
 AI_MODEL=qwen2.5:0.5b
 AUTO_DOWNLOAD_MODEL=false
@@ -114,6 +117,7 @@ services:
       SEARXNG_URL: ${SEARXNG_URL:-}
 
       ORINOCO_DATABASE_PATH: /home/container/data/orinoco.sqlite3
+      ORINOCO_TRUSTED_PROXY_IPS: ${ORINOCO_TRUSTED_PROXY_IPS:-}
       ORINOCO_BOOTSTRAP_TOKEN: ${ORINOCO_BOOTSTRAP_TOKEN:-}
       ORINOCO_BACKUP_ENABLED: ${ORINOCO_BACKUP_ENABLED:-false}
       ORINOCO_BACKUP_KEY: ${ORINOCO_BACKUP_KEY:-}
@@ -224,7 +228,7 @@ Do not remove the data directory when replacing an image. If an update fails, fo
 
 ## 11. Remote access and security
 
-The example binds the web port to `127.0.0.1` intentionally. For remote use, put a trusted reverse proxy with HTTPS in front of it, or use a private network such as Tailscale. Configure the proxy and Orinoco's trusted-proxy settings according to [Network Deployment](NETWORK_DEPLOYMENT.md).
+The example binds the web port to `127.0.0.1` intentionally. For remote use, put a trusted reverse proxy with HTTPS in front of it, or use a private network such as Tailscale. Configure the proxy and Orinoco's trusted-proxy settings according to [Network Deployment](NETWORK_DEPLOYMENT.md). The Compose file passes `ORINOCO_TRUSTED_PROXY_IPS` from `.env` into the container; leave it blank until you have measured the exact proxy peer address as seen by Orinoco. Then set only that address (or a narrowly scoped approved CIDR), recreate the container, and verify spoofed forwarding headers from an untrusted peer are ignored. Do not guess the Docker bridge address or trust a broad private subnet.
 
 - Do not expose the raw Orinoco application port directly to the public internet.
 - Do not expose Ollama port 11434.
