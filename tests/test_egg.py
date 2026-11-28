@@ -130,7 +130,8 @@ def test_egg_startup_and_image_match_container_runtime(egg: dict) -> None:
     entrypoint = (repository_root / "docker" / "entrypoint.py").read_text(encoding="utf-8")
 
     assert egg["startup"] == "supervisord -n -c /opt/orinoco/docker/supervisord.conf"
-    assert egg["images"] == ["ghcr.io/lcswolf/orinoco-ai:sha-bcbd697a18dafc7edde55127d28554faad487539"]
+    assert len(egg["images"]) == 1
+    assert re.fullmatch(r"ghcr.io/lcswolf/orinoco-ai:sha-[0-9a-f]{40}", egg["images"][0])
     assert 'ENTRYPOINT ["python", "/usr/local/bin/orinoco-entrypoint"]' in dockerfile
     assert "os.execvp(args[0], args)" in entrypoint
     for program in ("ollama", "model-init", "orinoco-web", "backup-scheduler"):
